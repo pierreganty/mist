@@ -343,10 +343,9 @@ put >= 1 , Pwhile = 0 , P1 = 0 , Pwait = 0 , Pafterwait = 0 , Pdecslot = 0 , Pin
 
 target
 
-#Passign >= 1 , ptrPeq0 >= 1 , Tassign >= 1 ,  ptrTeq0 >= 1
-#Passign >= 1 , ptrPeq1 >= 1 , Tassign >= 1 ,  ptrTeq1 >= 1
-#notslotTeq0 >= 1 , notslotTeq1 >= 1 , notslotTeq2 >= 1 
-
+Passign >= 1 , ptrPeq0 >= 1 , Tassign >= 1 ,  ptrTeq0 >= 1
+Passign >= 1 , ptrPeq1 >= 1 , Tassign >= 1 ,  ptrTeq1 >= 1
+notslotTeq0 >= 1 , notslotTeq1 >= 1 , notslotTeq2 >= 1 
 notslotPeq0 >= 1 , notslotPeq1 >= 1 , notslotPeq2 >= 1		
 
 

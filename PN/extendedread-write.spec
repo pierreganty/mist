@@ -178,3 +178,13 @@ init
 target
     x2 >= 1 , x11 >= 1
 
+#invariants needed ...
+invariants
+x0 = 1, x1 = 1, x2 = 1
+x0 = 1, x1 = 1, x3 = 1, x4 = 1
+x0 = 1, x1 = 1, x3 = 1, x5 = 1, x6 = 1
+x7 = 1, x8 = 1
+x7 = 45, x10 = 1, x11 = 1
+x3 = 1, x4 = 1, x9 = 1
+x12 = 1, x13 = 1
+x12 = 1, x14 = 1, x15 = 1, x20 = 4

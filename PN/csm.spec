@@ -72,3 +72,7 @@ init
 target
     x9 >= 2
 
+invariants
+x2 = 1, x3 = 1, x4 = 1, x5 = 1
+x0 = 1, x1 = 1, x4 = 1, x5 = 1
+x11 = 1, x13 = 1

@@ -14,3 +14,6 @@ init
 	X1>=1,X2=0,X3=0,X4=0,X5=1,X6=0,X7=0
 target 
 	X6>=1,X7>=1
+
+invariants
+X5 = 1, X7 = 1

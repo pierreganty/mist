@@ -99,3 +99,7 @@ target
     #x9 >= 8 
   #x12 >= 4 
 
+#invariants needed ...
+invariants
+x12 = 1,x13 = 1
+x16 = 1,x17 = 1
