@@ -66,5 +66,6 @@ target
     x3 >= 1, x10 >= 1
 
 invariants
+	x3=1, x4=1, x8=5
 
 
