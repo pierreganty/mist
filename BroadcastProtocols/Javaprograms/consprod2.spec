@@ -139,7 +139,7 @@ returnp >= 1 , lock >= 1 ->
 
 #init section
 init
-   initc >= 1, initp >= 1, whilec = 0, whileget = 0, waitget = 0, competec = 0, notifyc = 0, endc = 0,  whilep = 0, whileput = 0, waitput = 0, competep = 0, notifyp = 0, returnp = 0, available = 0, notavailable = 0, lock = 0, notlock = 0 
+   initc >= 1, initp >= 1, whilec = 0, whileget = 0, waitget = 0, competec = 0, notifyc = 0, endc = 0,  whilep = 0, whileput = 0, waitput = 0, competep = 0, notifyp = 0, returnp = 0, available = 0, notavailable = 1, lock = 0, notlock = 1 
 
 #Goals section
 target
