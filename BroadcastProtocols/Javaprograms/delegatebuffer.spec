@@ -1,6 +1,6 @@
-### example from the book Concurrent Programming in Java, Second Edition. -- Pages 271-272
-
-### attention, il faut normalement remplacer les notifyAll par des notify ###
+### example from the book Concurrent Programming in Java, Second Edition. -- Pages 271-272 ###
+### ATTENTION, IL FAUT NORMALEMENT REMPLACER LES NOTIFYALL PAR DES NOTIFY ###
+### Sinon l'algorithme semble avoir des difficultés à terminer ###
 
 vars
 unlockT lockT unlockP lockP notslotTeq0 slotTeq0 notslotTeq1 slotTeq1 notslotTeq2  slotTeq2 notslotPeq0 slotPeq0 notslotPeq1 slotPeq1 notslotPeq2  slotPeq2 notptrTeq0 ptrTeq0 notptrTeq1 ptrTeq1 notptrPeq0 ptrPeq0 notptrPeq1 ptrPeq1  
@@ -343,10 +343,11 @@ put >= 1 , Pwhile = 0 , P1 = 0 , Pwait = 0 , Pafterwait = 0 , Pdecslot = 0 , Pin
 
 target
 
+# Each line corresponds to a different set of bad states
 Passign >= 1 , ptrPeq0 >= 1 , Tassign >= 1 ,  ptrTeq0 >= 1
-Passign >= 1 , ptrPeq1 >= 1 , Tassign >= 1 ,  ptrTeq1 >= 1
-notslotTeq0 >= 1 , notslotTeq1 >= 1 , notslotTeq2 >= 1 
-notslotPeq0 >= 1 , notslotPeq1 >= 1 , notslotPeq2 >= 1		
+#Passign >= 1 , ptrPeq1 >= 1 , Tassign >= 1 ,  ptrTeq1 >= 1
+#notslotTeq0 >= 1 , notslotTeq1 >= 1 , notslotTeq2 >= 1 
+#notslotPeq0 >= 1 , notslotPeq1 >= 1 , notslotPeq2 >= 1		
 
 
 invariants

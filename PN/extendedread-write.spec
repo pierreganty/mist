@@ -178,7 +178,6 @@ init
 target
     x2 >= 1 , x11 >= 1
 
-#invariants needed ...
 invariants
 x0 = 1, x1 = 1, x2 = 1
 x0 = 1, x1 = 1, x3 = 1, x4 = 1

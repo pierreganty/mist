@@ -170,7 +170,6 @@ init
 target
     x1 >= 1 , x4 >= 1
 
-# invariants needed ...
 invariants
 x45 = 1, x49 = 1, x50 = 1, x51 = 1
 x37 = 1, x41 = 1, x42 = 1, x43 = 1

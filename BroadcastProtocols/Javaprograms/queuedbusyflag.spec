@@ -1,4 +1,4 @@
-### example from the book Java threads. -- Pages 213
+### example from the book Java threads. -- Pages 213 ###
 
 vars
 unlock lock flageqi notflageqi flageqmei notflageqmei flageqj notflageqj flageqmej notflageqmej busycounteq0 notbusycounteq0 waitersi notwaitersi  waitersj notwaitersj
@@ -6,9 +6,6 @@ Iwhile Igetbusyflag Ichoice1 Iif1 Ichoice2 Igoto1 Ichoice3 Iwhile2 Iwait Iafterw
 Jwhile Jgetbusyflag Jchoice1 Jif1 Jchoice2 Jgoto1 Jchoice3 Jwhile2 Jwait Jafterwait Jafterwhile Jbeforeendget Jendget Jwork Jif2 Jif3 Jchoice4 Jnotifyall Jassign Jchoice5 Jendfree
 Owhile Ogetbusyflag Ochoice1 Oif1 Ochoice2 Ogoto1 Ochoice3 Owhile2 Owait Oafterwait Oafterwhile Obeforeendget Oendget Owork Oif2 Oif3 Ochoice4 Onotifyall Oassign Ochoice5 Oendfree
 error
-
-
-
 
 rules 
 
