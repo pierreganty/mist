@@ -117,7 +117,7 @@ Pnotify >= 1, unlockT >= 1 ->
 	Pnotify' = Pnotify - 1,
 	Pslotinc' = Pslotinc + 1,
 	unlockT' = unlockT - 1,
-	lockP' = lockT + 1;
+	lockT' = lockT + 1;
 
 Pslotinc >= 1, slotTeq0 >= 1 ->
 	Pslotinc' = Pslotinc - 1,
