@@ -22,3 +22,6 @@ init
 
 target
   use >= 2
+
+invariants
+	think=1, wait=1, use=1

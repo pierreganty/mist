@@ -65,3 +65,6 @@ init
 target
     x3 >= 1, x10 >= 1
 
+invariants
+
+

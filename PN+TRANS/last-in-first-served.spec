@@ -76,3 +76,5 @@ I >= 1, Sa = 0, Ea = 0, Ma = 0, Sb = 0, Eb = 0, Mb = 0
 
 target
 Sa >= 1,Ma >= 1
+
+#no invariants
