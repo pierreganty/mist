@@ -99,7 +99,8 @@ GrantE >= 1 , WaitE >= 1 ->
 
 #init section
 init
-  Null >= 1 , Idle = 1
+  Null >= 1 , Idle = 1, ServeS = 0, ServeE = 0, GrantS = 0, GrantE = 0, ex = 0, notex = 1, WaitS = 0, WaitE = 0, Shared = 0, Exclusive = 0,
+
 
 #Goals section
 target
