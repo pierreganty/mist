@@ -16,7 +16,7 @@ Iwhile >= 1 ->
 	Igetbusyflag' = Igetbusyflag + 1;
 
 Igetbusyflag >= 1 , unlock >= 1 ->
-	Igetbusyflag' = Igetbusyflag + 1,
+	Igetbusyflag' = Igetbusyflag - 1,
 	Ichoice1' = Ichoice1 + 1,
 	unlock' = unlock - 1,
 	lock' = lock + 1;
@@ -222,7 +222,7 @@ Jwhile >= 1 ->
 	Jgetbusyflag' = Jgetbusyflag + 1;
 
 Jgetbusyflag >= 1 , unlock >= 1 ->
-	Jgetbusyflag' = Jgetbusyflag + 1,
+	Jgetbusyflag' = Jgetbusyflag - 1,
 	Jchoice1' = Jchoice1 + 1,
 	unlock' = unlock - 1,
 	lock' = lock + 1;
@@ -428,7 +428,7 @@ Owhile >= 1 ->
 	Ogetbusyflag' = Ogetbusyflag + 1;
 
 Ogetbusyflag >= 1 , unlock >= 1 ->
-	Ogetbusyflag' = Ogetbusyflag + 1,
+	Ogetbusyflag' = Ogetbusyflag - 1,
 	Ochoice1' = Ochoice1 + 1,
 	unlock' = unlock - 1,
 	lock' = lock + 1;
