@@ -1,5 +1,5 @@
 Vars
-X6,X2,X3,X4,X5,X6
+X1,X2,X3,X4,X5,X6
 Rules
 X1>=1,X4>=1 ->
 X1=X1-1
