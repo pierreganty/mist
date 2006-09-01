@@ -22,8 +22,14 @@
 #ifndef __ABSTRACTION_H
 #define __ABSTRACTION_H
 
+
 #include"def.h"
+#include"proc.h"
 #include"transsystem.h"
+#include"basis.h"
+#include"precone.h"
+#include"remove.h"
+#include"complement.h"
 
 typedef struct abstraction_t {
 		integer16 nbV;
@@ -33,4 +39,12 @@ typedef struct abstraction_t {
 
 /* Only works for Petri Nets w/o invariants */
 transition_system_t *build_sys_using_abs(transition_system_t *sys, abstraction_t *abs);
+
+
+ISTSharingTree *ist_abstract_post_of_rules(ISTSharingTree * S, abstractions_t * abs, transition_system_t *t, int rule); 
+void abstract_bound(ISTSharingTree *S, abstractions_t * abs);
+void ist_downward_closure(ISTSharingTree * S);
+ISTSharingTree * abstract_place_pretild_rule(ISTSharingTree * S, abstractions_t * abs, transition_system_t *t, int rule);
+ISTSharingTree * abstract_place_pretild(ISTSharingTree * S, abstractions_t * abs, transition_system_t *t);
+ISTSharingTree * abstract_pretild(ISTSharingTree * S, abstractions_t * abs, transition_system_t *t);
 #endif

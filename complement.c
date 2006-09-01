@@ -64,54 +64,81 @@ static ISTHeadListNode* complete_list_of_sons(ISTNode *Node){
 	return list_node;
 }
 
-void ist_complement(ISTSharingTree *S){
-	/*
-	 * Don't have to few layers ... or this will fail completely 
-	 */
+void ist_complement(ISTSharingTree *S, size_t dim){
+
 	ISTLayer *Layer;
 	ISTNode *Node, *new_node;
-	ISTHeadListNode *list_node; 
+	ISTHeadListNode *list_node;
+    ISTInterval **tuple;
+	ISTInterval *inter;
+	int i;	
 
-	list_node = complete_list_of_sons(S->Root);
-	new_node = ist_remove_first_elem_list_node(list_node);
-	while (new_node != NULL){
-		/*
-		 * Caution, ist_add_node don't necesseraly return new_node ... 
-		 * e.g. imagine one node without son in layer and you want insert a same node without sons
-		 */
-		ist_add_son(S->Root,ist_add_node(S->FirstLayer,new_node));
+	if (ist_is_empty(S) == false) {
+
+		/*First step: determinisation */	
+		ist_determinize(S);
+
+		/*complementation in itself */
+		list_node = complete_list_of_sons(S->Root);
 		new_node = ist_remove_first_elem_list_node(list_node);
-	}
-	xfree(list_node);
-
-	/* Now the general case */
-	Layer = S->FirstLayer;
-	/* We enter the loop whenever we have at least two variables in the system ! */
-	while (Layer != S->LastLayer->Previous){
-		Node = Layer->FirstNode;
-		while (Node != NULL){
-			list_node = complete_list_of_sons(Node);
-			if (Layer->Next == S->LastLayer->Previous) {
-				ist_remove_sons(Node);
-				ist_remove_node_without_father_layer(Layer->Next);
-			}
+		while (new_node != NULL){
+			/*
+		 	* Caution, ist_add_node don't necesseraly return new_node ... 
+		 	* e.g. imagine one node without son in layer and you want insert a same node without sons
+		 	*/
+			ist_add_son(S->Root,ist_add_node(S->FirstLayer,new_node));
 			new_node = ist_remove_first_elem_list_node(list_node);
-			while (new_node != NULL){
-				ist_add_son(Node,ist_add_node(Layer->Next,new_node));
+		}
+		xfree(list_node);
+
+		/* Now the general case */
+		Layer = S->FirstLayer;
+		while (Layer != S->LastLayer->Previous){
+			/* We have at least two variables in the system ! */
+			Node = Layer->FirstNode;
+			while (Node != NULL){
+				list_node = complete_list_of_sons(Node);
+				if (Layer->Next == S->LastLayer->Previous) {
+					ist_remove_sons(Node);
+					ist_remove_node_without_father_layer(Layer->Next);
+				}
 				new_node = ist_remove_first_elem_list_node(list_node);
+				while (new_node != NULL){
+					ist_add_son(Node,ist_add_node(Layer->Next,new_node));
+					new_node = ist_remove_first_elem_list_node(list_node);
+				}
+				xfree(list_node);
+				Node = Node->Next;
 			}
-			xfree(list_node);
+			Layer = Layer->Next;
+		}
+		Node = Layer->FirstNode;
+		while (Node != NULL) {
+			ist_add_son(Node,S->LastLayer->FirstNode);
 			Node = Node->Next;
 		}
-		Layer = Layer->Next;
+		ist_remove_node_without_son(S);
+		/* if you ist_remove_sons and that after your list_node is empty, this is the case */
+		ist_adjust_second_condition(S);
+	} else {
+		/* complement of the empty sef of dimension dim*/
+
+		/*First: construction of a tuple corresponding to N^{dim} */
+		tuple = (ISTInterval **) xmalloc(dim * sizeof(ISTInterval *));
+		inter = ist_build_interval(0,INFINITY);
+		for(i = 0;i < dim; i++) 
+			tuple[i] = ist_copy_interval(inter);
+		ist_dispose_info(inter);
+
+		/*adding tuple to S (which is empty) gives us an IST that contains any tuple over positive 
+		 * integer of dimension dim*/
+		
+		ist_add(S,tuple,dim);
+
+		/*free of the tuple */
+		for(i = 0; i < dim; i++) {
+			ist_dispose_info(tuple[i]);
+		}
+		xfree(tuple);
 	}
-	/* At this point Layer == S->LastLayer->Previous */
-	Node = Layer->FirstNode;
-	while (Node != NULL) {
-		ist_add_son(Node,S->LastLayer->FirstNode);
-		Node = Node->Next;
-	}
-	ist_remove_node_without_son(S);
-	/* if you ist_remove_sons and that after your list_node is empty, this is the case */
-	ist_adjust_second_condition(S);
 }

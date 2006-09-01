@@ -58,3 +58,154 @@ build_sys_using_abs(sys,abs)
 	}
 	return retval;	
 }
+
+
+ISTSharingTree *ist_abstract_post_of_rules(ISTSharingTree * S, abstractions_t * abs, transition_system_t *t, int rule) {
+
+	ISTSharingTree * result;
+	ISTLayer * L;
+	ISTNode * N;
+	ISTInterval * v;
+	int i;
+	
+	result =  ist_copy(S);	
+	//intersection with guard
+	//If the info of a node has no intersection with guard, we remove its sons, i.e. the node 
+	//becomes useless and will be removed later.	
+	for (i = 0, L = result->FirstLayer; i < abs->nbV; i++,L = L->Next) {
+		N = L->FirstNode;
+	    	while (N != NULL) {
+			v = ist_intersect_intervals(N->Info,&t->transition[rule].cmd_for_place[i].guard);
+			if (v == NULL) {
+				ist_remove_sons(N);
+				ist_dispose_info(v);
+			} else {
+				ist_dispose_info(N->Info);
+				N->Info = v;
+			}
+			N = N->Next;
+		}
+	}
+
+	//we remove the useless nodes
+	ist_remove_node_without_son(result);
+
+	//If the IST is not empty, we apply the effect of the function
+	if (ist_is_empty(result) == false) {
+		for (i = 0, L = result->FirstLayer; i < abs->nbV; i++, L = L->Next) {
+			N = L->FirstNode;
+	    		while (N != NULL) {
+				if ((N->Info->Right != INFINITY) &&
+					(N->Info->Right + t->transition[rule].cmd_for_place[i].delta <=
+					abs->bound[i]))
+					N->Info->Right = N->Info->Right + t->transition[rule].cmd_for_place[i].delta;
+				else
+					N->Info->Right = INFINITY;
+				N = N->Next;
+			}
+		}	
+	}
+	return result;
+}
+
+
+/*
+ * apply the (0,...,k,INFINITY) abstraction
+ */
+
+void abstract_bound(ISTSharingTree *S, abstractions_t * abs) {
+	ISTLayer * L;
+	ISTNode * N;
+	int i;
+
+	for(L = S->FirstLayer, i = 0 ; L != S->LastLayer ; L = L->Next, i++) 
+		for(N = L->FirstNode ; N != NULL ; N = N->Next) 
+			if (N->Info->Right > abs->bound[i])
+				ist_assign_values_to_interval(N->Info,N->Info->Left,INFINITY);
+}
+
+
+/*
+ * function that add tuples that are lesser than tuples in S
+ */
+
+
+void ist_downward_closure(ISTSharingTree * S) {
+	ISTLayer *L;
+	ISTNode *N;
+
+	for(L = S->FirstLayer;L < S->LastLayer;L = L->Next)
+		for(N = L->FirstNode; N != NULL;N = N->Next) 
+			ist_assign_values_to_interval(N->Info,0,N->Info->Right);
+	
+}
+
+
+/*
+ * compute the pretild for one transition t for the abstract system
+ */
+ISTSharingTree * abstract_place_pretild_rule(ISTSharingTree * S, abstractions_t * abs, transition_system_t *t, int rule) {
+	
+	ISTSharingTree * result = NULL;
+	ISTSharingTree * temp;
+	ISTLayer * L;
+	int i;
+	boolean top;
+	for (i=0,L = S->FirstLayer, top = false; (i < abs->nbV) && (top == false);i++,L = L->Next) {
+		if ((t->transition[rule].cmd_for_place[i].guard.Left > 0) && 
+		(t->transition[rule].cmd_for_place[i].places_abstracted > 1)) {
+			top = true;
+		}
+	}
+	if (top == false) {
+		temp = ist_copy(S);
+		ist_complement(temp,abs->nbV);
+		result = ist_pre_of_transfer(temp, &t->transition[rule], abs->nbV);
+		ist_dispose(temp);
+		ist_complement(result,abs->nbV);
+	}
+	else {
+		ist_new(&result);
+		ist_complement(result,abs->nbV);
+	}
+	return result;	
+}
+
+
+/*
+ * compute the abstrat pretild for the abstract system for all transitions
+ *
+ */
+
+ISTSharingTree * abstract_place_pretild(ISTSharingTree * S, abstractions_t * abs, transition_system_t *t) {
+
+	ISTSharingTree * result;
+	ISTSharingTree * temp1;
+	ISTSharingTree * temp2;
+	int i;
+
+	ist_new(&result);
+	ist_complement(result,abs->nbV);
+	for(i = 0; i < t->limits.nbr_rules; i++) {
+		temp1 = abstract_place_pretild_rule(S,abs,t,i);
+		temp2 = ist_intersection(result,temp1);
+		ist_dispose(result);
+		ist_dispose(temp1);
+		result= temp2;
+	}
+	
+	return result;
+}
+
+/*
+ * compute the abstract pretild
+ *
+ */
+
+ISTSharingTree * abstract_pretild(ISTSharingTree * S, abstractions_t * abs, transition_system_t *t) {
+	ISTSharingTree * result;
+	
+	result = abstract_place_pretild(S,abs,t);
+	abstract_bound(result,abs);
+	return result;	
+}
