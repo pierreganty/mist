@@ -3,6 +3,7 @@ INCLUDES=-I.
 bin_PROGRAMS = mist2
 mist2_SOURCES = \
 	abstraction.h\
+	abstraction.c\
 	basis.c \
 	basis.h \
 	checkup.c \
