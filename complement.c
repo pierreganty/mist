@@ -16,7 +16,7 @@
    along with mist2; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-   Copyright 2003, 2004, Pierre Ganty
+   Copyright 2003, 2004, 2006 Pierre Ganty, Laurent Van Begin
  */
 
 
