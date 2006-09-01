@@ -16,7 +16,7 @@
    along with mist2; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-   Copyright 2003, Pierre Ganty
+   Copyright 2003, Pierre Ganty. Copyright 2006, Laurent Van Begin 
  */
 
 #include "minimize.h"
@@ -917,17 +917,21 @@ boolean ist_exact_subsumption_test(T,S)
 {
 	boolean res;
 	ISTSharingTree *S_bis, *intersec, *temp;
-	S_bis = ist_copy(S);	
-	ist_determinize(S_bis);
-	ist_complement(S_bis);
-	//-------FOR Debugging{----------
-	temp = ist_intersection(S_bis,S);
-	assert(ist_is_empty(temp));
-	ist_dispose(temp);
-	//-------FOR Debugging}----------
-	intersec = ist_intersection(S_bis,T);
-	res = ist_is_empty(intersec);
-	ist_dispose(S_bis);
-	ist_dispose(intersec);
+
+	if (ist_is_empty(T) == false) {
+		S_bis = ist_copy(S);	
+		ist_complement(S_bis,ist_nb_layers(T));
+		//-------FOR Debugging{----------
+		temp = ist_intersection(S_bis,S);
+		assert(ist_is_empty(temp));
+		ist_dispose(temp);
+		//-------FOR Debugging}----------
+		intersec = ist_intersection(S_bis,T);
+		res = ist_is_empty(intersec);
+		ist_dispose(S_bis);
+		ist_dispose(intersec);
+	} else 
+		res = true;
+
 	return res;
 }

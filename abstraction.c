@@ -60,7 +60,7 @@ build_sys_using_abs(sys,abs)
 }
 
 
-ISTSharingTree *ist_abstract_post_of_rules(ISTSharingTree * S, abstractions_t * abs, transition_system_t *t, int rule) {
+ISTSharingTree *ist_abstract_post_of_rules(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule) {
 
 	ISTSharingTree * result;
 	ISTLayer * L;
@@ -113,7 +113,7 @@ ISTSharingTree *ist_abstract_post_of_rules(ISTSharingTree * S, abstractions_t * 
  * apply the (0,...,k,INFINITY) abstraction
  */
 
-void abstract_bound(ISTSharingTree *S, abstractions_t * abs) {
+void abstract_bound(ISTSharingTree *S, abstraction_t * abs) {
 	ISTLayer * L;
 	ISTNode * N;
 	int i;
@@ -144,7 +144,7 @@ void ist_downward_closure(ISTSharingTree * S) {
 /*
  * compute the pretild for one transition t for the abstract system
  */
-ISTSharingTree * abstract_place_pretild_rule(ISTSharingTree * S, abstractions_t * abs, transition_system_t *t, int rule) {
+ISTSharingTree * abstract_place_pretild_rule(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule) {
 	
 	ISTSharingTree * result = NULL;
 	ISTSharingTree * temp;
@@ -177,7 +177,7 @@ ISTSharingTree * abstract_place_pretild_rule(ISTSharingTree * S, abstractions_t 
  *
  */
 
-ISTSharingTree * abstract_place_pretild(ISTSharingTree * S, abstractions_t * abs, transition_system_t *t) {
+ISTSharingTree * abstract_place_pretild(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t) {
 
 	ISTSharingTree * result;
 	ISTSharingTree * temp1;
@@ -202,7 +202,7 @@ ISTSharingTree * abstract_place_pretild(ISTSharingTree * S, abstractions_t * abs
  *
  */
 
-ISTSharingTree * abstract_pretild(ISTSharingTree * S, abstractions_t * abs, transition_system_t *t) {
+ISTSharingTree * abstract_pretild(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t) {
 	ISTSharingTree * result;
 	
 	result = abstract_place_pretild(S,abs,t);

@@ -29,6 +29,6 @@
  * This modules provides a procedure that modify a IST S into his complement.
  * This means that from a denotational point of view, their intersection is empty.
  */
-void ist_complement(ISTSharingTree *S);
+void ist_complement(ISTSharingTree *S, size_t dim);
 
 #endif
