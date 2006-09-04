@@ -26,6 +26,8 @@
 #include "normalize.h"
 #include "listnode.h"
 #include "remove.h"
+#include "determinize.h"
+#include "basis.h"
 #include <stdlib.h>
 
 
@@ -64,8 +66,8 @@ static ISTHeadListNode* complete_list_of_sons(ISTNode *Node){
 	return list_node;
 }
 
-void ist_complement(ISTSharingTree *S, size_t dim){
-
+void ist_complement(ISTSharingTree *S, size_t dim)
+{
 	ISTLayer *Layer;
 	ISTNode *Node, *new_node;
 	ISTHeadListNode *list_node;

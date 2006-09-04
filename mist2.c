@@ -240,31 +240,27 @@ void ic4pn(system, initial_marking, frontier)
 	transition_system_t *system;
 	ISTSharingTree *frontier, *initial_marking;
 {
-	abstraction_t *myabs;
+	abstraction_t *myabs, *newabs;
 	transition_system_t *sysabs;
 	size_t i;
 
 	myabs=(abstraction_t *)xmalloc(sizeof(abstraction_t));
 	/* For a first test */
-	myabs->nbV=2;
+	myabs->nbV=1;
 	myabs->A=(integer16 **)xmalloc(myabs->nbV*sizeof(integer16));
 	for(i=0;i<myabs->nbV;++i)
 		myabs->A[i]=(integer16 *)xmalloc(system->limits.nbr_variables*sizeof(integer16));
-	myabs->A[0][0]=1;
-	myabs->A[0][1]=1;
-	myabs->A[0][2]=1;
-	myabs->A[0][3]=0;
-	myabs->A[0][4]=0;
-	myabs->A[1][0]=0;
-	myabs->A[1][1]=0;
-	myabs->A[1][2]=0;
-	myabs->A[1][3]=1;
-	myabs->A[1][4]=1;
+	myabs->A[0][0]=0;
+	myabs->A[0][1]=0;
+	myabs->A[0][2]=0;
+	myabs->A[0][3]=1;
+	myabs->A[0][4]=1;
 	myabs->bound=(integer16 *)xmalloc(myabs->nbV*sizeof(integer16));
 	/* For a first test */
 	myabs->bound[0]=2;
 	myabs->bound[1]=2;
-	sysabs=build_sys_using_abs(system,myabs);
+	ist_complement(frontier,system->limits.nbr_variables);
+	newabs=refine_abs(system,myabs,frontier);
 }
 
 int main(int argc, char *argv[ ])

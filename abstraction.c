@@ -59,9 +59,91 @@ build_sys_using_abs(sys,abs)
 	return retval;	
 }
 
+boolean is_layer_unbounded(layer)
+	ISTLayer *layer;
+{
+	ISTNode *Node=layer->FirstNode;
+	while(Node!=NULL){
+		if(ist_is_unbounded(Node->Info)==true) {
+			return true;
+		}
+		Node=Node->Next;
+	}
+	return false;
+}
 
-ISTSharingTree *ist_abstract_post_of_rules(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule) {
+/* We assume exists i s.t. sum cur_abs->A[i][j] > 1 */
+abstraction_t *refine_abs(system, cur_abs, S)
+	transition_system_t *system;
+	abstraction_t *cur_abs;
+	ISTSharingTree *S;
+{
+	size_t i,j,current,first_non_singleton_row;
+	boolean bef_1st_non0_occur,first_bound,split;
+	abstraction_t *retval;
+	ISTLayer *layer;
+	retval=(abstraction_t *)xmalloc(sizeof(abstraction_t));
+	/* A refinement step add exactly one new dimension w.r.t. the current abstraction */
+	retval->nbV=(cur_abs->nbV+1);
+	retval->A=(integer16 **)xmalloc(retval->nbV*sizeof(integer16));
+	retval->bound=(integer16 *)xmalloc(retval->nbV*sizeof(integer16));
+	for(i=0;i<retval->nbV;++i){
+		retval->A[i]=(integer16 *)xmalloc(system->limits.nbr_variables*sizeof(integer16));
+		/* The new abstraction is initialized w/ 0's everywhere */
+		for(j=0;j<system->limits.nbr_variables;++j)
+			retval->A[i][j]=0;
+		retval->bound[i]=1;
+	}
+	/* current : pointer in retval, i : pointer in cur_abs */
+	for(current=0,i=0;i<cur_abs->nbV && current<retval->nbV;++i,++current){
+		/* Did we add a new line ? */
+		split=false;
+		/* Is i before the first non zero occurence ? */
+		bef_1st_non0_occur=true;
+		/* We refine according to the value in S */
+		layer = S->FirstLayer;
+		for(j=0;j<system->limits.nbr_variables;++j){
+			if(cur_abs->A[i][j] == 1) {
+				/* By default we copy the line */
+				retval->A[current][j]=1;
+				/* if haven't added a new line yet */
+				if(current == i){
+					if (bef_1st_non0_occur==false){
+						if( is_layer_unbounded(layer) != first_bound ){
+							/* We add a new line. We split unbounded from bounded places in cur_abs->A[i] */
+							split=true;
+							retval->A[current][j]=0;
+							retval->A[current+1][j]=1;
+						}
+						first_non_singleton_row=i;
 
+					} else {
+						first_bound = is_layer_unbounded(layer);
+						bef_1st_non0_occur=false;
+					}
+				}
+			}
+			layer=layer->Next;
+		}
+		if(split == true)
+			++current;
+
+	}
+	if (current==i){
+		for(j=0;cur_abs->A[first_non_singleton_row][j]==0;++j);
+		retval->A[first_non_singleton_row][j]=0;
+		retval->A[current][j]=1;
+	}
+	/* We release the current_abstraction */
+	for(i=0;i<cur_abs->nbV;++i)
+		free(cur_abs->A[i]);
+	free(cur_abs->bound);
+	free(cur_abs);
+	return retval;
+}
+
+ISTSharingTree *ist_abstract_post_of_rules(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule) 
+{
 	ISTSharingTree * result;
 	ISTLayer * L;
 	ISTNode * N;
@@ -113,7 +195,8 @@ ISTSharingTree *ist_abstract_post_of_rules(ISTSharingTree * S, abstraction_t * a
  * apply the (0,...,k,INFINITY) abstraction
  */
 
-void abstract_bound(ISTSharingTree *S, abstraction_t * abs) {
+void abstract_bound(ISTSharingTree *S, abstraction_t * abs) 
+{
 	ISTLayer * L;
 	ISTNode * N;
 	int i;
@@ -130,7 +213,8 @@ void abstract_bound(ISTSharingTree *S, abstraction_t * abs) {
  */
 
 
-void ist_downward_closure(ISTSharingTree * S) {
+void ist_downward_closure(ISTSharingTree * S)
+{
 	ISTLayer *L;
 	ISTNode *N;
 
@@ -144,8 +228,8 @@ void ist_downward_closure(ISTSharingTree * S) {
 /*
  * compute the pretild for one transition t for the abstract system
  */
-ISTSharingTree * abstract_place_pretild_rule(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule) {
-	
+ISTSharingTree * abstract_place_pretild_rule(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule) 
+{
 	ISTSharingTree * result = NULL;
 	ISTSharingTree * temp;
 	ISTLayer * L;
@@ -177,8 +261,8 @@ ISTSharingTree * abstract_place_pretild_rule(ISTSharingTree * S, abstraction_t *
  *
  */
 
-ISTSharingTree * abstract_place_pretild(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t) {
-
+ISTSharingTree * abstract_place_pretild(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t)
+{
 	ISTSharingTree * result;
 	ISTSharingTree * temp1;
 	ISTSharingTree * temp2;
@@ -202,9 +286,9 @@ ISTSharingTree * abstract_place_pretild(ISTSharingTree * S, abstraction_t * abs,
  *
  */
 
-ISTSharingTree * abstract_pretild(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t) {
+ISTSharingTree *abstract_pretild(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t)
+{
 	ISTSharingTree * result;
-	
 	result = abstract_place_pretild(S,abs,t);
 	abstract_bound(result,abs);
 	return result;	

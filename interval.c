@@ -232,6 +232,17 @@ inline boolean ist_not_equal_interval(Value1, Value2)
 	return result;
 }
 
+inline boolean ist_is_unbounded(Value)
+	ISTInterval *Value;
+{
+	boolean result=false;
+	if (Value != NULL){
+		if (Value->Right == INFINITY)
+			result=true;
+	}
+	return result;
+}
+
 inline void ist_assign_interval_to_interval(receiver,sender) 
 	ISTInterval *receiver, *sender;
 {

@@ -78,6 +78,7 @@ boolean ist_less_interval(ISTInterval *Value1, ISTInterval *Value2) ;
 boolean ist_less_or_equal_interval(ISTInterval *Value1, ISTInterval *Value2) ;
 boolean ist_equal_interval(ISTInterval *Value1, ISTInterval *Value2) ;
 boolean ist_not_equal_interval(ISTInterval *Value1, ISTInterval *Value2) ;
+boolean ist_is_unbounded(ISTInterval *Value);
 
 void ist_assign_interval_to_interval(ISTInterval* receiver,ISTInterval *sender); 
 void ist_assign_values_to_interval(ISTInterval* receiver,integer32 leftbound,integer32 rightbound);
