@@ -261,6 +261,7 @@ void ic4pn(system, initial_marking, frontier)
 	myabs->bound[1]=2;
 	ist_complement(frontier,system->limits.nbr_variables);
 	newabs=refine_abs(system,myabs,frontier);
+	sysabs=build_sys_using_abs(system,newabs);
 }
 
 int main(int argc, char *argv[ ])
