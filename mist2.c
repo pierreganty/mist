@@ -236,15 +236,99 @@ void mist_cmdline_options_handle(int argc, char *argv[ ])
 	}
 }
 
+void bound_values(ISTSharingTree * S,int * bound) {
+	ISTNode * N;
+	ISTLayer *L;
+	int i;
+	
+	for(i=0,L = S->FirstLayer;L != S->LastLayer;i++,L = L->Next){
+		for(N= L->FirstNode;N != NULL;N = N->Next) {
+			ist_assign_values_to_interval(N->Info,min(N->Info.Left,bound[i]),min(N->Info.Right,bound[i]));
+		}
+	}
+}
+
+ISTSharingTree * bounded_post_rule(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule,int*bound) {
+	ISTSharingTree *result = ist_abstract_post_of_rules(S,abs,t,rule);
+	bound_values(result,bound);
+	return result;
+}
+
+ISTSharingTree * bounded_post(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t,int*bound) {
+	ISTSharingTree *result;
+	ISTSharingTree *tmp;
+	ISTSharingTree *tmp2;
+	int i;
+	
+	ist_new(&result);
+	for(i = 0;i< t->limits.nbr_rules;i++) {
+		tmp = bounded_post_rule(S,abs,t,i,bound);
+		if (ist_is_empty(tmp) == false) {
+			tmp2 = ist_union(tmp,result);
+			ist_dispose(tmp);
+			ist_dispose(result);
+			result = tmp2;
+		}
+	}
+	return result;
+}
+
+ISTSharingTree *bounded_post_star(ISTSharingTree * initial_marking, abstraction_t * abs, transition_system_t *t,
+		int*bound) {
+	ISTSharingTree *result;
+	ISTSharingTree *tmp;
+	ISTSharingTree *tmp2;
+	
+	result = ist_copy(initial_marking);
+	while (true) {
+		tmp = bounded_post(result,abs,t,bound);
+		if (ist_exact_subsumption_test(tmp,result) == false) {
+			tmp2 = ist_union(tmp,result);
+			ist_dispose(tmp);
+			ist_dispose(result);
+			result = tmp2;
+		} else break;
+	}
+	return result;
+}
+
 /* lfp is a out parameter which contains de lfp, it is initalized w/ ist_new */
 boolean 
-eec(system, abs, initial_marking, lfp)
+eec(system, abs, initial_marking, lfp,Bad)
 	transition_system_t *system;
 	abstraction_t *abs; /* For the bounds on the places */
 	ISTSharingTree *initial_marking, **lfp;
+	ISTSharingTree *Bad;
 {
 	boolean retval;
-
+	ISTSharingTree * P;
+	ISTSharingTree * abs_post_star;
+	ISTSharingTree * inter;
+	boolean finished = false;
+	
+	while (finished == false) {
+		abs_post_star = ist_abstract_post_star(initial_marking,abs,system);
+		inter = ist_intersection(abs_post_star,Bad);
+		if (ist_is_empty(inter) == true) {
+			ist_dispose(inter);
+			retval = true;
+			finished = true;
+		} else {
+			ist_dispose(inter);
+			bpost = bounded_post_star(initial_marking,abs,t,abs->bound);	
+			inter = ist_intersection(bpost,Bad);
+			if (ist_is_empty(inter) == true) {
+				ist_dispose(inter);
+				retval = false;
+				finished = true;
+			} else {
+				ist_dispose(inter);
+				for (i = 0;i< system->limmits->nbr_variables;i++){
+					abs->bound[i] = abs->bound[i] +1;
+				}
+			}
+		}
+	}
 	return retval;
 }
 

@@ -202,6 +202,49 @@ ISTSharingTree *ist_abstract_post_of_rules(ISTSharingTree * S, abstraction_t * a
 	return result;
 }
 
+ISTSharingTree *ist_abstract_post(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t) {
+
+	int i;
+	ISTSharingTree * result;
+	ISTSharingTree * tmp;
+	ISTSharingTree * tmp2;
+
+	ist_new(&result);
+	for(i=0;i< t->limits.nbr_rules;i++) {
+		tmp = ist_abstract_post_of_rules(S,abs,t,i);
+		if ( ist_exact_subsumption_test(tmp,result) == false) {
+			tmp2 = ist_union(tmp,result);
+			ist_dispose(tmp);
+			ist_dispose(result);
+			result = tmp2;
+		} else {
+			ist_dispose(tmp);
+		}
+	}
+	return result;
+}
+
+ISTSharingTree *ist_abstract_post_star(ISTSharingTree * initial_marking, abstraction_t * abs, transition_system_t *t) {
+	ISTSharingTree * S;
+	ISTSharingTree * tmp;
+	ISTSharingTree * tmp2;
+
+	S = ist_copy(initial_marking);
+
+	while (true) {
+		tmp = ist_abstract_post(S,abs,t);
+		if ( ist_exact_subsumption_test(tmp,S) == false) {		
+			tmp2 = ist_union(tmp,S);
+			ist_dispose(S);
+			ist_dispose(tmp);
+			S = tmp2;
+		} else {
+			ist_dispose(tmp);
+			break;
+		}
+	}
+	return S;	
+}
 
 /*
  * apply the (0,...,k,INFINITY) abstraction

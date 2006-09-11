@@ -30,6 +30,7 @@
 #include"precone.h"
 #include"remove.h"
 #include"complement.h"
+#include"minimize.h"
 
 typedef struct abstraction_t {
 		integer16 nbV;
@@ -43,10 +44,13 @@ abstraction_t *refine_abs(transition_system_t *system, abstraction_t *cur_abs, I
 ISTSharingTree *aplha(abstraction_t *abs, ISTSharingTree *val);
 
 /* abstract operators */
-ISTSharingTree *ist_abstract_post_of_rules(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule); 
+ISTSharingTree *ist_abstract_post_of_rules(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule);
+ISTSharingTree *ist_abstract_post(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t);
+ISTSharingTree *ist_abstract_post_star(ISTSharingTree * initial_marking, abstraction_t * abs, transition_system_t *t);
 void abstract_bound(ISTSharingTree *S, abstraction_t * abs);
 void ist_downward_closure(ISTSharingTree * S);
 ISTSharingTree * abstract_place_pretild_rule(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule);
 ISTSharingTree * abstract_place_pretild(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t);
 ISTSharingTree * abstract_pretild(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t);
+
 #endif
