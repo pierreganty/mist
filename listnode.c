@@ -16,7 +16,7 @@
    along with mist2; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-   Copyright 2003, Pierre Ganty
+   Copyright 2003, Pierre Ganty. 2006, Laurent Van Begin
  */
 
 #include "listnode.h"
@@ -48,6 +48,22 @@ void ist_insert_list_node(List, Node)
 	List->FirstElem = NewElem;
 }
 
+//add node only if it not in List yet
+boolean ist_insert_list_node_without_redundancy(List,Node)
+	ISTHeadListNode *List;
+	ISTNode *Node;
+{
+	ISTSon *tmp;
+	
+	tmp = List->FirstElem;
+    while (tmp != NULL)
+		if (tmp->Son == Node)
+			return false;
+	    else
+	   		tmp = tmp->Next;
+	ist_insert_list_node(List,Node);	   
+	return true;
+}
 
 ISTNode *ist_remove_first_elem_list_node(List)
 	ISTHeadListNode *List;

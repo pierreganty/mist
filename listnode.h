@@ -38,6 +38,7 @@ typedef struct ISTHeadListNode {
 /* Declaration of functions */
 void ist_init_list_node(ISTHeadListNode **List) ;
 void ist_insert_list_node(ISTHeadListNode *List, ISTNode *Node) ;
+boolean ist_insert_list_node_without_redundancy(ISTHeadListNode *List, ISTNode *Node) ;
 ISTNode *ist_remove_first_elem_list_node(ISTHeadListNode *List) ;
 boolean ist_is_empty_list_node(ISTHeadListNode *List) ;
 

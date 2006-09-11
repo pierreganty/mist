@@ -16,7 +16,7 @@
    along with mist2; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-   Copyright 2003, 2004, Pierre Ganty
+   Copyright 2003, 2004, Pierre Ganty, 2006, Laurent Van Begin
  */
 
 #ifndef __BASIS_H
@@ -25,6 +25,8 @@
 #include "proc.h"
 #include "def.h"
 #include "interval.h"
+#include "listnode.h"
+#include "normalize.h"
 #include <stdio.h>
 #include <stddef.h>
 
@@ -57,6 +59,7 @@ ISTSharingTree *ist_copy(ISTSharingTree *ST) ;
 ISTSharingTree *ist_union(ISTSharingTree *ST1, ISTSharingTree *ST2) ;
 ISTSharingTree *ist_intersection(ISTSharingTree *ST1, ISTSharingTree *ST2) ;
 ISTSharingTree *ist_minus(ISTSharingTree *ST1, ISTSharingTree *ST2) ;
+ISTSharingTree * ist_projection(ISTSharingTree * S, int *mask);
 
 size_t ist_nb_sons(ISTSharingTree *ST) ;
 size_t ist_nb_nodes(ISTSharingTree *ST) ;

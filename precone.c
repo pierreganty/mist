@@ -437,6 +437,14 @@ ISTSharingTree *ist_pre_of_transfer(S, transition, nbr_variables)
 	transition_t *transition;
 	integer16 nbr_variables;
 {
+
+
+	printf("ist_pre_of_rule_plus_transfer: On rentre\n");
+	ist_checkup(S);
+	ist_write(S);
+	printf("========================================\n");
+	
+
 	ISTLayer* Layer;
 	ISTInterval *CurrentValue;
 	ISTNode *Node;
@@ -445,6 +453,11 @@ ISTSharingTree *ist_pre_of_transfer(S, transition, nbr_variables)
 	size_t i,j,TargetLayer, CurrentTarget;
 	boolean stop;
 	Sol = ist_copy(S);
+	
+	printf("copie de S\n");
+	ist_checkup(Sol);
+	ist_write(Sol);
+	
 	PlacesInTransfert = (integer16 *)xmalloc(nbr_variables*sizeof(integer16));
 	for (i=0; i < transition->nbr_transfers; ++i){
 		for (j=0; j < nbr_variables;++j){	
@@ -467,7 +480,20 @@ ISTSharingTree *ist_pre_of_transfer(S, transition, nbr_variables)
 			 * We remove from the target layer, all the nodes that do not have
 			 * their value equal to target (i.e. CurrentValue).
 			 */
+			
+			printf("avant RemoveNodeWithoutValue\n");
+			ist_checkup(STInt1);
+			ist_write(STInt1);
+			
+			ist_checkup(Sol);
+			ist_write(Sol);
+			
 			RemoveNodeWithoutValue(STInt1,TargetLayer,CurrentValue);
+
+			printf("apres RemoveNodeWithoutValue\n");
+			ist_checkup(STInt1);
+			ist_write(STInt1);
+			
 			/*
 			 * We build the overapproximation of values that do not satisfy the
 			 * transfer's equation.  We do it for all the layers that are
@@ -479,6 +505,11 @@ ISTSharingTree *ist_pre_of_transfer(S, transition, nbr_variables)
 			 * formula to keep only the models of the transfer formula.  So we
 			 * have generated all the possible decomposition of the sum.
 			 */
+
+			printf("apres ComputeOverApproximationForValue\n");
+			ist_checkup(STInt1);
+			ist_write(STInt1);
+			
 			STInt2 = ist_intersection_with_formula_transfer(STInt1,PlacesInTransfert,CurrentValue, nbr_variables);
 			ist_dispose(STInt1);
 			STInt1 = ist_union(STInt3,STInt2);
@@ -522,6 +553,8 @@ ISTSharingTree *ist_pre_of_rule_plus_transfer(Prec, transition, nbr_variables)
 	size_t l;
 	boolean modified = false;
 
+	
+	
 	tau = ist_build_interval(0,INFINITY);
 	STInt=ist_copy(Prec);
 	if (transition->nbr_transfers > 0) 

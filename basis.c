@@ -872,4 +872,123 @@ ISTInterval **ist_path2array(S)
 	return Sol; 
 }
 
+ISTHeadListNode * NoProject(ISTNode * node,ISTSharingTree * STR, ISTLayer * rlayer, int nlayer,int * mask);
+ISTNode *  YesProject(ISTNode * node,ISTSharingTree * STR, ISTLayer * rlayer, int nlayer,int * mask) {
+	ISTSon *s;
+	ISTNode *rchild;
+	ISTNode *rnode;
+	ISTHeadListNode * list;
+	ISTHeadListNode * list_tmp;
+	TMemo1 *memo;
+
+	if (ist_equal_interval(node->Info,&IST_end_of_list))
+		rnode = ist_add_node(rlayer, ist_create_node(&IST_end_of_list));
+	else {
+		ist_init_list_node(&list_tmp);
+		rnode = ist_create_node(node->Info);
+		rlayer = rlayer->Next;
+		if (rlayer == NULL) 
+			rlayer = ist_add_last_layer(STR);
+		
+		for(s=node->FirstSon;s != NULL;s=s->Next){
+			if (mask[nlayer+1] == 0) {
+				list = NoProject(s->Son,STR,rlayer,nlayer+1,mask);
+				while(ist_is_empty_list_node(list) == false)
+					ist_insert_list_node_without_redundancy(list_tmp,
+							ist_remove_first_elem_list_node(list));
+				xfree(list);
+			} else {
+				memo = ist_get_memoization1(s->Son, s->Son);
+				if (memo != NULL)
+					rchild = memo->r;
+				else 
+					rchild = YesProject(s->Son,STR,rlayer,nlayer+1,mask);
+				ist_add_son(rnode,rchild);
+				
+			}
+		}
+		/*if the next layer is not projected, we add the new sons */
+		if (mask[nlayer+1] == 0) {
+			for(rchild = ist_remove_first_elem_list_node(list_tmp); rchild != NULL;
+					rchild = ist_remove_first_elem_list_node(list_tmp)) {
+				ist_add_son(rnode,rchild);
+			}
+		}
+		rlayer = rlayer->Previous;
+		rnode = ist_add_node(rlayer,rnode);
+		xfree(list_tmp);
+	}
+	ist_put_memoization1(node,node,rnode);
+	return rnode;	  
+}
+
+    
+ISTHeadListNode * NoProject(ISTNode * node,ISTSharingTree * STR, ISTLayer * rlayer, int nlayer,int* mask) {
+
+	ISTSon *s;
+	ISTNode *rchild;
+	ISTHeadListNode * list;
+	ISTHeadListNode * list_temp;
+	TMemo1 *memo;
+
+	ist_init_list_node(&list);
+	for(s = node->FirstSon; s != NULL; s = s->Next) {
+		if(mask[nlayer+1] > 0) {
+			memo = ist_get_memoization1(s->Son, s->Son);
+			if (memo != NULL)
+				ist_insert_list_node(list,memo->r);
+			else 
+				ist_insert_list_node(list,YesProject(s->Son,STR,rlayer,nlayer+1,mask));
+		} else {
+			list_temp = NoProject(s->Son,STR,rlayer,nlayer+1,mask);
+			for(rchild = ist_remove_first_elem_list_node(list_temp) ; rchild != NULL; 
+					rchild = ist_remove_first_elem_list_node(list_temp)) 
+				ist_insert_list_node(list,rchild);
+			xfree(list_temp);
+		}
+	}
+	return list;
+}
+
+
+/*
+ *
+ * we make the assumption that we keep the last layer
+ *
+ */
+ISTSharingTree * ist_projection(ISTSharingTree * S, int *mask) {
+	ISTSharingTree * STR;
+	ISTLayer * rlayer;
+	ISTSon * s;
+	ISTHeadListNode * list;
+	ISTHeadListNode * list_tmp;
+	
+	ist_new(&STR);
+	if (ist_is_empty(S) == false) {
+		ist_new_magic_number();
+		ist_new_memo1_number();
+		ist_init_list_node(&list_tmp);
+		rlayer = ist_add_last_layer(STR);
+		for(s = S->Root->FirstSon; s != NULL;s = s->Next) {
+			if (mask[0] > 0)
+				ist_add_son(STR->Root,YesProject(s->Son,STR,rlayer,0,mask));
+			else {
+				list = NoProject(s->Son,STR,rlayer,0,mask);
+				while (ist_is_empty_list_node(list) == false) {
+					ist_insert_list_node_without_redundancy(list_tmp,
+							ist_remove_first_elem_list_node(list));
+				}
+				xfree(list);
+			}
+		}
+		/*if the first variable is projected, we add sons to root*/
+		while (ist_is_empty_list_node(list_tmp) == false) {
+			ist_add_son(STR->Root,ist_remove_first_elem_list_node(list_tmp));
+		}
+		
+		xfree(list_tmp);
+		ist_normalize(STR);
+	}
+	return STR;
+}
 

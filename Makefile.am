@@ -20,6 +20,8 @@ mist2_SOURCES = \
 	complement.h \
 	computesim.c \
 	computesim.h \
+	concretisation.c \
+	concretisation.h \
 	def.h \
 	determinize.c \
 	determinize.h \

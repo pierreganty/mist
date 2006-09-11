@@ -5,7 +5,7 @@
 #include "precone.h"
 #include "normalize.h"
 #include "xmalloc.h"
+#include "basis.h"
 
 void ist_add_variables(ISTSharingTree *S,int nb_var);
-ISTSharingTree * ist_projection(ISTSharingTree * S, int *mask);
 ISTSharingTree * ist_concretisation(ISTSharingTree *S, transition_system_t *sys,transition_system_t *abstract_sys, abstraction_t * abs);
