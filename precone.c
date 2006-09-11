@@ -37,12 +37,13 @@
 #ifdef TRANSFERT
 
 
-ISTNode *  post_trans(ISTNode * node,ISTSharingTree * STR, ISTLayer * rlayer, ISTInterval val,int no_layer,int *origin,int target) {
+ISTNode *post_trans(ISTNode * node,ISTSharingTree * STR, ISTLayer * rlayer, ISTInterval val,int no_layer,int *origin,int target) {
 	ISTSon *s;
 	ISTNode *rchild;
 	ISTNode *rnode;
 	TMemo1 *memo;
 	ISTInterval inter;
+	long temp;
 
 	if (ist_equal_interval(node->Info,&IST_end_of_list))
 		rnode = ist_add_node(rlayer, ist_create_node(&IST_end_of_list));
@@ -63,7 +64,15 @@ ISTNode *  post_trans(ISTNode * node,ISTSharingTree * STR, ISTLayer * rlayer, IS
 			rlayer = ist_add_last_layer(STR);
 	
 		for(s=node->FirstSon;s != NULL;s=s->Next){
-//			memo = /*on regarde si on a déjà construit le sous-arbre*/
+			/* 
+			 * We store the interval, in a univoque way inside a 32 bit field.
+			 * We take as asumption that -> Left and ->Right < 2^16.
+			 */
+			temp = (0x0000ffff & val.Left);
+			temp =  (val.Right == INFINITY ?
+					0x0000ffff : 0x0000ffff & val.Right) | (temp << 16);
+			memo = ist_get_memoization1(s->Son, (ISTNode*)temp);
+
 			if (memo != NULL) 
 				ist_add_son(rnode,memo->r);
 			else {
@@ -76,8 +85,10 @@ ISTNode *  post_trans(ISTNode * node,ISTSharingTree * STR, ISTLayer * rlayer, IS
 			ist_add_interval_to_interval(rnode->Info,&val);
 		rnode = ist_add_node(rlayer,rnode);
 	}
-	/* on mémorise */
-	ist_put_memoization1(rnode,rnode, rnode);
+	temp = (0x0000ffff & val.Left);
+	temp =  (val.Right == INFINITY ?
+			0x0000ffff : 0x0000ffff & val.Right) | (temp << 16);
+	ist_put_memoization1(node, (ISTNode *)temp, rnode);
 	return rnode;	  
 }
 
@@ -90,7 +101,6 @@ ISTSharingTree * post_of_transfer(ISTSharingTree * S, int * origin, int target) 
 	ist_assign_values_to_interval(&inter,0,0);
 	ist_new(&STR);
 	if (ist_is_empty(S) == false) {
-		ist_new_magic_number();
 		ist_new_memo1_number();
 		rlayer = ist_add_last_layer(STR);
 		for(s = S->Root->FirstSon; s != NULL;s = s->Next) {
