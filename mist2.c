@@ -236,32 +236,55 @@ void mist_cmdline_options_handle(int argc, char *argv[ ])
 	}
 }
 
+/* lfp is a out parameter which contains de lfp, it is initalized w/ ist_new */
+boolean 
+eec(system, abs, initial_marking, lfp)
+	transition_system_t *system;
+	abstraction_t *abs; /* For the bounds on the places */
+	ISTSharingTree *initial_marking, **lfp;
+{
+	boolean retval;
+
+	return retval;
+}
+
 void ic4pn(system, initial_marking, frontier) 
 	transition_system_t *system;
 	ISTSharingTree *frontier, *initial_marking;
 {
 	abstraction_t *myabs, *newabs;
 	transition_system_t *sysabs;
-	size_t i;
+	ISTSharingTree *lfp_eec;
+	size_t i,j;
 
+	/* Memory allocation */
 	myabs=(abstraction_t *)xmalloc(sizeof(abstraction_t));
-	/* For a first test */
-	myabs->nbV=1;
+	myabs->bound=(integer16 *)xmalloc(myabs->nbV*sizeof(integer16));
 	myabs->A=(integer16 **)xmalloc(myabs->nbV*sizeof(integer16));
 	for(i=0;i<myabs->nbV;++i)
 		myabs->A[i]=(integer16 *)xmalloc(system->limits.nbr_variables*sizeof(integer16));
-	myabs->A[0][0]=0;
-	myabs->A[0][1]=0;
-	myabs->A[0][2]=0;
-	myabs->A[0][3]=1;
-	myabs->A[0][4]=1;
-	myabs->bound=(integer16 *)xmalloc(myabs->nbV*sizeof(integer16));
-	/* For a first test */
-	myabs->bound[0]=2;
-	myabs->bound[1]=2;
-	ist_complement(frontier,system->limits.nbr_variables);
-	newabs=refine_abs(system,myabs,frontier);
-	sysabs=build_sys_using_abs(system,newabs);
+	/* Initial abstraction */
+	myabs->nbV=1;
+	for(i=0;i<myabs->nbV;++i) {
+		for(j=0;i<system->limits.nbr_variables;++j)
+			myabs->A[i][j]=1;
+		myabs->bound[i]=1;
+	}
+	sysabs=build_sys_using_abs(system,myabs);
+
+	/* abstract the initial marking */
+
+	/* EEC: if 
+	 * 			eec(...,&lfp_eec,...) says "safe" then it is indeed safe
+	 * 		else (viz. unsafe) 
+	 * 			goto REFINE 
+	 * eec(...,X,...) s.t. X contains is a out parameter where we put the value of the lfp.
+	 */
+
+	/* REFINE:
+	 * (1) ist_complement o ist_pre_cone o ist_complement o ist_concretize (X) 
+	 * (2) refine_abs goto EEC:
+	 */
 }
 
 int main(int argc, char *argv[ ])

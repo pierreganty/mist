@@ -72,6 +72,17 @@ boolean is_layer_unbounded(layer)
 	return false;
 }
 
+ISTSharingTree *aplha(abs,val)
+	abstraction_t *abs;
+	ISTSharingTree *val;
+{
+	ISTSharingTree *retval;
+
+	
+
+	return retval;
+}
+
 /* We assume exists i s.t. sum cur_abs->A[i][j] > 1 */
 abstraction_t *refine_abs(system, cur_abs, S)
 	transition_system_t *system;
@@ -79,7 +90,7 @@ abstraction_t *refine_abs(system, cur_abs, S)
 	ISTSharingTree *S;
 {
 	size_t i,j,current,first_non_singleton_row;
-	boolean bef_1st_non0_occur,first_bound,split;
+	boolean before_non_null_entry,first_bound,nl_added;
 	abstraction_t *retval;
 	ISTLayer *layer;
 	retval=(abstraction_t *)xmalloc(sizeof(abstraction_t));
@@ -97,9 +108,9 @@ abstraction_t *refine_abs(system, cur_abs, S)
 	/* current : pointer in retval, i : pointer in cur_abs */
 	for(current=0,i=0;i<cur_abs->nbV && current<retval->nbV;++i,++current){
 		/* Did we add a new line ? */
-		split=false;
-		/* Is i before the first non zero occurence ? */
-		bef_1st_non0_occur=true;
+		nl_added=false;
+		/* Is i before the first non null entry ? */
+		before_non_null_entry=true;
 		/* We refine according to the value in S */
 		layer = S->FirstLayer;
 		for(j=0;j<system->limits.nbr_variables;++j){
@@ -108,27 +119,28 @@ abstraction_t *refine_abs(system, cur_abs, S)
 				retval->A[current][j]=1;
 				/* if haven't added a new line yet */
 				if(current == i){
-					if (bef_1st_non0_occur==false){
-						if( is_layer_unbounded(layer) != first_bound ){
+					if (before_non_null_entry==false){
+						if(is_layer_unbounded(layer) != first_bound ){
 							/* We add a new line. We split unbounded from bounded places in cur_abs->A[i] */
-							split=true;
+							nl_added=true;
 							retval->A[current][j]=0;
 							retval->A[current+1][j]=1;
 						}
 						first_non_singleton_row=i;
-
 					} else {
+						/* For the 1st non null entry. We remember if it is unbounded or no */
 						first_bound = is_layer_unbounded(layer);
-						bef_1st_non0_occur=false;
+						before_non_null_entry=false;
 					}
 				}
 			}
 			layer=layer->Next;
 		}
-		if(split == true)
+		if(nl_added == true)
 			++current;
 
 	}
+	/* If cur_abs->A == retval->A */
 	if (current==i){
 		for(j=0;cur_abs->A[first_non_singleton_row][j]==0;++j);
 		retval->A[first_non_singleton_row][j]=0;
