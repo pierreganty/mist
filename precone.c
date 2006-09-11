@@ -16,7 +16,7 @@
    along with mist2; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-   Copyright 2003, Pierre Ganty
+   Copyright 2003, Pierre Ganty, 2006 Laurent Van Begin
  */
 
 #include "precone.h"
@@ -35,6 +35,74 @@
 
 
 #ifdef TRANSFERT
+
+
+ISTNode *  post_trans(ISTNode * node,ISTSharingTree * STR, ISTLayer * rlayer, ISTInterval val,int no_layer,int *origin,int target) {
+	ISTSon *s;
+	ISTNode *rchild;
+	ISTNode *rnode;
+	TMemo1 *memo;
+	ISTInterval inter;
+
+	if (ist_equal_interval(node->Info,&IST_end_of_list))
+		rnode = ist_add_node(rlayer, ist_create_node(&IST_end_of_list));
+	else {
+
+		/*
+		 *if the layer is origin of the transfer
+		 */
+		if (origin[no_layer] == 1) {
+			ist_add_interval_to_interval(&val,node->Info);
+			ist_assign_values_to_interval(&inter,0,0);
+			rnode = ist_create_node(&inter);
+		} else
+			rnode = ist_create_node(node->Info);
+
+		rlayer = rlayer->Next;
+		if (rlayer == NULL) 
+			rlayer = ist_add_last_layer(STR);
+	
+		for(s=node->FirstSon;s != NULL;s=s->Next){
+//			memo = /*on regarde si on a déjà construit le sous-arbre*/
+			if (memo != NULL) 
+				ist_add_son(rnode,memo->r);
+			else {
+				rchild = post_trans(s->Son,STR,rlayer,val,no_layer +1, origin, target);
+				ist_add_son(rnode,rchild);
+			}
+		}	
+		rlayer = rlayer->Previous;
+		if (no_layer == target)
+			ist_add_interval_to_interval(rnode->Info,&val);
+		rnode = ist_add_node(rlayer,rnode);
+	}
+	/* on mémorise */
+	ist_put_memoization1(rnode,rnode, rnode);
+	return rnode;	  
+}
+
+ISTSharingTree * post_of_transfer(ISTSharingTree * S, int * origin, int target) {
+	ISTSharingTree * STR;
+	ISTLayer * rlayer;
+	ISTSon * s;
+	ISTInterval inter;
+	
+	ist_assign_values_to_interval(&inter,0,0);
+	ist_new(&STR);
+	if (ist_is_empty(S) == false) {
+		ist_new_magic_number();
+		ist_new_memo1_number();
+		rlayer = ist_add_last_layer(STR);
+		for(s = S->Root->FirstSon; s != NULL;s = s->Next) {
+			ist_add_son(S->Root,post_trans(s->Son,STR,rlayer,inter,0,origin,target));
+		}
+		
+		ist_normalize(STR);
+	}
+	return STR;
+}
+
+
 /* 
  * All that part (fron #ifdef TRANSFERT ... #else) is only dedicated to sytem
  */
