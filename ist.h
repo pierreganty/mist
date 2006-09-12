@@ -6,9 +6,9 @@
 #include"checkup.h"
 #include"computesim.h"
 #include"complement.h"
+#include"concretisation.h"
 #include"determinize.h"
 #include"father_mangmt.h"
-#include"initialmarking.h"
 #include"interval.h"
 #include"ist_to_ps.h"
 #include"listnode.h"
@@ -22,6 +22,5 @@
 #include"stat.h"
 #include"transtree.h"
 #include"list_ist.h"
-#include"findpathtransfer.h"
 
 #endif

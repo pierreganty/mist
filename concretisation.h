@@ -31,6 +31,6 @@
 #include "basis.h"
 
 void ist_add_variables(ISTSharingTree *S,integer16 nb_var);
-ISTSharingTree * ist_concretisation(ISTSharingTree *S, transition_system_t *sys,transition_system_t *abstract_sys, abstraction_t * abs);
+ISTSharingTree * ist_concretisation(ISTSharingTree *S, abstraction_t * abs);
 
 #endif

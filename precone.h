@@ -40,5 +40,7 @@ ISTSharingTree *ist_post_transition(ISTSharingTree *forward_p, transition_system
 /* Computation of the Pre ... with TransSharingTree */
 ISTSharingTree *ist_pre_of_rules (ISTSharingTree *prec);
 /* Pre operator */
-ISTSharingTree *ist_pre_cone(ISTSharingTree *Prec, ISTSharingTree *ReachedElem, transition_system_t *system) ;
+ISTSharingTree *ist_pre(ISTSharingTree *S, transition_system_t *system);
+ISTSharingTree *ist_pruned_pre(ISTSharingTree *Prec, ISTSharingTree *ReachedElem, transition_system_t *system) ;
+
 #endif

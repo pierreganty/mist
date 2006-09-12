@@ -29,10 +29,6 @@ mist2_SOURCES = \
 	error.h \
 	father_mangmt.c \
 	father_mangmt.h \
-	findpathtransfer.c \
-	findpathtransfer.h \
-	initialmarking.c \
-	initialmarking.h \
 	interval.c \
 	interval.h \
 	ist.h \

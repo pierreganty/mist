@@ -839,13 +839,16 @@ void ist_write(S)
 	/* A vector of pointer to intervals */
 	ISTInterval **path;
 	l = ist_nb_layers(S);
-	path = (ISTInterval **)xmalloc((l-1)*sizeof(ISTInterval *));
-	printf("<<< Printing the elements of the IST: %p\n",S);
-	if (S != NULL)
-		/* CAUTION : l is the number of layer */
-		st_Write(S->Root, path, 0L, l);
-	xfree(path);
-	printf(">>>\n");
+	if (l>=1) {
+		path = (ISTInterval **)xmalloc((l-1)*sizeof(ISTInterval *));
+		printf("<<< Printing the elements of the IST: %p\n",S);
+		if (S != NULL)
+			/* CAUTION : l is the number of layer */
+			st_Write(S->Root, path, 0L, l);
+		xfree(path);
+		printf(">>>\n");
+	} else
+		puts("Empty IST");
 }
 
 

@@ -920,7 +920,7 @@ boolean ist_exact_subsumption_test(T,S)
 
 	if (ist_is_empty(T) == false) {
 		S_bis = ist_copy(S);	
-		ist_complement(S_bis,ist_nb_layers(T));
+		ist_complement(S_bis,ist_nb_layers(T)-1);
 		//-------FOR Debugging{----------
 		temp = ist_intersection(S_bis,S);
 		assert(ist_is_empty(temp));

@@ -117,6 +117,6 @@ typedef struct transition_system_t {
 
 void build_problem_instance(T_PTR_tree tree, transition_system_t **system,
 	ISTSharingTree **init, ISTSharingTree **safe);
-
+void release_transition_system(transition_system_t *sys);
 
 #endif

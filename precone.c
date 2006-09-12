@@ -102,10 +102,10 @@ ISTSharingTree *ist_post_of_transfer(S, transition)
 	ISTSon * s;
 	ISTInterval inter;
 
-	ist_new_memo1_number();
 	ist_new(&Sol);
 	if (ist_is_empty(S) == false) {
 		for (i=0; i < transition->nbr_transfers; ++i){
+			ist_new_memo1_number();
 			ist_new(&STInt1);
 			rlayer = ist_add_last_layer(STInt1);
 			ist_assign_values_to_interval(&inter,0,0);
@@ -123,7 +123,7 @@ ISTSharingTree *ist_post_of_transfer(S, transition)
 
 
 /* 
- * All that part (fron #ifdef TRANSFERT ... #else) is only dedicated to sytem
+ * All that part (fron #ifdef TRANSFERT ... #else) is only dedicated to system
  */
 static boolean IsTarget(Place, transition)
 	integer16 Place;
@@ -542,34 +542,19 @@ ISTSharingTree *ist_pre_of_transfer(S, transition)
 			 * We remove from the target layer, all the nodes that do not have
 			 * their value equal to target (i.e. CurrentValue).
 			 */
-			
 			RemoveNodeWithoutValue(STInt1,TargetLayer,CurrentValue);
-
 			/*
 			 * We build the overapproximation of values that do not satisfy the
 			 * transfer's equation.  We do it for all the layers that are
 			 * involved in the current transfer.
 			 */
-			puts("ComputeOverApproximationForValue");
-			ist_checkup(STInt1);
-			ist_write(STInt1);
-			/* printf("Interval %d,%d \n",CurrentValue->Left,CurrentValue->Right);*/
-
-
 			ComputeOverApproximationForValue(STInt1,CurrentValue,&transition->transfers[i]);
 			/*
 			 * Starting from that overapproximation, we intersect with the
 			 * formula to keep only the models of the transfer formula.  So we
 			 * have generated all the possible decomposition of the sum.
 			 */
-			puts("call");
-			ist_checkup(STInt1);
-			ist_write(STInt1);
-			puts("done");
-			
-			puts("IntersectionWithFormulaTransfert");
 			STInt2 = ist_intersection_with_formula_transfer(STInt1,&transition->transfers[i],CurrentValue);
-			ist_write(STInt2);
 			ist_dispose(STInt1);
 			STInt1 = ist_union(STInt3,STInt2);
 			ist_dispose(STInt3);
@@ -759,11 +744,10 @@ ISTSharingTree *ist_pre_of_rules (prec)
 #endif
 
 
-ISTSharingTree *ist_pre_cone(prec, reached_elem, system)
+ISTSharingTree *ist_pruned_pre(prec, reached_elem, system)
 	ISTSharingTree *prec, *reached_elem;
 	transition_system_t *system;
 {
-#ifdef TRANSFERT
 	ISTSharingTree *pre_of_ith_rule, *temp;
 	ISTSharingTree *pre_until_ith_rule;
 	size_t i;
@@ -806,38 +790,48 @@ ISTSharingTree *ist_pre_cone(prec, reached_elem, system)
 		++i;
 	}
 	return pre_until_ith_rule;
+}
 
-#else
-	ISTSharingTree *raw_pre, *copy_prec;
-	copy_prec = ist_copy(prec);
-	/* DEPRECATED, to make functionnal */
-	raw_pre = ist_pre_of_rules(copy_prec);
-	if (ist_is_empty(raw_pre) == false) {
-		ist_normalize(raw_pre);
-		ist_remove_with_all_invar_heuristic(raw_pre);
-		/*
-		 * pruning with the old frontier,the new frontier 
-		 * and the set of the elements reached at the preceding iterations
-		 */
-		if (ist_is_empty(raw_pre) == false) {
-			/*remove from the frontier markings subsumed by the new frontier*/
-			temp = ist_remove_subsumed_paths(copy_prec, raw_pre);
-			ist_dispose(copy_prec);
-			copy_prec = temp;
-			if ((ist_is_empty(reached_elem) == false) & (ist_is_empty(raw_pre) == false)) {
-				temp = ist_remove_subsumed_paths(raw_pre, reached_elem);
-				ist_dispose(raw_pre);
-				raw_pre = temp;
+
+ISTSharingTree *ist_pre(prec, system)
+	ISTSharingTree *prec;
+	transition_system_t *system;
+{
+	ISTSharingTree *pre_of_ith_rule, *temp;
+	ISTSharingTree *pre_until_ith_rule;
+	size_t i;
+	ist_new(&pre_until_ith_rule);
+	i = 0;
+	while (i < system->limits.nbr_rules && (ist_is_empty(prec) == false)){
+		pre_of_ith_rule = ist_pre_of_rule_plus_transfer(prec, &system->transition[i]);
+		if (ist_is_empty(pre_of_ith_rule) == false){ 
+			ist_normalize(pre_of_ith_rule);
+			ist_remove_with_invar_heuristic(pre_of_ith_rule, i, system);
+
+			if ((ist_is_empty(pre_of_ith_rule) == false) && (ist_is_empty(pre_until_ith_rule) == false)){ 
+				temp = ist_remove_subsumed_paths(pre_of_ith_rule,pre_until_ith_rule);
+				ist_dispose(pre_of_ith_rule);
+				pre_of_ith_rule = temp;
+
+				if (ist_is_empty(pre_of_ith_rule) == false){ 
+					temp = ist_remove_subsumed_paths(pre_until_ith_rule,pre_of_ith_rule);
+					ist_dispose(pre_until_ith_rule);
+					pre_until_ith_rule = temp;
+				}
+			}
+			if (ist_is_empty(pre_of_ith_rule) == false){ 
+				temp = ist_minimal_form(pre_of_ith_rule);
+				ist_dispose(pre_of_ith_rule);
+				pre_of_ith_rule = temp;
+				temp = ist_union(pre_of_ith_rule,pre_until_ith_rule);
+				ist_dispose(pre_until_ith_rule);
+				pre_until_ith_rule=temp;
+
 			}
 		}
-		if (ist_is_empty(raw_pre) == false){
-			temp = ist_minimal_form(raw_pre);
-			ist_dispose(raw_pre);
-			raw_pre = temp;
-		}
+		++i;
 	}
-	return raw_pre;
-#endif 
+	return pre_until_ith_rule;
 }
 
 ISTSharingTree *ist_post(forward_p, system)

@@ -248,7 +248,6 @@ ISTSharingTree *ist_abstract_post_of_rules(ISTSharingTree * S, abstraction_t * a
 			v = ist_intersect_intervals(N->Info,&t->transition[rule].cmd_for_place[i].guard);
 			if (v == NULL) {
 				ist_remove_sons(N);
-				ist_dispose_info(v);
 			} else {
 				ist_dispose_info(N->Info);
 				N->Info = v;
@@ -338,17 +337,13 @@ void abstract_bound(ISTSharingTree *S, abstraction_t * abs)
 				ist_assign_values_to_interval(N->Info,N->Info->Left,INFINITY);
 }
 
-
 /*
  * function that add tuples that are lesser than tuples in S
  */
-
-
 void ist_downward_closure(ISTSharingTree * S)
 {
 	ISTLayer *L;
 	ISTNode *N;
-
 	for(L = S->FirstLayer;L < S->LastLayer;L = L->Next)
 		for(N = L->FirstNode; N != NULL;N = N->Next) 
 			ist_assign_values_to_interval(N->Info,0,N->Info->Right);
@@ -423,4 +418,13 @@ ISTSharingTree *abstract_pretild(ISTSharingTree * S, abstraction_t * abs, transi
 	result = abstract_place_pretild(S,abs,t);
 	abstract_bound(result,abs);
 	return result;	
+}
+
+void release_abstraction(abstraction_t *abs)
+{
+	size_t i;
+	for(i=0;i<abs->nbV;++i)
+		free(abs->A[i]);
+	free(abs->bound);
+	free(abs);
 }

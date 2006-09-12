@@ -77,3 +77,16 @@ build_problem_instance(tree, system, init, unsafe)
   *unsafe = _unsafe;
 
 }
+
+void release_transition_system(transition_system_t *sys)
+{
+	size_t i,j;
+	for (i=0;i<sys->limits.nbr_rules;++i){
+		for(j=0;j<sys->transition[i].nbr_transfers;++j)
+			xfree(sys->transition[i].transfers[j].origin);
+		xfree(sys->transition[i].cmd_for_place);
+	}
+	for(j=0;j<sys->limits.nbr_invariants;++j)
+			xfree(sys->invariants[j].weight_on_place);
+	xfree(sys);
+}

@@ -34,6 +34,45 @@
 #include "laparser.h"
 #include "ist.h"
 
+/* For printing the error trace */
+void ist_put_path_on_screen_with_parameterized_initial_marking(ISTSharingTree * initial_marking,THeadListIST * list_ist, transition_system_t * rules) {
+	ISTSharingTree * S;
+	ISTSharingTree * post;
+	ISTSharingTree * Siter;
+	ISTSharingTree * intersect;
+	int Continue, i;
+
+	printf("Path to reach the set of target states:\n");
+
+	S=ist_copy(initial_marking);
+	Siter = ist_first_element_list_ist(list_ist);
+	while (Siter != NULL) {
+		i = 0;
+		Continue = 1;
+		while ((i < rules->limits.nbr_rules) && (Continue == 1)) {
+			post = ist_post_transition(S,rules,i);
+			intersect = ist_intersection(post,Siter);
+			if (!ist_is_empty(intersect)) { 
+				printf(" --> %d",i);
+				ist_dispose(S);
+				S = intersect;
+				Continue = 0;
+			} else { 
+				ist_dispose(intersect);
+				ist_dispose(post);
+				i = i + 1;
+			} 
+		} 
+		if (i == rules->limits.nbr_rules) { 
+			printf("\nNo Path Found\n");
+			Siter = NULL;
+		} else {
+			Siter = ist_next_element_list_ist(list_ist);
+		}
+	}
+	printf("\n");
+}
+
 void mist(system, initial_marking, frontier) 
 	transition_system_t *system;
 	ISTSharingTree *frontier, *initial_marking;
@@ -58,39 +97,42 @@ void mist(system, initial_marking, frontier)
 	reached_elem = ist_copy(frontier);
 
 	Continue = true;
-	if (ist_is_empty(frontier) == true || ist_is_initial_marking_reached(initial_marking,reached_elem) == true) {
+	temp=ist_intersection(initial_marking,reached_elem);
+	reached = (ist_is_empty(temp) == true ? false : true);
+	ist_dispose(temp);
+	if (ist_is_empty(frontier) == true ||  reached == true) {
 		Continue = false;
 		puts("Unsafe region is empty or lies outside the invariants or contrains some initial states");
 	}
-
 	ist_init_list_ist(&List);
 	nbr_iteration = 1;
-	reached = false;
 	while (Continue == true) {
 		printf("\n\nIteration\t%3d\n", nbr_iteration);
 		puts("Computation of the symbolic predecessors states ...");
 		old_frontier = frontier;
 		/* As post cond, we have that frontier is minimal (in a 1to1 comparison) w.r.t reached_elem */
-		frontier = ist_pre_cone(old_frontier, reached_elem, system);
+		frontier = ist_pruned_pre(old_frontier, reached_elem, system);
 
 		if (ist_is_empty(frontier) == false) {
 
-				printf("The new frontier counts :\n");
-				ist_checkup(frontier);
+			printf("The new frontier counts :\n");
+			ist_checkup(frontier);
 #ifdef VERBOSE
-				ist_write(frontier);
+			ist_write(frontier);
 #endif
-			if (ist_is_initial_marking_reached(initial_marking,frontier)) {
+			temp=ist_intersection(initial_marking,frontier);
+			reached = (ist_is_empty(temp) == true ? false : true);
+			ist_dispose(temp);
+			if (reached == true) {
 				puts("+-------------------------------------+");
 				puts("|Initial states intersect the frontier|");
 				puts("+-------------------------------------+");
 				Continue = false;
-				reached = true;
 				ist_insert_at_the_beginning_list_ist(&List,old_frontier);
 				ist_insert_at_the_beginning_list_ist(&List,frontier);
 				/* 
 				 * Exact subsumption test is relevant ONLY FOR INTERVALS 
-				 *			} else if (ist_exact_subsumption_test(frontier,reached_elem)){
+				 *			 else if (ist_exact_subsumption_test(frontier,reached_elem))
 				 *				printf("reached_elem subsumes frontier \n");
 				 *				Continue = false; 
 				 */
@@ -116,14 +158,13 @@ void mist(system, initial_marking, frontier)
 				puts("After union, the reached symbolic state space is:");
 				ist_checkup(reached_elem);
 
-//				ist_dispose(old_frontier);
+				//				ist_dispose(old_frontier);
 				ist_insert_at_the_beginning_list_ist(&List,old_frontier);
 				old_frontier = frontier;
 			}
 
-		} else {
+		} else 
 			Continue = false;
-		}
 		nbr_iteration++;
 	}
 
@@ -134,11 +175,8 @@ void mist(system, initial_marking, frontier)
 		ist_write(reached_elem);
 #endif
 	}
-
-	if (reached == true) {
+	if (reached == true)
 		ist_put_path_on_screen_with_parameterized_initial_marking(initial_marking,&List,system);
-	}
-	
 	times(&after);
 	tick_sec = sysconf (_SC_CLK_TCK) ;
 	comp_u = ((float)after.tms_utime - (float)before.tms_utime)/(float)tick_sec ;
@@ -234,32 +272,34 @@ void mist_cmdline_options_handle(int argc, char *argv[ ])
 	}
 }
 
-void bound_values(ISTSharingTree * S,int * bound) {
-	ISTNode * N;
+void bound_values(ISTSharingTree * S, int *bound)
+{
+	ISTNode *N;
 	ISTLayer *L;
-	int i;
+	size_t i;
 	
 	for(i=0,L = S->FirstLayer;L != S->LastLayer;i++,L = L->Next){
-		for(N= L->FirstNode;N != NULL;N = N->Next) {
+		for(N= L->FirstNode;N != NULL;N = N->Next)
 			ist_assign_values_to_interval(N->Info,min(N->Info->Left,bound[i]),min(N->Info->Right,bound[i]));
-		}
 	}
 }
 
-ISTSharingTree * bounded_post_rule(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule,int*bound) {
-	ISTSharingTree *result = ist_abstract_post_of_rules(S,abs,t,rule);
-	bound_values(result,bound);
-	return result;
+ISTSharingTree *bounded_post_rule(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule,int*bound) {
+   ISTSharingTree *result = ist_abstract_post_of_rules(S,abs,t,rule);
+   bound_values(result,bound);
+   ist_downward_closure(result);
+   ist_normalize(result);
+   return result;
 }
 
-ISTSharingTree * bounded_post(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t,int*bound) {
+ISTSharingTree *bounded_post(ISTSharingTree *S, abstraction_t *abs, transition_system_t *t, int*bound) {
 	ISTSharingTree *result;
 	ISTSharingTree *tmp;
 	ISTSharingTree *tmp2;
 	int i;
 	
 	ist_new(&result);
-	for(i = 0;i< t->limits.nbr_rules;i++) {
+	for(i = 0;i<t->limits.nbr_rules;i++) {
 		tmp = bounded_post_rule(S,abs,t,i,bound);
 		if (ist_is_empty(tmp) == false) {
 			tmp2 = ist_union(tmp,result);
@@ -290,12 +330,11 @@ ISTSharingTree *bounded_post_star(ISTSharingTree * initial_marking, abstraction_
 	return result;
 }
 
-/* lfp is a out parameter which contains de lfp, it is initalized w/ ist_new */
-boolean eec(system, abs, initial_marking, lfp,Bad)
+/* lfp is a out parameter which contains de lfp */
+boolean eec(system, abs, initial_marking, bad, lfp)
 	transition_system_t *system;
 	abstraction_t *abs; /* For the bounds on the places */
-	ISTSharingTree *initial_marking, **lfp;
-	ISTSharingTree *Bad;
+	ISTSharingTree *initial_marking, *bad, **lfp;
 {
 	boolean retval;
 	ISTSharingTree * abs_post_star;
@@ -306,7 +345,7 @@ boolean eec(system, abs, initial_marking, lfp,Bad)
 	
 	while (finished == false) {
 		abs_post_star = ist_abstract_post_star(initial_marking,abs,system);
-		inter = ist_intersection(abs_post_star,Bad);
+		inter = ist_intersection(abs_post_star,bad);
 		if (ist_is_empty(inter) == true) {
 			*lfp = abs_post_star;
 			ist_dispose(inter);
@@ -316,30 +355,31 @@ boolean eec(system, abs, initial_marking, lfp,Bad)
 			ist_dispose(abs_post_star);
 			ist_dispose(inter);
 			bpost = bounded_post_star(initial_marking,abs,system,abs->bound);	
-			inter = ist_intersection(bpost,Bad);
+			inter = ist_intersection(bpost,bad);
 			if (ist_is_empty(inter) == true) {
+				*lfp = abs_post_star;
 				ist_dispose(inter);
 				retval = false;
 				finished = true;
 			} else {
 				ist_dispose(inter);
-				for (i = 0;i< system->limits.nbr_variables;i++){
-					abs->bound[i] = abs->bound[i] +1;
-				}
+				for (i = 0;i< system->limits.nbr_variables;i++)
+					++abs->bound[i];
 			}
 		}
 	}
 	return retval;
 }
 
-void ic4pn(system, initial_marking, frontier) 
+void ic4pn(system, initial_marking, bad) 
 	transition_system_t *system;
-	ISTSharingTree *frontier, *initial_marking;
+	ISTSharingTree *bad, *initial_marking;
 {
 	abstraction_t *myabs, *newabs;
 	transition_system_t *sysabs;
-	ISTSharingTree *lfp_eec;
-	size_t i,j;
+	ISTSharingTree *lfp_eec, *gamma_gfp, *tmp, *safe, *iterates, *new_iterates, *abs_initial_marking, *abs_bad;
+	size_t i,j,nb_iteration;
+	boolean out, conclusive;
 
 	/* Memory allocation */
 	myabs=(abstraction_t *)xmalloc(sizeof(abstraction_t));
@@ -357,37 +397,81 @@ void ic4pn(system, initial_marking, frontier)
 		for(j=0;j<system->limits.nbr_variables;++j)
 			myabs->A[i][j]=1;
 	}
-	sysabs=build_sys_using_abs(system,myabs);
-	puts("The original abstraction");
-	print_abstraction(myabs);
-	puts("The frontier");
-	ist_write(frontier);
-	lfp_eec=ist_abstraction(frontier,myabs);
-	puts("The abstracted frontier");
-	ist_write(lfp_eec);
+	tmp=ist_intersection(initial_marking,bad);
+	conclusive = (ist_is_empty(tmp)==true ? false : true);
+	ist_dispose(tmp);
 
-	newabs=refine_abs(myabs,frontier);
-	puts("The refined abstraction");
-	print_abstraction(newabs);
+	nb_iteration=0;
+	while(conclusive == false) {
+		/* We build the abstract system */
+		sysabs=build_sys_using_abs(system,myabs);
+		/* We abstract bad and initial_marking for eec */	
+		abs_bad = ist_abstraction(bad,myabs);
+		ist_write(abs_bad);
+		abs_initial_marking = ist_abstraction(initial_marking,myabs);
+		ist_write(abs_initial_marking);
 
-	/* We release the current_abstraction */
-	for(i=0;i<myabs->nbV;++i)
-		free(myabs->A[i]);
-	free(myabs->bound);
-	free(myabs);
+		if (eec(sysabs,myabs,abs_initial_marking,abs_bad,&lfp_eec)==true) {
+			/* says "safe" because it is indeed safe */
+			puts("EEC concludes safe");
+			conclusive = true;
+		} else { /* refine */
 
-	/* EEC: if 
-	 * 			eec(...,&lfp_eec,...) says "safe" then it is indeed safe
-	 * 		else (viz. unsafe) 
-	 * 			goto REFINE 
-	 * eec(...,X,...) s.t. X contains is a out parameter where we put the value of the lfp.
-	 */
+			/* Compute safe as alpha( \neg bad /\ lfp_eec ) */
+			tmp = ist_copy(bad);
+			ist_complement(tmp,sysabs->limits.nbr_variables);
+			safe = ist_intersection(lfp_eec,tmp);
+			ist_dispose(tmp);
+			tmp = ist_abstraction(safe,myabs);
+			ist_dispose(safe);
+			safe = tmp;
 
-	/* REFINE:
-	 * (1) ist_complement o ist_pre_cone o ist_complement o ist_concretize (X) 
-	 * (2) refine_abs goto EEC:
-	 */
+			/* def of the first iterates of the gfp */
+			iterates = safe;
+			/* compute the gfp for the abstraction */
+			do {
+				tmp = abstract_pretild(iterates,myabs,sysabs);
+				ist_dispose(iterates);
+				new_iterates = ist_intersection(tmp,safe);
+				ist_dispose(tmp);
+
+				tmp = ist_remove_subsumed_paths(iterates,new_iterates);
+				out = ist_is_empty(tmp);
+				ist_dispose(tmp);
+				ist_dispose(iterates);
+				iterates = new_iterates;
+			} while(out == false);
+
+			/* we compute gamma(gfp) */
+			gamma_gfp = ist_concretisation(iterates,myabs);
+			ist_dispose(iterates);
+
+			ist_complement(gamma_gfp,system->limits.nbr_variables);
+			tmp=ist_pre(gamma_gfp,system);
+			ist_complement(tmp,system->limits.nbr_variables);
+			ist_dispose(gamma_gfp);
+			gamma_gfp = tmp;
+
+			/* conclusive = true implies we have a negative instance */
+			tmp = ist_intersection(gamma_gfp,initial_marking);	
+			conclusive = (ist_is_empty(tmp)==true ? false : true);
+			ist_dispose(tmp);
+
+			/* We consider a new abstraction */
+			newabs=refine_abs(myabs,tmp);
+			ist_dispose(tmp);
+			release_abstraction(myabs);
+			myabs=newabs;
+		}
+		ist_dispose(abs_initial_marking);
+		ist_dispose(abs_bad);
+		/* We release the abstract system */
+		release_transition_system(sysabs);
+		++nb_iteration;
+	}
+	printf("Le nombre d'itérations %d\n",nb_iteration);
 }
+
 
 int main(int argc, char *argv[ ])
 {

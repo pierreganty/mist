@@ -40,6 +40,8 @@ typedef struct abstraction_t {
 		integer16 *bound;
 } abstraction_t;
 
+void print_abstraction(abstraction_t *abs);
+
 /* Only works for Petri Nets w/o invariants */
 transition_system_t *build_sys_using_abs(transition_system_t *sys, abstraction_t *abs);
 abstraction_t *refine_abs(abstraction_t *cur_abs, ISTSharingTree *S);
@@ -49,10 +51,10 @@ ISTSharingTree *ist_abstraction(ISTSharingTree *S, abstraction_t *abs);
 ISTSharingTree *ist_abstract_post_of_rules(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule);
 ISTSharingTree *ist_abstract_post(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t);
 ISTSharingTree *ist_abstract_post_star(ISTSharingTree * initial_marking, abstraction_t * abs, transition_system_t *t);
-void abstract_bound(ISTSharingTree *S, abstraction_t * abs);
-void ist_downward_closure(ISTSharingTree * S);
-ISTSharingTree * abstract_place_pretild_rule(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule);
-ISTSharingTree * abstract_place_pretild(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t);
-ISTSharingTree * abstract_pretild(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t);
+ISTSharingTree *abstract_place_pretild_rule(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule);
+ISTSharingTree *abstract_place_pretild(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t);
+ISTSharingTree *abstract_pretild(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t);
+void ist_downward_closure(ISTSharingTree *S);
+void release_abstraction(abstraction_t *abs);
 
 #endif
