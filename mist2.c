@@ -241,7 +241,7 @@ void bound_values(ISTSharingTree * S,int * bound) {
 	
 	for(i=0,L = S->FirstLayer;L != S->LastLayer;i++,L = L->Next){
 		for(N= L->FirstNode;N != NULL;N = N->Next) {
-			ist_assign_values_to_interval(N->Info,min(N->Info.Left,bound[i]),min(N->Info.Right,bound[i]));
+			ist_assign_values_to_interval(N->Info,min(N->Info->Left,bound[i]),min(N->Info->Right,bound[i]));
 		}
 	}
 }
@@ -291,29 +291,31 @@ ISTSharingTree *bounded_post_star(ISTSharingTree * initial_marking, abstraction_
 }
 
 /* lfp is a out parameter which contains de lfp, it is initalized w/ ist_new */
-boolean 
-eec(system, abs, initial_marking, lfp,Bad)
+boolean eec(system, abs, initial_marking, lfp,Bad)
 	transition_system_t *system;
 	abstraction_t *abs; /* For the bounds on the places */
 	ISTSharingTree *initial_marking, **lfp;
 	ISTSharingTree *Bad;
 {
 	boolean retval;
-	ISTSharingTree * P;
 	ISTSharingTree * abs_post_star;
 	ISTSharingTree * inter;
 	boolean finished = false;
+	ISTSharingTree * bpost;
+	int i;
 	
 	while (finished == false) {
 		abs_post_star = ist_abstract_post_star(initial_marking,abs,system);
 		inter = ist_intersection(abs_post_star,Bad);
 		if (ist_is_empty(inter) == true) {
+			*lfp = abs_post_star;
 			ist_dispose(inter);
 			retval = true;
 			finished = true;
 		} else {
+			ist_dispose(abs_post_star);
 			ist_dispose(inter);
-			bpost = bounded_post_star(initial_marking,abs,t,abs->bound);	
+			bpost = bounded_post_star(initial_marking,abs,system,abs->bound);	
 			inter = ist_intersection(bpost,Bad);
 			if (ist_is_empty(inter) == true) {
 				ist_dispose(inter);
@@ -321,7 +323,7 @@ eec(system, abs, initial_marking, lfp,Bad)
 				finished = true;
 			} else {
 				ist_dispose(inter);
-				for (i = 0;i< system->limmits->nbr_variables;i++){
+				for (i = 0;i< system->limits.nbr_variables;i++){
 					abs->bound[i] = abs->bound[i] +1;
 				}
 			}
