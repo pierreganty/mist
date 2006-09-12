@@ -55,12 +55,15 @@ invariant(T_PTR_tree entry) {
 		info = (char*) tree_getinfo(entry);
 		if (strcmp(info,"or") == 0) {
 			_system->invariants = (invariant_t *)xmalloc(tree_nbrsubtrees(entry) *sizeof(invariant_t));
-			for (nbrinv = 0 ; nbrinv < tree_nbrsubtrees(entry) ; nbrinv++) 
+			for (nbrinv = 0 ; nbrinv < tree_nbrsubtrees(entry) ; nbrinv++) {
+				_system->invariants[last].weight_on_place=NULL;
 				invariantor(tree_subtree(entry,nbrinv));
+			}
 
 		} else if (strcmp(info,"and") == 0) {
 			nbrinv = 0;
 			_system->invariants = (invariant_t *)xmalloc(sizeof(invariant_t));
+			_system->invariants[last].weight_on_place=NULL;
 			invariantor(entry);
 			nbrinv = 1;
 		}

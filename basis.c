@@ -872,8 +872,8 @@ ISTInterval **ist_path2array(S)
 	return Sol; 
 }
 
-ISTHeadListNode * NoProject(ISTNode * node,ISTSharingTree * STR, ISTLayer * rlayer, int nlayer,int * mask);
-ISTNode *  YesProject(ISTNode * node,ISTSharingTree * STR, ISTLayer * rlayer, int nlayer,int * mask) {
+ISTHeadListNode * NoProject(ISTNode * node,ISTSharingTree * STR, ISTLayer * rlayer, int nlayer,integer16 *mask);
+ISTNode *  YesProject(ISTNode * node,ISTSharingTree * STR, ISTLayer * rlayer, int nlayer,integer16 *mask) {
 	ISTSon *s;
 	ISTNode *rchild;
 	ISTNode *rnode;
@@ -923,7 +923,7 @@ ISTNode *  YesProject(ISTNode * node,ISTSharingTree * STR, ISTLayer * rlayer, in
 }
 
     
-ISTHeadListNode * NoProject(ISTNode * node,ISTSharingTree * STR, ISTLayer * rlayer, int nlayer,int* mask) {
+ISTHeadListNode * NoProject(ISTNode * node,ISTSharingTree * STR, ISTLayer * rlayer, int nlayer,integer16* mask) {
 
 	ISTSon *s;
 	ISTNode *rchild;
@@ -956,7 +956,7 @@ ISTHeadListNode * NoProject(ISTNode * node,ISTSharingTree * STR, ISTLayer * rlay
  * we make the assumption that we keep the last layer
  *
  */
-ISTSharingTree * ist_projection(ISTSharingTree * S, int *mask) {
+ISTSharingTree * ist_projection(ISTSharingTree * S, integer16 *mask) {
 	ISTSharingTree * STR;
 	ISTLayer * rlayer;
 	ISTSon * s;

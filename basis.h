@@ -59,7 +59,7 @@ ISTSharingTree *ist_copy(ISTSharingTree *ST) ;
 ISTSharingTree *ist_union(ISTSharingTree *ST1, ISTSharingTree *ST2) ;
 ISTSharingTree *ist_intersection(ISTSharingTree *ST1, ISTSharingTree *ST2) ;
 ISTSharingTree *ist_minus(ISTSharingTree *ST1, ISTSharingTree *ST2) ;
-ISTSharingTree * ist_projection(ISTSharingTree * S, int *mask);
+ISTSharingTree * ist_projection(ISTSharingTree * S, integer16 *mask);
 
 size_t ist_nb_sons(ISTSharingTree *ST) ;
 size_t ist_nb_nodes(ISTSharingTree *ST) ;

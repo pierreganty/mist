@@ -21,9 +21,9 @@
 #include "concretisation.h"
 
 		
-void ist_add_variables(ISTSharingTree *S,int nb_var) {
+void ist_add_variables(ISTSharingTree *S,integer16 nb_var) {
 
-	int i;
+	size_t i;
 	ISTLayer * L;
 	ISTNode * N;
 	ISTNode * N_tmp;
@@ -46,7 +46,7 @@ void ist_add_variables(ISTSharingTree *S,int nb_var) {
 
 ISTSharingTree * ist_concretisation(ISTSharingTree *S, transition_system_t *sys,transition_system_t *abstract_sys, abstraction_t * abs)
 {
-	int i, j;
+	size_t i, j;
 	ISTSharingTree * temp;
 	ISTSharingTree * temp2;
 	ISTSharingTree * result;
@@ -54,40 +54,26 @@ ISTSharingTree * ist_concretisation(ISTSharingTree *S, transition_system_t *sys,
 	ISTNode * N;
 	transition_t * t = (transition_t *) xmalloc(sizeof(transition_t));
 	boolean * in_abs = (boolean *)xmalloc( sys->limits.nbr_variables * sizeof(boolean));
-	int * mask;
+	integer16* mask;
 
-	/*
-	 *
-	 * initialisation
-	 *
-	 *
-	 */
-	for(i = 0; i < sys->limits.nbr_variables;i++) {
+	/* initialisation */
+	for(i = 0; i < sys->limits.nbr_variables;i++)
 		in_abs[i] = false;
-	}
 	
-	/*
-	 * adding of concrete variables
-	 *
-	 */
-	
+	/* adding of concrete variables */
 	temp = ist_copy(S);
 	ist_add_variables(temp,sys->limits.nbr_variables);
-	temp2 = ist_copy(temp);
 	/*
-	 *
 	 * construction of the transfers that defines the mapping from concrete
 	 * variables to abstract variables
-	 *
 	 */
 	t->nbr_transfers = abstract_sys->limits.nbr_variables;	
 	for(i=0;i< abstract_sys->limits.nbr_variables;i++) {
 		t->transfers[i].target = i;
-		t->transfers[i].origin = (int *) xmalloc
-			((sys->limits.nbr_variables + abstract_sys->limits.nbr_variables) * sizeof(int)); 
-		for(j=0;j < abstract_sys->limits.nbr_variables;j++) {
+		t->transfers[i].origin = (integer16 *) xmalloc
+			((sys->limits.nbr_variables + abstract_sys->limits.nbr_variables) * sizeof(integer16)); 
+		for(j=0;j < abstract_sys->limits.nbr_variables;j++)
 			t->transfers[i].origin[j] = 0;
-		}
 		for(j=0; j < sys->limits.nbr_variables;j++) {
 			if (abs->A[i][j] != 0) {
 				t->transfers[i].origin[abstract_sys->limits.nbr_variables + j] = abs->A[i][j];
@@ -95,32 +81,27 @@ ISTSharingTree * ist_concretisation(ISTSharingTree *S, transition_system_t *sys,
 			}
 		}
 	}
-	/*
-	 * Computation of the abstract value
-	 *
-	 */
-	
-	temp2 = ist_pre_of_transfer(temp,t,sys->limits.nbr_variables + abstract_sys->limits.nbr_variables);
+	/* Computation of the concrete values */
+	temp2 = ist_pre_of_transfer(temp,t);
 	ist_dispose(temp);
 	for(i=0; i < abstract_sys->limits.nbr_variables;i++) 
 		xfree(t->transfers[i].origin);
 	xfree(t);	
-	/*
-	 * projection to only keep the concrete variables
-	 *
-	 */
-	mask = (int *) xmalloc(
-			(sys->limits.nbr_variables + abstract_sys->limits.nbr_variables+1) * sizeof(int));
+	/* projection to only keep the concrete variables */
+	mask = (integer16 *) xmalloc(
+			(sys->limits.nbr_variables + abstract_sys->limits.nbr_variables+1) * sizeof(integer16));
 	for(i = 0; i < abstract_sys->limits.nbr_variables;i++) 
 		mask[i] = 0;
-	for(i = abstract_sys->limits.nbr_variables; i < abstract_sys->limits.nbr_variables + sys->limits.nbr_variables; i++) 
+	/* i = abstract_sys->limits.nbr_variables */
+	for(; i < abstract_sys->limits.nbr_variables + sys->limits.nbr_variables; i++) 
 		mask[i] = 1;
+	/* by convention */
 	mask[abstract_sys->limits.nbr_variables + sys->limits.nbr_variables] = 1;
 	result = ist_projection(temp2,mask);
 	ist_dispose(temp2);
 	xfree(mask);
 	/*
-	 *assignment of variables not in abstraction
+	 * assignment of variables not in abstraction (viz. each entry of the column equals to 0)
 	 */
 	for(i = 0, L = result->FirstLayer; i < sys->limits.nbr_variables; i++,L=L->Next) {
 		if (in_abs[i] == false) {

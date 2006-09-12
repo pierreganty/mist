@@ -20,6 +20,7 @@
  */
 
 #include"abstraction.h"
+#include"concretisation.h"
 #include"xmalloc.h"
 
 /* Only works for Petri Nets w/o invariants */
@@ -59,6 +60,25 @@ build_sys_using_abs(sys,abs)
 	return retval;	
 }
 
+void print_abstraction(abs)
+	abstraction_t *abs;
+{
+	size_t i,j;
+	printf("The system is %d variables.\n",(int) abs->nbV);
+	puts("The abstraction:");
+	puts("	For the merging:");
+	for(i=0;i<abs->nbV;++i){
+		for(j=0;j<abs->nbConcreteV;++j)
+			printf("%d",(int) abs->A[i][j]);
+		puts("");
+	}
+	puts("	For the bounds:");
+	for(i=0;i<abs->nbV;++i)
+		printf("%d",(int) abs->bound[i]);
+	puts("");
+
+}
+
 boolean is_layer_unbounded(layer)
 	ISTLayer *layer;
 {
@@ -72,20 +92,79 @@ boolean is_layer_unbounded(layer)
 	return false;
 }
 
-ISTSharingTree *aplha(abs,val)
+ISTSharingTree *ist_abstraction(S,abs)
+	ISTSharingTree *S;
 	abstraction_t *abs;
-	ISTSharingTree *val;
 {
-	ISTSharingTree *retval;
+	size_t i, j;
+	ISTSharingTree *temp, *temp2, *result;
+	ISTLayer * L;
+	ISTNode * N;
+	transition_t * t = (transition_t *)xmalloc(sizeof(transition_t));
+	boolean * in_abs = (boolean *)xmalloc(abs->nbConcreteV * sizeof(boolean));
+	int *mask;
 
+	/* initialisation */
+	for(i = 0; i < abs->nbConcreteV;i++)
+		in_abs[i] = false;
 	
-
-	return retval;
+	/* adding of abstract variables */
+	temp = ist_copy(S);
+	ist_add_variables(temp,abs->nbV);
+	/*
+	 * construction of the transfers that defines the mapping from concrete
+	 * variables to abstract variables
+	 */
+	t->nbr_transfers = abs->nbV;	
+	for(i=0;i< abs->nbV;i++) {
+		t->transfers[i].target = abs->nbConcreteV+i;
+		t->transfers[i].origin = (integer16 *) xmalloc
+			((abs->nbConcreteV + abs->nbV) * sizeof(integer16)); 
+		for(j=0;j < abs->nbConcreteV;j++) 
+			if (abs->A[i][j] != 0) {
+				t->transfers[i].origin[j] = abs->A[i][j];
+				in_abs[j] = true;
+			}
+		for(j=0; j < abs->nbV;j++) {
+			t->transfers[i].origin[abs->nbConcreteV + j] = 0;
+		}
+	}
+	/* Computation of the abstract values */
+	temp2 = ist_post_of_transfer(temp,t);
+	ist_dispose(temp);
+	for(i=0; i < abs->nbV;i++) 
+		xfree(t->transfers[i].origin);
+	xfree(t);	
+	/* projection to only keep the concrete variables */
+	mask = (integer16 *) xmalloc((abs->nbConcreteV + \
+				abs->nbV+1) * sizeof(integer16));
+	for(i = 0; i < abs->nbConcreteV;i++) 
+		mask[i] = 0;
+	/* i = abs->nbConcreteV */
+	for(; i < abs->nbV + abs->nbConcreteV; i++) 
+		mask[i] = 1;
+	/* by convention */
+	mask[abs->nbV + abs->nbConcreteV] = 1;
+	result = ist_projection(temp2,mask);
+	ist_dispose(temp2);
+	xfree(mask);
+	/*
+	 * assignment of variables not in abstraction (viz. each entry of the column equals to 0)
+	 */
+	for(i = 0, L = result->FirstLayer; i < abs->nbV; i++,L=L->Next) {
+		if (in_abs[i] == false) {
+			N = L->FirstNode;
+			while (N != NULL) {
+				ist_assign_values_to_interval(N->Info,0,INFINITY);
+				N = N->Next;
+			}
+		}		
+	}
+	return result;
 }
 
 /* We assume exists i s.t. sum cur_abs->A[i][j] > 1 */
-abstraction_t *refine_abs(system, cur_abs, S)
-	transition_system_t *system;
+abstraction_t *refine_abs(cur_abs, S)
 	abstraction_t *cur_abs;
 	ISTSharingTree *S;
 {
@@ -94,14 +173,16 @@ abstraction_t *refine_abs(system, cur_abs, S)
 	abstraction_t *retval;
 	ISTLayer *layer;
 	retval=(abstraction_t *)xmalloc(sizeof(abstraction_t));
+	/* The number of concrete places never changes */
+	retval->nbConcreteV=cur_abs->nbConcreteV;
 	/* A refinement step add exactly one new dimension w.r.t. the current abstraction */
 	retval->nbV=(cur_abs->nbV+1);
 	retval->A=(integer16 **)xmalloc(retval->nbV*sizeof(integer16));
 	retval->bound=(integer16 *)xmalloc(retval->nbV*sizeof(integer16));
 	for(i=0;i<retval->nbV;++i){
-		retval->A[i]=(integer16 *)xmalloc(system->limits.nbr_variables*sizeof(integer16));
+		retval->A[i]=(integer16 *)xmalloc(cur_abs->nbConcreteV*sizeof(integer16));
 		/* The new abstraction is initialized w/ 0's everywhere */
-		for(j=0;j<system->limits.nbr_variables;++j)
+		for(j=0;j<cur_abs->nbConcreteV;++j)
 			retval->A[i][j]=0;
 		retval->bound[i]=1;
 	}
@@ -113,7 +194,7 @@ abstraction_t *refine_abs(system, cur_abs, S)
 		before_non_null_entry=true;
 		/* We refine according to the value in S */
 		layer = S->FirstLayer;
-		for(j=0;j<system->limits.nbr_variables;++j){
+		for(j=0;j<cur_abs->nbConcreteV;++j){
 			if(cur_abs->A[i][j] == 1) {
 				/* By default we copy the line */
 				retval->A[current][j]=1;
@@ -146,11 +227,6 @@ abstraction_t *refine_abs(system, cur_abs, S)
 		retval->A[first_non_singleton_row][j]=0;
 		retval->A[current][j]=1;
 	}
-	/* We release the current_abstraction */
-	for(i=0;i<cur_abs->nbV;++i)
-		free(cur_abs->A[i]);
-	free(cur_abs->bound);
-	free(cur_abs);
 	return retval;
 }
 
@@ -299,7 +375,7 @@ ISTSharingTree * abstract_place_pretild_rule(ISTSharingTree * S, abstraction_t *
 	if (top == false) {
 		temp = ist_copy(S);
 		ist_complement(temp,abs->nbV);
-		result = ist_pre_of_transfer(temp, &t->transition[rule], abs->nbV);
+		result = ist_pre_of_transfer(temp, &t->transition[rule]);
 		ist_dispose(temp);
 		ist_complement(result,abs->nbV);
 	}

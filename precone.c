@@ -37,7 +37,8 @@
 #ifdef TRANSFERT
 
 
-ISTNode *post_trans(ISTNode * node,ISTSharingTree * STR, ISTLayer * rlayer, ISTInterval val,int no_layer,int *origin,int target) {
+ISTNode *PostOfTransfer(ISTNode *node,ISTSharingTree *STR, ISTLayer * rlayer, ISTInterval val,int no_layer,integer16 *origin,integer16 target)
+{
 	ISTSon *s;
 	ISTNode *rchild;
 	ISTNode *rnode;
@@ -48,7 +49,6 @@ ISTNode *post_trans(ISTNode * node,ISTSharingTree * STR, ISTLayer * rlayer, ISTI
 	if (ist_equal_interval(node->Info,&IST_end_of_list))
 		rnode = ist_add_node(rlayer, ist_create_node(&IST_end_of_list));
 	else {
-
 		/*
 		 *if the layer is origin of the transfer
 		 */
@@ -76,7 +76,7 @@ ISTNode *post_trans(ISTNode * node,ISTSharingTree * STR, ISTLayer * rlayer, ISTI
 			if (memo != NULL) 
 				ist_add_son(rnode,memo->r);
 			else {
-				rchild = post_trans(s->Son,STR,rlayer,val,no_layer +1, origin, target);
+				rchild = PostOfTransfer(s->Son,STR,rlayer,val,no_layer+1, origin, target);
 				ist_add_son(rnode,rchild);
 			}
 		}	
@@ -92,24 +92,33 @@ ISTNode *post_trans(ISTNode * node,ISTSharingTree * STR, ISTLayer * rlayer, ISTI
 	return rnode;	  
 }
 
-ISTSharingTree * post_of_transfer(ISTSharingTree * S, int * origin, int target) {
-	ISTSharingTree * STR;
+ISTSharingTree *ist_post_of_transfer(S, transition)
+	ISTSharingTree *S;
+	transition_t *transition;
+{
+	size_t i;
+	ISTSharingTree *STInt1, *STInt2, *Sol;
 	ISTLayer * rlayer;
 	ISTSon * s;
 	ISTInterval inter;
-	
-	ist_assign_values_to_interval(&inter,0,0);
-	ist_new(&STR);
+
+	ist_new_memo1_number();
+	ist_new(&Sol);
 	if (ist_is_empty(S) == false) {
-		ist_new_memo1_number();
-		rlayer = ist_add_last_layer(STR);
-		for(s = S->Root->FirstSon; s != NULL;s = s->Next) {
-			ist_add_son(S->Root,post_trans(s->Son,STR,rlayer,inter,0,origin,target));
+		for (i=0; i < transition->nbr_transfers; ++i){
+			ist_new(&STInt1);
+			rlayer = ist_add_last_layer(STInt1);
+			ist_assign_values_to_interval(&inter,0,0);
+			for(s = S->Root->FirstSon; s != NULL;s = s->Next)
+				ist_add_son(STInt1->Root,PostOfTransfer(s->Son,STInt1,rlayer,inter,0,transition->transfers[i].origin,transition->transfers[i].target));
+			ist_normalize(STInt1);
+			STInt2=ist_union(STInt1,Sol);
+			ist_dispose(Sol);
+			ist_dispose(STInt1);
+			Sol=STInt2;
 		}
-		
-		ist_normalize(STR);
 	}
-	return STR;
+	return Sol;
 }
 
 
@@ -337,10 +346,10 @@ static void AdjustSonLayer(Layer)
 	}
 }
 
-static void ComputeOverApproximationForValue(S, Value, PlacesInTransfert)
+static void ComputeOverApproximationForValue(S, Value, Trans)
 	ISTSharingTree *S;
    	ISTInterval *Value;
-   	integer16 *PlacesInTransfert;
+   	transfers_t *Trans;
 {
 	size_t i, nbr_variables; 
 	ISTInterval *Temp;
@@ -349,7 +358,7 @@ static void ComputeOverApproximationForValue(S, Value, PlacesInTransfert)
 	Temp = ist_build_interval(0,(Value->Right == INFINITY) ? INFINITY :0);
 	Layer = S->FirstLayer;
 	for (i=0; i < nbr_variables; ++i){
-		if (PlacesInTransfert[i] == true){
+		if (Trans->origin[i] == 1 || i == Trans->target){
 			/*
 			 * With 'Value' we can set the values in the target layer and
 			 * originS.  Si 'Value' a sa rightbound = \infty, alors on peut
@@ -371,9 +380,9 @@ static void ComputeOverApproximationForValue(S, Value, PlacesInTransfert)
 }
 
 
-static ISTNode *IntersectionWithFormulaTransfert(node, PlacesInTransfer, MaxSum,  height, NuLayer, LINK)
+static ISTNode *IntersectionWithFormulaTransfert(node, Trans, MaxSum,  height, NuLayer, LINK)
 	ISTNode *node;
-	integer16 *PlacesInTransfer;
+	transfers_t *Trans;
 	ISTInterval *MaxSum;
 	integer16 height;
 	long  NuLayer;
@@ -399,7 +408,7 @@ static ISTNode *IntersectionWithFormulaTransfert(node, PlacesInTransfer, MaxSum,
 		s1 = node->FirstSon;
 		stop = false;
 		while (s1 != NULL && !stop) {
-			if (NuLayer < height && PlacesInTransfer[NuLayer] == true){
+			if (NuLayer < height && (Trans->origin[NuLayer] == 1 || Trans->target == NuLayer)){
 				ist_add_interval_to_interval(LINK->intersect,s1->Son->Info);
 				if (LINK->intersect->Left > MaxSum->Left ||
 						(LINK->intersect->Left == MaxSum->Left &&
@@ -425,8 +434,7 @@ static ISTNode *IntersectionWithFormulaTransfert(node, PlacesInTransfer, MaxSum,
 					if (LINK->memo != NULL){
 						rchild = LINK->memo->r;
 					} else
-						rchild = IntersectionWithFormulaTransfert(s1->Son,
-								PlacesInTransfer,MaxSum, height, NuLayer + 1, LINK);
+						rchild = IntersectionWithFormulaTransfert(s1->Son,Trans,MaxSum, height, NuLayer + 1, LINK);
 					if (rchild != NULL)
 						ist_add_son(rnode, rchild);
 				}
@@ -439,8 +447,7 @@ static ISTNode *IntersectionWithFormulaTransfert(node, PlacesInTransfer, MaxSum,
 				if (LINK->memo != NULL){ 
 					rchild = LINK->memo->r;
 				} else
-					rchild = IntersectionWithFormulaTransfert(s1->Son,
-							PlacesInTransfer,MaxSum, height, NuLayer + 1, LINK);
+					rchild = IntersectionWithFormulaTransfert(s1->Son, Trans,MaxSum, height, NuLayer + 1, LINK);
 				if (rchild != NULL)
 					ist_add_son(rnode, rchild);
 			}
@@ -462,11 +469,11 @@ static ISTNode *IntersectionWithFormulaTransfert(node, PlacesInTransfer, MaxSum,
 }
 
 
-ISTSharingTree *ist_intersection_with_formula_transfer(ST1, PlacesInTransfer, Value, height)
+/* Assume ist_nb_layers(S)-1 == system->limits.nbr_variables */
+ISTSharingTree *ist_intersection_with_formula_transfer(ST1, Trans, Value)
 	ISTSharingTree *ST1;
-	integer16 *PlacesInTransfer;
+	transfers_t *Trans;
 	ISTInterval *Value;
-	integer16 height;
 {
 	struct LOC_ist_method  V;
 	ISTSon *s1;
@@ -480,14 +487,13 @@ ISTSharingTree *ist_intersection_with_formula_transfer(ST1, PlacesInTransfer, Va
 	s1 = ST1->Root->FirstSon;
 	stop = false;
 	while (s1 != NULL && !stop) {
-		if (PlacesInTransfer[0] == true){
+		if (Trans->origin[0] == 1 || Trans->target == 0){
 			ist_add_interval_to_interval(V.intersect,s1->Son->Info);
 			if (V.intersect->Left > Value->Left || (V.intersect->Left == Value->Left
 					   	&& ist_greater_value(V.intersect->Right,Value->Right))) {
 				stop = true;
 			} else {
-				rchild = IntersectionWithFormulaTransfert(s1->Son,PlacesInTransfer,
-							Value, height, 1L,&V);
+				rchild = IntersectionWithFormulaTransfert(s1->Son,Trans, Value, ist_nb_layers(ST1)-1, 1L,&V);
 				if (rchild != NULL) {
 					ist_add_son(V.STR->Root, rchild);
 				}
@@ -496,8 +502,7 @@ ISTSharingTree *ist_intersection_with_formula_transfer(ST1, PlacesInTransfer, Va
 				ist_sub_interval_to_interval(V.intersect,s1->Son->Info);
 			}
 		} else {
-			rchild = IntersectionWithFormulaTransfert(s1->Son,PlacesInTransfer,
-					Value, height, 1L,&V);
+			rchild = IntersectionWithFormulaTransfert(s1->Son,Trans, Value, ist_nb_layers(ST1)-1, 1L,&V);
 			if (rchild != NULL) {
 				ist_add_son(V.STR->Root, rchild);
 			}
@@ -510,40 +515,19 @@ ISTSharingTree *ist_intersection_with_formula_transfer(ST1, PlacesInTransfer, Va
 
 
 
-ISTSharingTree *ist_pre_of_transfer(S, transition, nbr_variables)
+ISTSharingTree *ist_pre_of_transfer(S, transition)
 	ISTSharingTree *S;
 	transition_t *transition;
-	integer16 nbr_variables;
 {
-
-
-	printf("ist_pre_of_rule_plus_transfer: On rentre\n");
-	ist_checkup(S);
-	ist_write(S);
-	printf("========================================\n");
-	
-
 	ISTLayer* Layer;
 	ISTInterval *CurrentValue;
 	ISTNode *Node;
 	ISTSharingTree *Sol, *STInt1, *STInt2, *STInt3;
-	integer16 *PlacesInTransfert;
-	size_t i,j,TargetLayer, CurrentTarget;
+	size_t i,TargetLayer, CurrentTarget;
 	boolean stop;
 	Sol = ist_copy(S);
 	
-	printf("copie de S\n");
-	ist_checkup(Sol);
-	ist_write(Sol);
-	
-	PlacesInTransfert = (integer16 *)xmalloc(nbr_variables*sizeof(integer16));
 	for (i=0; i < transition->nbr_transfers; ++i){
-		for (j=0; j < nbr_variables;++j){	
-			PlacesInTransfert[j] = transition->transfers[i].origin[j];
-		}
-		/* We set to true all the variables that are involved in the transfers
-		 */
-		PlacesInTransfert[transition->transfers[i].target] = true;
 		ist_new(&STInt3);
 		Layer = Sol->FirstLayer;
 		TargetLayer = transition->transfers[i].target;
@@ -559,36 +543,33 @@ ISTSharingTree *ist_pre_of_transfer(S, transition, nbr_variables)
 			 * their value equal to target (i.e. CurrentValue).
 			 */
 			
-			printf("avant RemoveNodeWithoutValue\n");
-			ist_checkup(STInt1);
-			ist_write(STInt1);
-			
-			ist_checkup(Sol);
-			ist_write(Sol);
-			
 			RemoveNodeWithoutValue(STInt1,TargetLayer,CurrentValue);
 
-			printf("apres RemoveNodeWithoutValue\n");
-			ist_checkup(STInt1);
-			ist_write(STInt1);
-			
 			/*
 			 * We build the overapproximation of values that do not satisfy the
 			 * transfer's equation.  We do it for all the layers that are
 			 * involved in the current transfer.
 			 */
-			ComputeOverApproximationForValue(STInt1,CurrentValue,PlacesInTransfert);
+			puts("ComputeOverApproximationForValue");
+			ist_checkup(STInt1);
+			ist_write(STInt1);
+			/* printf("Interval %d,%d \n",CurrentValue->Left,CurrentValue->Right);*/
+
+
+			ComputeOverApproximationForValue(STInt1,CurrentValue,&transition->transfers[i]);
 			/*
 			 * Starting from that overapproximation, we intersect with the
 			 * formula to keep only the models of the transfer formula.  So we
 			 * have generated all the possible decomposition of the sum.
 			 */
-
-			printf("apres ComputeOverApproximationForValue\n");
+			puts("call");
 			ist_checkup(STInt1);
 			ist_write(STInt1);
+			puts("done");
 			
-			STInt2 = ist_intersection_with_formula_transfer(STInt1,PlacesInTransfert,CurrentValue, nbr_variables);
+			puts("IntersectionWithFormulaTransfert");
+			STInt2 = ist_intersection_with_formula_transfer(STInt1,&transition->transfers[i],CurrentValue);
+			ist_write(STInt2);
 			ist_dispose(STInt1);
 			STInt1 = ist_union(STInt3,STInt2);
 			ist_dispose(STInt3);
@@ -614,15 +595,13 @@ ISTSharingTree *ist_pre_of_transfer(S, transition, nbr_variables)
 		ist_dispose(Sol);
 		Sol = STInt3;
 	}
-	xfree(PlacesInTransfert);
 	return Sol;
 }
 
 
-ISTSharingTree *ist_pre_of_rule_plus_transfer(Prec, transition, nbr_variables)
+ISTSharingTree *ist_pre_of_rule_plus_transfer(Prec, transition)
 	ISTSharingTree *Prec;
 	transition_t *transition;
-	integer16 nbr_variables;
 {
 	ISTSharingTree *STInt, *Temp;
 	ISTNode *Node;
@@ -631,8 +610,6 @@ ISTSharingTree *ist_pre_of_rule_plus_transfer(Prec, transition, nbr_variables)
 	size_t l;
 	boolean modified = false;
 
-	
-	
 	tau = ist_build_interval(0,INFINITY);
 	STInt=ist_copy(Prec);
 	if (transition->nbr_transfers > 0) 
@@ -644,7 +621,7 @@ ISTSharingTree *ist_pre_of_rule_plus_transfer(Prec, transition, nbr_variables)
 				 * the second condition */
 				ist_adjust_second_condition(STInt);
 			}
-			Temp = ist_pre_of_transfer(STInt, transition, nbr_variables);
+			Temp = ist_pre_of_transfer(STInt, transition);
 			ist_dispose(STInt);
 			STInt = Temp;
 		}
@@ -793,7 +770,7 @@ ISTSharingTree *ist_pre_cone(prec, reached_elem, system)
 	ist_new(&pre_until_ith_rule);
 	i = 0;
 	while (i < system->limits.nbr_rules && (ist_is_empty(prec) == false)){
-		pre_of_ith_rule = ist_pre_of_rule_plus_transfer(prec, &system->transition[i], system->limits.nbr_variables);
+		pre_of_ith_rule = ist_pre_of_rule_plus_transfer(prec, &system->transition[i]);
 		if (ist_is_empty(pre_of_ith_rule) == false){ 
 			ist_normalize(pre_of_ith_rule);
 			ist_remove_with_invar_heuristic(pre_of_ith_rule, i, system);
@@ -934,7 +911,7 @@ ISTSharingTree *ist_post(forward_p, system)
 					for (k = 0; k < system->transition[j].nbr_transfers; ++k){
 						ist_assign_values_to_interval(&tokens_transfered,0,0);
 						for (l = 0; l < system->limits.nbr_variables; ++l){
-							if (system->transition[j].transfers[k].origin[l]  == true){
+							if (system->transition[j].transfers[k].origin[l]  == 1){
 								ist_add_interval_to_interval(&tokens_transfered,tuple[l]);
 								/* Post condition of the trasnfer */
 								ist_assign_values_to_interval(tuple[l],0,0);
@@ -1040,7 +1017,7 @@ ISTSharingTree *ist_post_transition(forward_p, system, transition)
 			  for (k = 0; k < system->transition[transition].nbr_transfers; ++k){
 			    ist_assign_values_to_interval(&tokens_transfered,0,0);
 			    for (l = 0; l < system->limits.nbr_variables; ++l){
-			      if (system->transition[transition].transfers[k].origin[l]  == true){
+			      if (system->transition[transition].transfers[k].origin[l]  == 1){
 				ist_add_interval_to_interval(&tokens_transfered,tuple[l]);
 				ist_assign_values_to_interval(tuple[l],0,0);
 			      }

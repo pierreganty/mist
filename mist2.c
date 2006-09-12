@@ -16,7 +16,7 @@
    along with mist2; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-   Copyright 2003, 2004, Pierre Ganty, Laurent Van Begin
+   Copyright 2003, 2004, 2006, Pierre Ganty, Laurent Van Begin
  */
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -49,8 +49,6 @@ void mist(system, initial_marking, frontier)
 	struct tms before, after;
 	float comp_u, comp_s ;
 
-	/* We initialize the memory management of the system */
-	ist_init_system();
 	times(&before) ;
 
 	temp = ist_remove_with_all_invar_exact(frontier, system);
@@ -343,20 +341,38 @@ void ic4pn(system, initial_marking, frontier)
 
 	/* Memory allocation */
 	myabs=(abstraction_t *)xmalloc(sizeof(abstraction_t));
+	/* We copy the number of places of the original system into the abstraction */
+	myabs->nbConcreteV=system->limits.nbr_variables;
+	/* We start with a unique abstract place */
+	myabs->nbV=1;
 	myabs->bound=(integer16 *)xmalloc(myabs->nbV*sizeof(integer16));
 	myabs->A=(integer16 **)xmalloc(myabs->nbV*sizeof(integer16));
 	for(i=0;i<myabs->nbV;++i)
 		myabs->A[i]=(integer16 *)xmalloc(system->limits.nbr_variables*sizeof(integer16));
 	/* Initial abstraction */
-	myabs->nbV=1;
 	for(i=0;i<myabs->nbV;++i) {
-		for(j=0;i<system->limits.nbr_variables;++j)
-			myabs->A[i][j]=1;
 		myabs->bound[i]=1;
+		for(j=0;j<system->limits.nbr_variables;++j)
+			myabs->A[i][j]=1;
 	}
 	sysabs=build_sys_using_abs(system,myabs);
+	puts("The original abstraction");
+	print_abstraction(myabs);
+	puts("The frontier");
+	ist_write(frontier);
+	lfp_eec=ist_abstraction(frontier,myabs);
+	puts("The abstracted frontier");
+	ist_write(lfp_eec);
 
-	/* abstract the initial marking */
+	newabs=refine_abs(myabs,frontier);
+	puts("The refined abstraction");
+	print_abstraction(newabs);
+
+	/* We release the current_abstraction */
+	for(i=0;i<myabs->nbV;++i)
+		free(myabs->A[i]);
+	free(myabs->bound);
+	free(myabs);
 
 	/* EEC: if 
 	 * 			eec(...,&lfp_eec,...) says "safe" then it is indeed safe
@@ -373,39 +389,45 @@ void ic4pn(system, initial_marking, frontier)
 
 int main(int argc, char *argv[ ])
 {
-  T_PTR_tree atree;
-  transition_system_t *system;
-  ISTSharingTree *initial_marking, *unsafe_cone;
+	T_PTR_tree atree;
+	transition_system_t *system;
+	ISTSharingTree *initial_marking, *unsafe_cone;
 
-  head_msg();
-  mist_cmdline_options_handle(argc, argv);
+	head_msg();
+	mist_cmdline_options_handle(argc, argv);
 
-  linenumber = 1;
-  tbsymbol_init(&tbsymbol, 4096);
+	linenumber = 1;
+	tbsymbol_init(&tbsymbol, 4096);
 
-  printf("\n\n"); 
-  printf("Parsing the problem instance.\n");
-  
-  my_yyparse(&atree, argv[optind++]);
+	printf("\n\n"); 
+	printf("Parsing the problem instance.\n");
+
+	my_yyparse(&atree, argv[optind++]);
 
 #ifdef TBSYMB_DUMP  
-  printf("\n\n");
-  tbsymbol_dump(tbsymbol, &callback);
+	printf("\n\n");
+	tbsymbol_dump(tbsymbol, &callback);
 #endif    
 
 #ifdef TREE_DUMP  
-  printf("\n\n");
-  tree_dump(atree, callback_tree_before, callback_tree_after, callback_leaf);
+	printf("\n\n");
+	tree_dump(atree, callback_tree_before, callback_tree_after, callback_leaf);
 #endif
-  
-  build_problem_instance(atree, &system, &initial_marking, &unsafe_cone);
-  printf(".. DONE\n");
-  printf("System has %3d variables, %3d transitions and %2d actual invariants\n",system->limits.nbr_variables, system->limits.nbr_rules, system->limits.nbr_invariants);
 
-  ic4pn(system,initial_marking,unsafe_cone);
+	build_problem_instance(atree, &system, &initial_marking, &unsafe_cone);
+	printf(".. DONE\n");
+	printf("System has %3d variables, %3d transitions and %2d actual invariants\n",system->limits.nbr_variables, system->limits.nbr_rules, system->limits.nbr_invariants);
 
-  tbsymbol_destroy(&tbsymbol);
- 
+	/* We initialize the memory management of the system */
+	printf("Allocating memory for data structure.. ");
+	ist_init_system();
+	printf("DONE\n");
 
-  return 0;
+	ic4pn(system,initial_marking,unsafe_cone);
+	//mist(system,initial_marking,unsafe_cone);
+
+	tbsymbol_destroy(&tbsymbol);
+
+
+	return 0;
 }

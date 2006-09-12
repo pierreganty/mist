@@ -33,6 +33,8 @@
 #include"minimize.h"
 
 typedef struct abstraction_t {
+		/* A local copy of system->limits.nbr_variables */
+		integer16 nbConcreteV;
 		integer16 nbV;
 		integer16 **A;
 		integer16 *bound;
@@ -40,8 +42,8 @@ typedef struct abstraction_t {
 
 /* Only works for Petri Nets w/o invariants */
 transition_system_t *build_sys_using_abs(transition_system_t *sys, abstraction_t *abs);
-abstraction_t *refine_abs(transition_system_t *system, abstraction_t *cur_abs, ISTSharingTree *S);
-ISTSharingTree *aplha(abstraction_t *abs, ISTSharingTree *val);
+abstraction_t *refine_abs(abstraction_t *cur_abs, ISTSharingTree *S);
+ISTSharingTree *ist_abstraction(ISTSharingTree *S, abstraction_t *abs);
 
 /* abstract operators */
 ISTSharingTree *ist_abstract_post_of_rules(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule);
