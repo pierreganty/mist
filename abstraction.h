@@ -54,7 +54,7 @@ ISTSharingTree *ist_abstract_post_star(ISTSharingTree * initial_marking, abstrac
 ISTSharingTree *abstract_place_pretild_rule(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule);
 ISTSharingTree *abstract_place_pretild(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t);
 ISTSharingTree *abstract_pretild(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t);
-void ist_downward_closure(ISTSharingTree *S);
+//void ist_downward_closure(ISTSharingTree *S);
 void release_abstraction(abstraction_t *abs);
 
 #endif

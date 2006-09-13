@@ -271,6 +271,14 @@ void mist_cmdline_options_handle(int argc, char *argv[ ])
 		err_quit("Missing filename");
 	}
 }
+void ist_downward_closure(ISTSharingTree * S) {
+	ISTLayer *L;
+	ISTNode *N;
+
+	for(L=S->FirstLayer;L!= S->LastLayer;L = L->Next) 
+		for(N=L->FirstNode; N!= NULL;N = N->Next)
+			ist_assign_values_to_interval(N->Info,0,N->Info->Right);
+}
 
 void bound_values(ISTSharingTree * S, int *bound)
 {
@@ -278,14 +286,14 @@ void bound_values(ISTSharingTree * S, int *bound)
 	ISTLayer *L;
 	size_t i;
 	
-	for(i=0,L = S->FirstLayer;L != S->LastLayer;i++,L = L->Next){
+	for(i=0,L = S->FirstLayer;L != S->LastLayer;i++,L = L->Next)
 		for(N= L->FirstNode;N != NULL;N = N->Next)
 			ist_assign_values_to_interval(N->Info,min(N->Info->Left,bound[i]),min(N->Info->Right,bound[i]));
-	}
 }
 
 ISTSharingTree *bounded_post_rule(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule,int*bound) {
-   ISTSharingTree *result = ist_abstract_post_of_rules(S,abs,t,rule);
+
+   ISTSharingTree *result = ist_symbolic_post_of_rules(S,abs,t,rule);
    bound_values(result,bound);
    ist_downward_closure(result);
    ist_normalize(result);
@@ -300,13 +308,15 @@ ISTSharingTree *bounded_post(ISTSharingTree *S, abstraction_t *abs, transition_s
 	
 	ist_new(&result);
 	for(i = 0;i<t->limits.nbr_rules;i++) {
+		printf("i=%d\n",i);
+		ist_write(S);
 		tmp = bounded_post_rule(S,abs,t,i,bound);
 		if (ist_is_empty(tmp) == false) {
 			tmp2 = ist_union(tmp,result);
 			ist_dispose(tmp);
 			ist_dispose(result);
 			result = tmp2;
-		}
+		} else ist_dispose(tmp);
 	}
 	return result;
 }
@@ -316,8 +326,14 @@ ISTSharingTree *bounded_post_star(ISTSharingTree * initial_marking, abstraction_
 	ISTSharingTree *result;
 	ISTSharingTree *tmp;
 	ISTSharingTree *tmp2;
+
+
+	printf("initial_marking\n");
+	ist_write(initial_marking);
 	
 	result = ist_copy(initial_marking);
+	bound_values(result, abs->bound);
+	ist_normalize(result);
 	while (true) {
 		tmp = bounded_post(result,abs,t,bound);
 		if (ist_exact_subsumption_test(tmp,result) == false) {
@@ -325,7 +341,10 @@ ISTSharingTree *bounded_post_star(ISTSharingTree * initial_marking, abstraction_
 			ist_dispose(tmp);
 			ist_dispose(result);
 			result = tmp2;
-		} else break;
+		} else {
+			ist_dispose(tmp);
+			break;
+		}
 	}
 	return result;
 }
@@ -342,18 +361,27 @@ boolean eec(system, abs, initial_marking, bad, lfp)
 	boolean finished = false;
 	ISTSharingTree * bpost;
 	int i;
+
+	ist_downward_closure(initial_marking);
+
+	printf("initial_marking\n");
+	ist_write(initial_marking);
 	
 	while (finished == false) {
 		abs_post_star = ist_abstract_post_star(initial_marking,abs,system);
 		inter = ist_intersection(abs_post_star,bad);
 		if (ist_is_empty(inter) == true) {
-			*lfp = abs_post_star;
 			ist_dispose(inter);
+			*lfp = abs_post_star;
 			retval = true;
 			finished = true;
 		} else {
 			ist_dispose(abs_post_star);
 			ist_dispose(inter);
+		
+			printf("initial_marking\n");
+			ist_write(initial_marking);
+
 			bpost = bounded_post_star(initial_marking,abs,system,abs->bound);	
 			inter = ist_intersection(bpost,bad);
 			if (ist_is_empty(inter) == true) {
