@@ -571,9 +571,9 @@ ISTSharingTree *ist_intersection(ST1, ST2)
 	}
 	stop = false;
 	while (!stop) {
-		if (V.STR->LastLayer == NULL) {
+		if (V.STR->LastLayer == NULL)
 			stop = true;
-		}else {
+		else {
 			if (V.STR->LastLayer->FirstNode != NULL)
 				stop = true;
 			else
@@ -581,6 +581,8 @@ ISTSharingTree *ist_intersection(ST1, ST2)
 		}
 	}
 	V.STR->NbElements = V.STR->Root->AuxI;
+	if(ist_is_empty(V.STR)==false)
+		ist_normalize(V.STR);
 	return V.STR;
 }
 

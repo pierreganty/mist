@@ -484,6 +484,7 @@ void ic4pn(system, initial_marking, bad)
 				ist_dispose(_tmp);
 				
 				new_iterates = ist_intersection(tmp,alpha_safe);
+				ist_checkup(new_iterates);
 				ist_dispose(tmp);
 				ist_downward_closure(new_iterates);
 				ist_normalize(new_iterates);
