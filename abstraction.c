@@ -326,14 +326,31 @@ ISTSharingTree *ist_abstract_post_of_rules(ISTSharingTree * S, abstraction_t * a
 	ISTSharingTree * result;
 	ISTLayer * L;
 	ISTNode * N;
-	ISTInterval * v;
+//	ISTInterval * v;
 	int i;
 
 	printf("entree abstract_post_of_rule\n");
 
 	ist_write(S);
+
+	ISTInterval **g = (ISTInterval **)xmalloc(abs->nbV * sizeof(ISTInterval *));
+	ISTSharingTree *G;
+
+	for(i = 0;i < abs->nbV;i++) {
+		g[i] = ist_copy_interval(&t->transition[rule].cmd_for_place[i].guard);
+	}
+	ist_new(&G);
+	ist_add(G,g,abs->nbV);
+	for(i= 0;i< abs->nbV;i++) {
+		ist_dispose_info(g[i]);
+	}
+	xfree(g);
+
+	result = ist_intersection(S,G);
+	ist_dispose(G);
+
 	
-	result =  ist_copy(S);	
+/*	result =  ist_copy(S);	
 	//intersection with guard
 	//If the info of a node has no intersection with guard, we remove its sons, i.e. the node 
 	//becomes useless and will be removed later.	
@@ -357,7 +374,7 @@ ISTSharingTree *ist_abstract_post_of_rules(ISTSharingTree * S, abstraction_t * a
 
 	//we remove the useless nodes
 	ist_remove_node_without_son(result);
-
+*/
 	//If the IST is not empty, we apply the effect of the function
 	if (ist_is_empty(result) == false) {
 		for (i = 0, L = result->FirstLayer; i < abs->nbV; i++, L = L->Next) {
@@ -372,7 +389,8 @@ ISTSharingTree *ist_abstract_post_of_rules(ISTSharingTree * S, abstraction_t * a
 					ist_assign_values_to_interval(N->Info,0,N->Info->Right = INFINITY);
 				N = N->Next;
 			}
-		}	
+		}
+		ist_normalize(result);	
 	}
 	return result;
 }

@@ -366,7 +366,9 @@ boolean eec(system, abs, initial_marking, bad, lfp)
 	size_t i;
 
 	ist_downward_closure(initial_marking);
-
+	ist_normalize(initial_marking);
+	ist_checkup(initial_marking);
+	
 	while (finished == false) {
 		abs_post_star = ist_abstract_post_star(initial_marking,abs,system);
 		inter = ist_intersection(abs_post_star,bad);

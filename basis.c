@@ -541,7 +541,7 @@ static ISTNode *Intersection(node1, node2, LINK)
 
 /*
  * This function returns the intersection of the ISTs ST1 and ST2.
- * Union  semantic (i.e. work with intervals as set of values) not syntactic (i.e. work with labels of nodes).
+ * Intersection semantic (i.e. work with intervals as set of values) not syntactic (i.e. work with labels of nodes).
  */
 ISTSharingTree *ist_intersection(ST1, ST2)
 	ISTSharingTree *ST1, *ST2;
