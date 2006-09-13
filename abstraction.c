@@ -104,62 +104,64 @@ ISTSharingTree *ist_abstraction(S,abs)
 	boolean * in_abs = (boolean *)xmalloc(abs->nbConcreteV * sizeof(boolean));
 	int *mask;
 
-	/* initialisation */
-	for(i = 0; i < abs->nbConcreteV;i++)
-		in_abs[i] = false;
+	if (ist_is_empty(S) == false) {
+		/* initialisation */
+		for(i = 0; i < abs->nbConcreteV;i++)
+			in_abs[i] = false;
 	
-	/* adding of abstract variables */
-	temp = ist_copy(S);
-	ist_add_variables(temp,abs->nbV);
-	/*
-	 * construction of the transfers that defines the mapping from concrete
-	 * variables to abstract variables
-	 */
-	t->nbr_transfers = abs->nbV;	
-	for(i=0;i< abs->nbV;i++) {
-		t->transfers[i].target = abs->nbConcreteV+i;
-		t->transfers[i].origin = (integer16 *) xmalloc
-			((abs->nbConcreteV + abs->nbV) * sizeof(integer16)); 
-		for(j=0;j < abs->nbConcreteV;j++) 
-			if (abs->A[i][j] != 0) {
-				t->transfers[i].origin[j] = abs->A[i][j];
-				in_abs[j] = true;
+		/* adding of abstract variables */
+		temp = ist_copy(S);
+		ist_add_variables(temp,abs->nbV);
+		/*
+		 * construction of the transfers that defines the mapping from concrete
+		 * variables to abstract variables
+		 */
+		t->nbr_transfers = abs->nbV;	
+		for(i=0;i< abs->nbV;i++) {
+			t->transfers[i].target = abs->nbConcreteV+i;
+			t->transfers[i].origin = (integer16 *) xmalloc
+				((abs->nbConcreteV + abs->nbV) * sizeof(integer16)); 
+			for(j=0;j < abs->nbConcreteV;j++) 
+				if (abs->A[i][j] != 0) {
+					t->transfers[i].origin[j] = abs->A[i][j];
+					in_abs[j] = true;
+				}
+			for(j=0; j < abs->nbV;j++) {
+				t->transfers[i].origin[abs->nbConcreteV + j] = 0;
 			}
-		for(j=0; j < abs->nbV;j++) {
-			t->transfers[i].origin[abs->nbConcreteV + j] = 0;
 		}
-	}
-	/* Computation of the abstract values */
-	temp2 = ist_post_of_transfer(temp,t);
-	ist_dispose(temp);
-	for(i=0; i < abs->nbV;i++) 
-		xfree(t->transfers[i].origin);
-	xfree(t);	
-	/* projection to only keep the concrete variables */
-	mask = (integer16 *) xmalloc((abs->nbConcreteV + \
-				abs->nbV+1) * sizeof(integer16));
-	for(i = 0; i < abs->nbConcreteV;i++) 
-		mask[i] = 0;
-	/* i = abs->nbConcreteV */
-	for(; i < abs->nbV + abs->nbConcreteV; i++) 
-		mask[i] = 1;
-	/* by convention */
-	mask[abs->nbV + abs->nbConcreteV] = 1;
-	result = ist_projection(temp2,mask);
-	ist_dispose(temp2);
-	xfree(mask);
-	/*
-	 * assignment of variables not in abstraction (viz. each entry of the column equals to 0)
-	 */
-	for(i = 0, L = result->FirstLayer; i < abs->nbV; i++,L=L->Next) {
-		if (in_abs[i] == false) {
-			N = L->FirstNode;
-			while (N != NULL) {
-				ist_assign_values_to_interval(N->Info,0,INFINITY);
-				N = N->Next;
-			}
-		}		
-	}
+		/* Computation of the abstract values */
+		temp2 = ist_post_of_transfer(temp,t);
+		ist_dispose(temp);
+		for(i=0; i < abs->nbV;i++) 
+			xfree(t->transfers[i].origin);
+		xfree(t);	
+		/* projection to only keep the concrete variables */
+		mask = (integer16 *) xmalloc((abs->nbConcreteV + \
+					abs->nbV+1) * sizeof(integer16));
+		for(i = 0; i < abs->nbConcreteV;i++) 
+			mask[i] = 0;
+		/* i = abs->nbConcreteV */
+		for(; i < abs->nbV + abs->nbConcreteV; i++) 
+			mask[i] = 1;
+		/* by convention */
+		mask[abs->nbV + abs->nbConcreteV] = 1;
+		result = ist_projection(temp2,mask);
+		ist_dispose(temp2);
+		xfree(mask);
+		/*
+		 * assignment of variables not in abstraction (viz. each entry of the column equals to 0)
+		 */
+		for(i = 0, L = result->FirstLayer; i < abs->nbV; i++,L=L->Next) {
+			if (in_abs[i] == false) {
+				N = L->FirstNode;
+				while (N != NULL) {
+					ist_assign_values_to_interval(N->Info,0,INFINITY);
+					N = N->Next;
+				}
+			}		
+		}
+	} else ist_new(&result);
 	return result;
 }
 
@@ -279,6 +281,10 @@ ISTSharingTree *ist_symbolic_post_of_rules(ISTSharingTree * S, abstraction_t * a
 */
 	//If the IST is not empty, we apply the effect of the function
 	if (ist_is_empty(result) == false) {
+
+		printf(" result n est pas vide:\n");
+		ist_checkup(result);
+		
 		for (i = 0, L = result->FirstLayer; i < abs->nbV; i++, L = L->Next) {
 			for(N = L->FirstNode;N != NULL;N=N->Next) {
 					ist_assign_values_to_interval(N->Info, 
@@ -286,7 +292,7 @@ ISTSharingTree *ist_symbolic_post_of_rules(ISTSharingTree * S, abstraction_t * a
 							N->Info->Right + t->transition[rule].cmd_for_place[i].delta);
 			}
 		}	
-	}
+	} else printf("IST vide\n");
 	return result;
 }
 
@@ -446,23 +452,27 @@ ISTSharingTree * abstract_place_pretild_rule(ISTSharingTree * S, abstraction_t *
 	ISTLayer * L;
 	int i;
 	boolean top;
-	for (i=0,L = S->FirstLayer, top = false; (i < abs->nbV) && (top == false);i++,L = L->Next) {
-		if ((t->transition[rule].cmd_for_place[i].guard.Left > 0) && 
-		(t->transition[rule].cmd_for_place[i].places_abstracted > 1)) {
-			top = true;
+
+	if (ist_is_empty(S) == false) {
+	
+		for (i=0,L = S->FirstLayer, top = false; (i < abs->nbV) && (top == false);i++,L = L->Next) {
+			if ((t->transition[rule].cmd_for_place[i].guard.Left > 0) && 
+			(t->transition[rule].cmd_for_place[i].places_abstracted > 1)) {
+				top = true;
+			}
 		}
-	}
-	if (top == false) {
-		temp = ist_copy(S);
-		ist_complement(temp,abs->nbV);
-		result = ist_pre_of_transfer(temp, &t->transition[rule]);
-		ist_dispose(temp);
-		ist_complement(result,abs->nbV);
-	}
-	else {
-		ist_new(&result);
-		ist_complement(result,abs->nbV);
-	}
+		if (top == false) {
+			temp = ist_copy(S);
+			ist_complement(temp,abs->nbV);
+			result = ist_pre_of_transfer(temp, &t->transition[rule]);
+			ist_dispose(temp);
+			ist_complement(result,abs->nbV);
+		}
+		else {
+			ist_new(&result);
+			ist_complement(result,abs->nbV);
+		}
+	} else ist_new(&result);
 	return result;	
 }
 

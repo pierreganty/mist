@@ -34,6 +34,7 @@
 #include "laparser.h"
 #include "ist.h"
 
+
 /* For printing the error trace */
 void ist_put_path_on_screen_with_parameterized_initial_marking(ISTSharingTree * initial_marking,THeadListIST * list_ist, transition_system_t * rules) 
 {
@@ -295,9 +296,14 @@ void bound_values(ISTSharingTree * S, int *bound)
 ISTSharingTree *bounded_post_rule(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule,int*bound) 
 {
    ISTSharingTree *result = ist_symbolic_post_of_rules(S,abs,t,rule);
-   bound_values(result,bound);
-   ist_downward_closure(result);
-   ist_normalize(result);
+   printf("ca va bientot planter...\n");
+
+   if (ist_is_empty(result) == false) {
+      ist_checkup(result);
+      bound_values(result,bound);
+      ist_downward_closure(result);
+      ist_normalize(result);
+   }
    return result;
 }
 
@@ -377,7 +383,6 @@ boolean eec(system, abs, initial_marking, bad, lfp)
 			retval = true;
 			finished = true;
 		} else {
-			ist_dispose(abs_post_star);
 			ist_dispose(inter);
 		
 			printf("initial_marking\n");
@@ -391,12 +396,16 @@ boolean eec(system, abs, initial_marking, bad, lfp)
 				retval = false;
 				finished = true;
 			} else {
+				ist_dispose(abs_post_star);
 				ist_dispose(inter);
 				for (i = 0;i< system->limits.nbr_variables;i++)
 					++abs->bound[i];
 			}
 		}
 	}
+	printf("lfp=\n");
+	ist_write(*lfp);
+	
 	return retval;
 }
 
@@ -479,9 +488,14 @@ void ic4pn(system, initial_marking, bad)
 			} while(out == false);
 
 			/* we compute gamma(gfp) */
+			printf("On a calculer le plus grand point fixe\n");
+			ist_write(iterates);
+			
 			gamma_gfp = ist_concretisation(iterates,myabs);
 			ist_dispose(iterates);
 
+			ist_write(gamma_gfp);
+			
 			ist_complement(gamma_gfp,system->limits.nbr_variables);
 			tmp=ist_pre(gamma_gfp,system);
 			/* Now we should call:

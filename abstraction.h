@@ -47,6 +47,10 @@ transition_system_t *build_sys_using_abs(transition_system_t *sys, abstraction_t
 abstraction_t *refine_abs(abstraction_t *cur_abs, ISTSharingTree *S);
 ISTSharingTree *ist_abstraction(ISTSharingTree *S, abstraction_t *abs);
 
+
+ISTSharingTree *ist_symbolic_post_of_rules(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule);
+ISTSharingTree *ist_symbolic_post(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t);
+
 /* abstract operators */
 ISTSharingTree *ist_symbolic_post_of_rules(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule);
 ISTSharingTree *ist_abstract_post_of_rules(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule);
