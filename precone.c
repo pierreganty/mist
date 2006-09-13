@@ -583,7 +583,6 @@ ISTSharingTree *ist_pre_of_transfer(S, transition)
 	return Sol;
 }
 
-
 ISTSharingTree *ist_pre_of_rule_plus_transfer(Prec, transition)
 	ISTSharingTree *Prec;
 	transition_t *transition;
@@ -695,7 +694,7 @@ static ISTNode *PreOfRulesNode(node, nodetrans, LINK)
 /*
  * OUT OF ORDER : To update, we have to pass the system->tree_of_transitions
  */
-ISTSharingTree *ist_pre_of_rules (prec)
+ISTSharingTree *ist_pre_of_rules(prec)
 	ISTSharingTree *prec;
 {
 	struct LOC_ist_method  V;
@@ -834,7 +833,7 @@ ISTSharingTree *ist_pre(prec, system)
 	return pre_until_ith_rule;
 }
 
-ISTSharingTree *ist_post(forward_p, system)
+ISTSharingTree *ist_enumerative_post(forward_p, system)
 	ISTSharingTree *forward_p;
 	transition_system_t *system;
 {
@@ -850,9 +849,8 @@ ISTSharingTree *ist_post(forward_p, system)
 	/* Allocation of memory */
 	path = (ISTSon **)xmalloc((system->limits.nbr_variables)*sizeof(ISTSon *));
 	tuple = (ISTInterval **)xmalloc((system->limits.nbr_variables)*sizeof(ISTInterval *));
-	for (i = 0; i < system->limits.nbr_variables; ++i){
+	for (i = 0; i < system->limits.nbr_variables; ++i)
 		tuple[i] = ist_new_info();
-	}
 	/* 
 	 * Now, we will browse all the elems of forward_p
 	 * for each compute the post for all the rules and add
@@ -936,7 +934,7 @@ ISTSharingTree *ist_post(forward_p, system)
 	return res;
 }
 
-ISTSharingTree *ist_post_transition(forward_p, system, transition)
+ISTSharingTree *ist_enumerative_post_transition(forward_p, system, transition)
 	ISTSharingTree *forward_p;
 	transition_system_t *system;
 	int transition;

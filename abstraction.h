@@ -48,6 +48,7 @@ abstraction_t *refine_abs(abstraction_t *cur_abs, ISTSharingTree *S);
 ISTSharingTree *ist_abstraction(ISTSharingTree *S, abstraction_t *abs);
 
 /* abstract operators */
+ISTSharingTree *ist_symbolic_post_of_rules(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule);
 ISTSharingTree *ist_abstract_post_of_rules(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule);
 ISTSharingTree *ist_abstract_post(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t);
 ISTSharingTree *ist_abstract_post_star(ISTSharingTree * initial_marking, abstraction_t * abs, transition_system_t *t);

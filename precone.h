@@ -35,9 +35,9 @@ ISTSharingTree *ist_pre_of_transfer(ISTSharingTree *S, transition_t *transition)
 ISTSharingTree *ist_post_of_transfer(ISTSharingTree *S, transition_t *transition);
 ISTSharingTree *ist_pre_of_rule_plus_transfer(ISTSharingTree *Prec, transition_t *transition);
 /* Post operator only implemented for system with transfert */
-ISTSharingTree *ist_post(ISTSharingTree *forward_p, transition_system_t *system);
-ISTSharingTree *ist_post_transition(ISTSharingTree *forward_p, transition_system_t *system, int transition);
-/* Computation of the Pre ... with TransSharingTree */
+ISTSharingTree *ist_enumerative_post(ISTSharingTree *forward_p, transition_system_t *system);
+ISTSharingTree *ist_enumerative_post_transition(ISTSharingTree *forward_p, transition_system_t *system, int transition);
+/* Computation of the Pre ... with TransSharingTree (DEPRECATED) */
 ISTSharingTree *ist_pre_of_rules (ISTSharingTree *prec);
 /* Pre operator */
 ISTSharingTree *ist_pre(ISTSharingTree *S, transition_system_t *system);

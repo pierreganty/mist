@@ -35,7 +35,8 @@
 #include "ist.h"
 
 /* For printing the error trace */
-void ist_put_path_on_screen_with_parameterized_initial_marking(ISTSharingTree * initial_marking,THeadListIST * list_ist, transition_system_t * rules) {
+void ist_put_path_on_screen_with_parameterized_initial_marking(ISTSharingTree * initial_marking,THeadListIST * list_ist, transition_system_t * rules) 
+{
 	ISTSharingTree * S;
 	ISTSharingTree * post;
 	ISTSharingTree * Siter;
@@ -50,7 +51,7 @@ void ist_put_path_on_screen_with_parameterized_initial_marking(ISTSharingTree * 
 		i = 0;
 		Continue = 1;
 		while ((i < rules->limits.nbr_rules) && (Continue == 1)) {
-			post = ist_post_transition(S,rules,i);
+			post = ist_enumerative_post_transition(S,rules,i);
 			intersect = ist_intersection(post,Siter);
 			if (!ist_is_empty(intersect)) { 
 				printf(" --> %d",i);
@@ -291,8 +292,8 @@ void bound_values(ISTSharingTree * S, int *bound)
 			ist_assign_values_to_interval(N->Info,min(N->Info->Left,bound[i]),min(N->Info->Right,bound[i]));
 }
 
-ISTSharingTree *bounded_post_rule(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule,int*bound) {
-
+ISTSharingTree *bounded_post_rule(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule,int*bound) 
+{
    ISTSharingTree *result = ist_symbolic_post_of_rules(S,abs,t,rule);
    bound_values(result,bound);
    ist_downward_closure(result);
@@ -304,7 +305,7 @@ ISTSharingTree *bounded_post(ISTSharingTree *S, abstraction_t *abs, transition_s
 	ISTSharingTree *result;
 	ISTSharingTree *tmp;
 	ISTSharingTree *tmp2;
-	int i;
+	size_t i;
 	
 	ist_new(&result);
 	for(i = 0;i<t->limits.nbr_rules;i++) {
@@ -407,7 +408,7 @@ void ic4pn(system, initial_marking, bad)
 	transition_system_t *sysabs;
 	ISTSharingTree *lfp_eec, *gamma_gfp, *tmp, *safe, *iterates, *new_iterates, *abs_initial_marking, *abs_bad;
 	size_t i,j,nb_iteration;
-	boolean out, conclusive;
+	boolean out, conclusive, eec_conclusive;
 
 	/* Memory allocation */
 	myabs=(abstraction_t *)xmalloc(sizeof(abstraction_t));
@@ -439,13 +440,19 @@ void ic4pn(system, initial_marking, bad)
 		abs_initial_marking = ist_abstraction(initial_marking,myabs);
 		ist_write(abs_initial_marking);
 
-		if (eec(sysabs,myabs,abs_initial_marking,abs_bad,&lfp_eec)==true) {
+		eec_conclusive=eec(sysabs,myabs,abs_initial_marking,abs_bad,&lfp_eec);
+		ist_dispose(abs_initial_marking);
+		ist_dispose(abs_bad);
+
+		if (eec_conclusive==true) {
 			/* says "safe" because it is indeed safe */
 			puts("EEC concludes safe");
 			conclusive = true;
-		} else { /* refine */
+		} else { /* refine the abstraction */
+			puts("The EEC fixpoint");
+			ist_write(lfp_eec);
 
-			/* Compute safe as alpha( \neg bad /\ lfp_eec ) */
+			/* safe is given by \alpha( \neg bad /\ lfp_eec ) */
 			tmp = ist_copy(bad);
 			ist_complement(tmp,sysabs->limits.nbr_variables);
 			safe = ist_intersection(lfp_eec,tmp);
@@ -454,7 +461,7 @@ void ic4pn(system, initial_marking, bad)
 			ist_dispose(safe);
 			safe = tmp;
 
-			/* def of the first iterates of the gfp */
+			/* def of the first iterates of the gfp in the abstract */
 			iterates = safe;
 			/* compute the gfp for the abstraction */
 			do {
@@ -463,6 +470,7 @@ void ic4pn(system, initial_marking, bad)
 				new_iterates = ist_intersection(tmp,safe);
 				ist_dispose(tmp);
 
+				/* We remove the subsumed paths in iterates */
 				tmp = ist_remove_subsumed_paths(iterates,new_iterates);
 				out = ist_is_empty(tmp);
 				ist_dispose(tmp);
@@ -476,23 +484,24 @@ void ic4pn(system, initial_marking, bad)
 
 			ist_complement(gamma_gfp,system->limits.nbr_variables);
 			tmp=ist_pre(gamma_gfp,system);
-			ist_complement(tmp,system->limits.nbr_variables);
+			/* Now we should call:
+			 * ist_complement(tmp,system->limits.nbr_variables);
+			 * but since we will complement it again to test I /\ \neg gamma_gfp 
+			 * we postpone it
+			 */
 			ist_dispose(gamma_gfp);
 			gamma_gfp = tmp;
 
-			/* conclusive = true implies we have a negative instance */
+			/* conclusive = true implies initial_marking \nleq gamma_gfp */
 			tmp = ist_intersection(gamma_gfp,initial_marking);	
 			conclusive = (ist_is_empty(tmp)==true ? false : true);
-			ist_dispose(tmp);
 
-			/* We consider a new abstraction */
+			/* We build the next abstraction */
 			newabs=refine_abs(myabs,tmp);
 			ist_dispose(tmp);
 			release_abstraction(myabs);
 			myabs=newabs;
 		}
-		ist_dispose(abs_initial_marking);
-		ist_dispose(abs_bad);
 		/* We release the abstract system */
 		release_transition_system(sysabs);
 		++nb_iteration;
