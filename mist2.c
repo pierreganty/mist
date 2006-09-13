@@ -379,6 +379,7 @@ boolean eec(system, abs, initial_marking, bad, lfp)
 			ist_dispose(inter);
 		
 			printf("initial_marking\n");
+			ist_checkup(initial_marking);
 			ist_write(initial_marking);
 
 			bpost = bounded_post_star(initial_marking,abs,system,abs->bound);	
@@ -453,6 +454,7 @@ void ic4pn(system, initial_marking, bad)
 			conclusive = true;
 		} else { /* refine the abstraction */
 			puts("The EEC fixpoint");
+			ist_checkup(lfp_eec);
 			ist_write(lfp_eec);
 
 			/* safe is given by \alpha(\neg bad) /\ lfp_eec */
@@ -464,13 +466,25 @@ void ic4pn(system, initial_marking, bad)
 
 			/* def of the first iterates of the gfp in the abstract */
 			iterates = ist_copy(alpha_safe);
+			ist_checkup(alpha_safe);
+			ist_downward_closure(iterates);
+			ist_normalize(iterates);
+
 			puts("The gfp starts with.");
 			ist_write(iterates);
 			/* compute the gfp for the abstraction */
 			do {
 				tmp = abstract_pretild(iterates,myabs,sysabs);
+
+				_tmp=ist_copy(tmp);
+				ist_downward_closure(_tmp);
+				assert(ist_exact_subsumption_test(tmp,_tmp)==true);
+				ist_dispose(_tmp);
+				
 				new_iterates = ist_intersection(tmp,alpha_safe);
 				ist_dispose(tmp);
+				ist_downward_closure(new_iterates);
+				ist_normalize(new_iterates);
 
 				/* We remove the subsumed paths in iterates */
 				tmp = ist_remove_subsumed_paths(iterates,new_iterates);
