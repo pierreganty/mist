@@ -315,8 +315,6 @@ ISTSharingTree *bounded_post(ISTSharingTree *S, abstraction_t *abs, transition_s
 	
 	ist_new(&result);
 	for(i = 0;i<t->limits.nbr_rules;i++) {
-		printf("i=%d\n",i);
-		ist_write(S);
 		tmp = bounded_post_rule(S,abs,t,i,bound);
 		if (ist_is_empty(tmp) == false) {
 			tmp2 = ist_union(tmp,result);
@@ -335,9 +333,6 @@ ISTSharingTree *bounded_post_star(ISTSharingTree * initial_marking, abstraction_
 	ISTSharingTree *tmp2;
 
 
-	printf("initial_marking\n");
-	ist_write(initial_marking);
-	
 	result = ist_copy(initial_marking);
 	bound_values(result, abs->bound);
 	ist_normalize(result);
@@ -371,9 +366,6 @@ boolean eec(system, abs, initial_marking, bad, lfp)
 
 	ist_downward_closure(initial_marking);
 
-	printf("initial_marking\n");
-	ist_write(initial_marking);
-	
 	while (finished == false) {
 		abs_post_star = ist_abstract_post_star(initial_marking,abs,system);
 		inter = ist_intersection(abs_post_star,bad);
@@ -390,22 +382,20 @@ boolean eec(system, abs, initial_marking, bad, lfp)
 
 			bpost = bounded_post_star(initial_marking,abs,system,abs->bound);	
 			inter = ist_intersection(bpost,bad);
-			if (ist_is_empty(inter) == true) {
+			if (ist_is_empty(inter) == false) {
 				*lfp = abs_post_star;
-				ist_dispose(inter);
 				retval = false;
 				finished = true;
 			} else {
 				ist_dispose(abs_post_star);
-				ist_dispose(inter);
+				
 				for (i = 0;i< system->limits.nbr_variables;i++)
 					++abs->bound[i];
 			}
+			ist_dispose(bpost);
+			ist_dispose(inter);
 		}
 	}
-	printf("lfp=\n");
-	ist_write(*lfp);
-	
 	return retval;
 }
 
@@ -472,13 +462,12 @@ void ic4pn(system, initial_marking, bad)
 			safe=tmp;
 
 			/* def of the first iterates of the gfp in the abstract */
-			iterates = safe;
+			iterates = ist_copy(safe);
 			puts("The gfp starts with.");
 			ist_write(iterates);
 			/* compute the gfp for the abstraction */
 			do {
 				tmp = abstract_pretild(iterates,myabs,sysabs);
-				ist_dispose(iterates);
 				new_iterates = ist_intersection(tmp,safe);
 				ist_dispose(tmp);
 
@@ -521,8 +510,7 @@ void ic4pn(system, initial_marking, bad)
 
 
 			/* We build the next abstraction */
-			newabs=refine_abs(myabs,tmp);
-			ist_dispose(tmp);
+			newabs=refine_abs(myabs,gamma_gfp);
 			release_abstraction(myabs);
 			myabs=newabs;
 		}

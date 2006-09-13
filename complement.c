@@ -72,7 +72,6 @@ void ist_complement(ISTSharingTree *S, size_t dim)
 	ISTNode *Node, *new_node, *rnode;
 	ISTHeadListNode *list_node;
     ISTInterval **tuple;
-	ISTInterval *inter;
 	int i;	
 
 	if (ist_is_empty(S) == false) {
@@ -153,10 +152,8 @@ void ist_complement(ISTSharingTree *S, size_t dim)
 
 		/*First: construction of a tuple corresponding to N^{dim} */
 		tuple = (ISTInterval **) xmalloc(dim * sizeof(ISTInterval *));
-		inter = ist_build_interval(0,INFINITY);
 		for(i = 0;i < dim; i++) 
-			tuple[i] = ist_copy_interval(inter);
-		ist_dispose_info(inter);
+			tuple[i] = ist_build_interval(0,INFINITY);
 
 		/*adding tuple to S (which is empty) gives us an IST that contains any tuple over positive 
 		 * integer of dimension dim*/

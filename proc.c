@@ -81,6 +81,22 @@ inline void ist_dispose_info(interv)
 inline void ist_dispose_son(son)
 	ISTSon *son;
 {
+
+	/*debug code */
+	ISTSon *ptr;
+	ptr = st_SonsMemory;
+	while (ptr != NULL) {
+		if (ptr == son) {
+			printf("Warning Warning Warning....et encore un Warning\n");
+		} else ptr = ptr->Next;
+	}
+	
+	/*
+	 *
+	 * fin du code de debuggage
+	 * 
+	 */
+	
 	son->Next = st_SonsMemory;
 	st_SonsMemory = son;
 }
