@@ -78,7 +78,6 @@ void ist_complement(ISTSharingTree *S, size_t dim)
 	if (ist_is_empty(S) == false) {
 		/*First step: determinisation */	
 		ist_determinize(S);
-
 		/* Special case where we have only one variable */
 		if(dim<=1) {
 			/*complementation in itself */
@@ -140,8 +139,14 @@ void ist_complement(ISTSharingTree *S, size_t dim)
 				Node = Node->Next;
 			}
 			ist_remove_node_without_son(S);
-			/* if you ist_remove_sons and that after your list_node is empty, this is the case */
-			ist_adjust_second_condition(S);
+			/* Special case when true is given in input */
+			if (S->Root->FirstSon == NULL) {
+				while (S->LastLayer != NULL) {
+					ist_remove_last_layer(S);
+				}
+			} else 
+				/* if you ist_remove_sons and that after your list_node is empty, this is the case */
+				ist_adjust_second_condition(S);
 		}
 	} else {
 		/* complement of the empty sef of dimension dim*/

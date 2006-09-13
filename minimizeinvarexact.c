@@ -185,7 +185,7 @@ ISTSharingTree *ist_intersection_with_invar(ST1, invariant, height)
 			if (WITH->LastLayer->FirstNode != NULL)
 				stop = true;
 			else
-				ist_delete_last_layer(V.STR);
+				ist_remove_last_layer(V.STR);
 		}
 	}
 	ist_dispose_info(V.intersect);

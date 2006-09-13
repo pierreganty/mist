@@ -1050,7 +1050,7 @@ ISTLayer *ist_add_last_layer(ST)
 }
 
 
-void ist_delete_last_layer(ST)
+void ist_remove_last_layer(ST)
 	ISTSharingTree *ST;
 {
 	ISTLayer *temp;

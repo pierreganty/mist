@@ -154,6 +154,6 @@ ISTNode *ist_add_node(ISTLayer *layer, ISTNode *node) ;
 void ist_add_node_star(ISTLayer *layer, ISTNode *node) ;
 ISTLayer *ist_add_first_layer(ISTSharingTree *ST) ;
 ISTLayer *ist_add_last_layer(ISTSharingTree *ST) ;
-void ist_delete_last_layer(ISTSharingTree *ST) ;
+void ist_remove_last_layer(ISTSharingTree *ST) ;
 
 #endif

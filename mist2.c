@@ -415,7 +415,7 @@ void ic4pn(system, initial_marking, bad)
 {
 	abstraction_t *myabs, *newabs;
 	transition_system_t *sysabs;
-	ISTSharingTree *lfp_eec, *gamma_gfp, *tmp, *safe, *iterates, *new_iterates, *abs_initial_marking, *abs_bad;
+	ISTSharingTree *lfp_eec, *gamma_gfp, *tmp, *_tmp, *safe, *iterates, *new_iterates, *abs_initial_marking, *abs_bad;
 	size_t i,j,nb_iteration;
 	boolean out, conclusive, eec_conclusive;
 
@@ -461,17 +461,20 @@ void ic4pn(system, initial_marking, bad)
 			puts("The EEC fixpoint");
 			ist_write(lfp_eec);
 
-			/* safe is given by \alpha( \neg bad /\ lfp_eec ) */
+			/* safe is given by \alpha(\neg bad) /\ lfp_eec */
 			tmp = ist_copy(bad);
-			ist_complement(tmp,sysabs->limits.nbr_variables);
-			safe = ist_intersection(lfp_eec,tmp);
+			ist_complement(tmp,system->limits.nbr_variables);
+			safe = ist_abstraction(tmp,myabs);
 			ist_dispose(tmp);
-			tmp = ist_abstraction(safe,myabs);
+			tmp = ist_intersection(lfp_eec,safe);
 			ist_dispose(safe);
-			safe = tmp;
+			ist_dispose(lfp_eec);
+			safe=tmp;
 
 			/* def of the first iterates of the gfp in the abstract */
 			iterates = safe;
+			puts("The gfp starts with.");
+			ist_write(iterates);
 			/* compute the gfp for the abstraction */
 			do {
 				tmp = abstract_pretild(iterates,myabs,sysabs);
@@ -488,27 +491,34 @@ void ic4pn(system, initial_marking, bad)
 			} while(out == false);
 
 			/* we compute gamma(gfp) */
-			printf("On a calculer le plus grand point fixe\n");
+			printf("The gfp is\n");
 			ist_write(iterates);
 			
 			gamma_gfp = ist_concretisation(iterates,myabs);
 			ist_dispose(iterates);
 
+			printf("The gamma(gfp) is\n");
 			ist_write(gamma_gfp);
 			
 			ist_complement(gamma_gfp,system->limits.nbr_variables);
-			tmp=ist_pre(gamma_gfp,system);
-			/* Now we should call:
-			 * ist_complement(tmp,system->limits.nbr_variables);
-			 * but since we will complement it again to test I /\ \neg gamma_gfp 
-			 * we postpone it
-			 */
-			ist_dispose(gamma_gfp);
-			gamma_gfp = tmp;
 
 			/* conclusive = true implies initial_marking \nleq gamma_gfp */
 			tmp = ist_intersection(gamma_gfp,initial_marking);	
 			conclusive = (ist_is_empty(tmp)==true ? false : true);
+			ist_dispose(tmp);
+
+			tmp=ist_pre(gamma_gfp,system);
+			ist_dispose(gamma_gfp);
+			ist_complement(tmp,system->limits.nbr_variables);
+			gamma_gfp = tmp;
+			/* Now intersect not bad */
+			_tmp=ist_copy(bad);
+			ist_complement(_tmp,system->limits.nbr_variables);
+			tmp=ist_intersection(_tmp,gamma_gfp);
+			ist_dispose(gamma_gfp);
+			ist_dispose(_tmp);
+			gamma_gfp = tmp;
+
 
 			/* We build the next abstraction */
 			newabs=refine_abs(myabs,tmp);

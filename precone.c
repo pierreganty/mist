@@ -734,7 +734,7 @@ ISTSharingTree *ist_pre_of_rules(prec)
 			if (V.STR->LastLayer->FirstNode != NULL)
 				stop = true;
 			else
-				ist_delete_last_layer(V.STR);
+				ist_remove_last_layer(V.STR);
 		}
 	}
 	V.STR->NbElements = V.STR->Root->AuxI;

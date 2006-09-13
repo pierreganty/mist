@@ -129,7 +129,7 @@ ISTSharingTree *ist_compute_who_subsumes(ST1, ST2)
 		if (WITH->LastLayer->FirstNode != NULL)
 			stop = true;
 		else
-			ist_delete_last_layer(V.STR);
+			ist_remove_last_layer(V.STR);
 	}
 	if (ist_is_empty(V.STR) == false)
 		ist_normalize(V.STR);
@@ -228,7 +228,7 @@ ISTSharingTree *ist_compute_subsumed_paths(ST1, ST2)
 		if (WITH->LastLayer->FirstNode != NULL)
 			stop = true;
 		else
-			ist_delete_last_layer(V.STR);
+			ist_remove_last_layer(V.STR);
 	}
 	if (ist_is_empty(V.STR) == false)
 		ist_normalize(V.STR);
@@ -366,7 +366,7 @@ ISTSharingTree *ist_compute_subsumed_paths_within_tree(S)
 			if (WITH->LastLayer->FirstNode != NULL)
 				stop = true;
 			else
-				ist_delete_last_layer(V.STR);
+				ist_remove_last_layer(V.STR);
 		}
 	}
 	WITH->NbElements = WITH->Root->AuxI;
