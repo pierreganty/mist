@@ -377,9 +377,9 @@ ISTSharingTree *ist_abstract_post_of_rules(ISTSharingTree * S, abstraction_t * a
 	return result;
 }
 
-ISTSharingTree *ist_abstract_post(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t) {
-
-	int i;
+ISTSharingTree *ist_abstract_post(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t) 
+{
+	size_t i;
 	ISTSharingTree * result;
 	ISTSharingTree * tmp;
 	ISTSharingTree * tmp2;
@@ -394,9 +394,8 @@ ISTSharingTree *ist_abstract_post(ISTSharingTree * S, abstraction_t * abs, trans
 			ist_dispose(tmp);
 			ist_dispose(result);
 			result = tmp2;
-		} else {
+		} else 
 			ist_dispose(tmp);
-		}
 	}
 	return result;
 }
