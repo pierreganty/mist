@@ -29,6 +29,6 @@
  * This module aims at verifying that an IST respects his definition
  */
 
-void ist_checkup(ISTSharingTree *S) ;
+boolean ist_checkup(ISTSharingTree *S) ;
 
 #endif

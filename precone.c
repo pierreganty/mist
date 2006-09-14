@@ -92,33 +92,25 @@ ISTNode *PostOfTransfer(ISTNode *node,ISTSharingTree *STR, ISTLayer * rlayer, IS
 	return rnode;	  
 }
 
-ISTSharingTree *ist_post_of_transfer(S, transition)
+ISTSharingTree *ist_post_of_transfer(S, transfers)
 	ISTSharingTree *S;
-	transition_t *transition;
+	transfers_t *transfers;
 {
-	size_t i;
-	ISTSharingTree *STInt1, *STInt2, *Sol;
+	ISTSharingTree *STInt1;
 	ISTLayer * rlayer;
 	ISTSon * s;
 	ISTInterval inter;
 
-	ist_new(&Sol);
+	ist_new(&STInt1);
 	if (ist_is_empty(S) == false) {
-		for (i=0; i < transition->nbr_transfers; ++i){
-			ist_new_memo1_number();
-			ist_new(&STInt1);
-			rlayer = ist_add_last_layer(STInt1);
-			ist_assign_values_to_interval(&inter,0,0);
-			for(s = S->Root->FirstSon; s != NULL;s = s->Next)
-				ist_add_son(STInt1->Root,PostOfTransfer(s->Son,STInt1,rlayer,inter,0,transition->transfers[i].origin,transition->transfers[i].target));
-			ist_normalize(STInt1);
-			STInt2=ist_union(STInt1,Sol);
-			ist_dispose(Sol);
-			ist_dispose(STInt1);
-			Sol=STInt2;
-		}
+		ist_new_memo1_number();
+		rlayer = ist_add_last_layer(STInt1);
+		ist_assign_values_to_interval(&inter,0,0);
+		for(s = S->Root->FirstSon; s != NULL;s = s->Next)
+			ist_add_son(STInt1->Root,PostOfTransfer(s->Son,STInt1,rlayer,inter,0,transfers->origin,transfers->target));
+		ist_normalize(STInt1);
 	}
-	return Sol;
+	return STInt1;
 }
 
 
@@ -515,7 +507,7 @@ ISTSharingTree *ist_intersection_with_formula_transfer(ST1, Trans, Value)
 
 
 
-ISTSharingTree *ist_pre_of_transfer(S, transition)
+ISTSharingTree *ist_pre_of_all_transfer(S, transition)
 	ISTSharingTree *S;
 	transition_t *transition;
 {
@@ -605,7 +597,7 @@ ISTSharingTree *ist_pre_of_rule_plus_transfer(Prec, transition)
 				 * the second condition */
 				ist_adjust_second_condition(STInt);
 			}
-			Temp = ist_pre_of_transfer(STInt, transition);
+			Temp = ist_pre_of_all_transfer(STInt, transition);
 			ist_dispose(STInt);
 			STInt = Temp;
 		}

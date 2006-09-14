@@ -89,7 +89,7 @@ ISTSharingTree *ist_concretisation(ISTSharingTree *S, abstraction_t *abs)
 			}
 		}
 		/* Computation of the concrete values */
-		temp2 = ist_pre_of_transfer(temp,t);
+		temp2 = ist_pre_of_all_transfer(temp,t);
 		ist_dispose(temp);
 		for(i=0; i < abs->nbV;i++) 
 			xfree(t->transfers[i].origin);

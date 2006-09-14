@@ -383,26 +383,46 @@ static boolean mismatch_in_counting_fathers(S)
     return stop;
 }  
 
-void ist_checkup(S) 
+boolean ist_checkup(S) 
     ISTSharingTree *S; 
 { 
-	if (first_cond_is_violated(S)) 
+	boolean retval=true;
+	if (first_cond_is_violated(S)) {
 		err_msg("Error: First Cond violated!\n"); 
-	if (second_cond_is_violated(S)) 
+		retval=false;
+	}
+	if (second_cond_is_violated(S)) {
 		err_msg("Error: Second Cond violated!\n"); 
-	if (exists_layers_not_ordered(S)) 
+		retval=false;
+	}
+	if (exists_layers_not_ordered(S)) {
 		err_msg("Error: Non-ordered nodes in a layer!\n"); 
-	if (exists_irrellevant_info(S)) 
+		retval=false;
+	}
+	if (exists_irrellevant_info(S)) {
 		err_msg("Error: Irrelevant info in node!\n"); 
-	if (exists_sons_not_ordered(S)) 
+		retval=false;
+	}
+	if (exists_sons_not_ordered(S)) {
 		err_msg("Error: Non-ordered sons!\n"); 
-	if (exists_node_without_son(S)) 
+		retval=false;
+	}
+	if (exists_node_without_son(S)) {
 		err_msg("Error: Node without sons!\n"); 
-	if (exists_node_without_father(S)) 
+		retval=false;
+	}
+	if (exists_node_without_father(S)) {
 		err_msg("Error: Son without father!\n"); 
-	if (exists_son_twice(S)) 
+		retval=false;
+	}
+	if (exists_son_twice(S)) {
 		err_msg("Error: A node with two pointers to the same node!\n"); 
-	if (mismatch_in_counting_fathers(S)) 
+		retval=false;
+	}
+	if (mismatch_in_counting_fathers(S)) {
 		err_msg("Error: NbFathers not handled properly!\n"); 
+		retval=false;
+	}
 	ist_stat(S);
+	return retval;
 }

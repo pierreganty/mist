@@ -131,14 +131,16 @@ ISTSharingTree *ist_abstraction(S,abs)
 			}
 		}
 		/* Computation of the abstract values */
-		temp2 = ist_post_of_transfer(temp,t);
-		ist_dispose(temp);
+		for(i=0; i<t->nbr_transfers;++i) {
+			temp2 = ist_post_of_transfer(temp,&t->transfers[i]);
+			ist_dispose(temp);
+			temp = temp2;
+		}
 		for(i=0; i < abs->nbV;i++) 
 			xfree(t->transfers[i].origin);
 		xfree(t);	
 		/* projection to only keep the concrete variables */
-		mask = (integer16 *) xmalloc((abs->nbConcreteV + \
-					abs->nbV+1) * sizeof(integer16));
+		mask = (integer16 *) xmalloc((abs->nbConcreteV+abs->nbV+1)*sizeof(integer16));
 		for(i = 0; i < abs->nbConcreteV;i++) 
 			mask[i] = 0;
 		/* i = abs->nbConcreteV */
@@ -481,7 +483,7 @@ ISTSharingTree * abstract_place_pretild_rule(ISTSharingTree * S, abstraction_t *
 		if (top == false) {
 			temp = ist_copy(S);
 			ist_complement(temp,abs->nbV);
-			result = ist_pre_of_transfer(temp, &t->transition[rule]);
+			result = ist_pre_of_all_transfer(temp, &t->transition[rule]);
 			ist_dispose(temp);
 			ist_complement(result,abs->nbV);
 		}
