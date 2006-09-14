@@ -53,8 +53,7 @@ void ist_adjust_first_condition(S)
 				SaveN = CurN;
 				CurN = CurN->Next;
 				ist_remove_node(CurLayer, SaveN);
-			}
-			else {
+			} else {
 				CopyN = ist_create_node(CurN->Info);
 				val = CurN->FirstSon->Son->Info;
 				CopyS = ist_create_node(val);

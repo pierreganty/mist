@@ -274,13 +274,38 @@ void mist_cmdline_options_handle(int argc, char *argv[ ])
 		err_quit("Missing filename");
 	}
 }
+
+//the list of nodes needs to be sorted
 void ist_downward_closure(ISTSharingTree * S) {
 	ISTLayer *L;
-	ISTNode *N;
+	ISTNode *N, *_N;
+	boolean finished;
 
-	for(L=S->FirstLayer;L!= S->LastLayer;L = L->Next) 
-		for(N=L->FirstNode; N!= NULL;N = N->Next)
-			ist_assign_values_to_interval(N->Info,0,N->Info->Right);
+	for(L=S->FirstLayer;L!= S->LastLayer;L = L->Next) {
+		finished = false;
+		while( finished == false) {
+			_N=NULL;
+			N=L->FirstNode;
+			while(N!=NULL){
+				if (N->Info->Left != 0)
+					break;
+				_N=N;
+				N=N->Next;
+			}
+			if (N == NULL)
+				finished = true;
+			else {
+				if (_N == NULL) {
+					ist_assign_values_to_interval(N->Info,0,N->Info->Right);
+				} else {
+					_N->Next = N->Next;
+					N->Next = NULL;
+					ist_assign_values_to_interval(N->Info,0,N->Info->Right);
+					ist_add_node_star(L,N);
+				}
+			}
+		}
+	}
 }
 
 void bound_values(ISTSharingTree * S, int *bound)
@@ -468,9 +493,12 @@ void ic4pn(system, initial_marking, bad)
 
 			/* def of the first iterates of the gfp in the abstract */
 			iterates = ist_copy(alpha_safe);
-			ist_checkup(alpha_safe);
+			puts("Avant dc");
+			ist_checkup(iterates);
 			ist_downward_closure(iterates);
 			ist_normalize(iterates);
+			puts("Après dc");
+			ist_checkup(iterates);
 
 			puts("The gfp starts with.");
 			ist_write(iterates);
