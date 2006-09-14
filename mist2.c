@@ -275,42 +275,6 @@ void mist_cmdline_options_handle(int argc, char *argv[ ])
 	}
 }
 
-//the list of nodes needs to be sorted
-/*void ist_downward_closure(ISTSharingTree * S) {
-	ISTLayer *L;
-	ISTNode *N, *_N;
-	boolean finished;
-
-	for(L=S->FirstLayer;L!= S->LastLayer;L = L->Next) {
-		finished = false;
-		while(finished == false) {
-			_N=NULL;
-			N=L->FirstNode;
-			while(N!=NULL){
-				if (N->Info->Left != 0)
-					break;
-				_N=N;
-				N=N->Next;
-			}
-			if (N == NULL)
-				finished = true;
-			else {
-				if (_N == NULL) {
-					ist_assign_values_to_interval(N->Info,0,N->Info->Right);
-				} else {
-					_N->Next = N->Next;
-					if (L->LastNode == N)
-						L->LastNode = _N;
-					N->Next = NULL;
-					ist_assign_values_to_interval(N->Info,0,N->Info->Right);
-					ist_add_node_star(L,N);
-				}
-			}
-		}
-	}
-}
-*/
-
 static ISTNode *Downward_closure(node, LINK)
 	ISTNode *node;
 	struct LOC_ist_method  *LINK;
@@ -383,7 +347,6 @@ ISTSharingTree *bounded_post_rule(ISTSharingTree * S, abstraction_t * abs, trans
 {
    ISTSharingTree *result;
    ISTSharingTree * tmp = ist_symbolic_post_of_rules(S,abs,t,rule);
-   printf("ca va bientot planter...\n");
    if (ist_is_empty(tmp) == false) {
       ist_checkup(tmp);
       bound_values(tmp,bound);
@@ -468,9 +431,7 @@ boolean eec(system, abs, initial_marking, bad, lfp)
 		} else {
 			ist_dispose(inter);
 		
-			printf("downward_closed_initial_marking\n");
 			assert(ist_checkup(downward_closed_initial_marking)==true);
-			ist_write(downward_closed_initial_marking);
 
 			bpost = bounded_post_star(downward_closed_initial_marking,abs,system,abs->bound);	
 			inter = ist_intersection(bpost,bad);
@@ -531,12 +492,8 @@ void ic4pn(system, initial_marking, bad)
 		sysabs=build_sys_using_abs(system,myabs);
 		/* We abstract bad and initial_marking for eec */	
 		alpha_bad = ist_abstraction(bad,myabs);
-		puts("alpha(bad)");
-		ist_write(alpha_bad);
 		assert(ist_checkup(alpha_bad)==true);
 		alpha_initial_marking = ist_abstraction(initial_marking,myabs);
-		puts("alpha(initial_marking)");
-		ist_write(alpha_initial_marking);
 		assert(ist_checkup(alpha_initial_marking)==true);
 
 		eec_conclusive=eec(sysabs,myabs,alpha_initial_marking,alpha_bad,&lfp_eec);
@@ -545,14 +502,13 @@ void ic4pn(system, initial_marking, bad)
 
 		if (eec_conclusive==true) {
 			/* says "safe" because it is indeed safe */
-			puts("EEC concludes safe with the abstraction");
-			print_abstraction(myabs);
+//			puts("EEC concludes safe with the abstraction");
+//			print_abstraction(myabs);
 			conclusive = true;
 		} else { /* refine the abstraction */
-			print_abstraction(myabs);
-			puts("The EEC fixpoint");
+//			print_abstraction(myabs);
+//			puts("The EEC fixpoint");
 			assert(ist_checkup(lfp_eec)==true);
-			ist_write(lfp_eec);
 
 
 			/* safe is given by \alpha(\neg bad) /\ lfp_eec */
@@ -571,8 +527,6 @@ void ic4pn(system, initial_marking, bad)
 			ist_normalize(iterates);
 			assert(ist_checkup(iterates)==true);
 
-			puts("gfp, iterates nr.0");
-			ist_write(iterates);
 			/* compute the gfp for the abstraction */
 			do {
 				assert(ist_checkup(iterates)==true);
@@ -603,15 +557,11 @@ void ic4pn(system, initial_marking, bad)
 			} while(out == false);
 
 			/* we compute gamma(gfp) */
-			puts("gfp, final iterates");
-			ist_write(iterates);
 			assert(ist_checkup(iterates)==true);
 			
 			gamma_gfp = ist_concretisation(iterates,myabs);
 			ist_dispose(iterates);
 
-			puts("gamma(gfp)");
-			ist_write(gamma_gfp);
 			assert(ist_checkup(gamma_gfp)==true);
 
 			ist_complement(gamma_gfp,system->limits.nbr_variables);

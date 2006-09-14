@@ -29,12 +29,6 @@ void ist_add_variables(ISTSharingTree *S,integer16 nb_var) {
 	ISTNode * N_tmp;
 	ISTInterval * inter;
 
-	printf("ist_add_variables: entree\n");
-	if (ist_is_empty(S) == true)
-		printf("S est vide\n");
-	else
-		printf("S est pas vide\n");
-	
 	inter = ist_build_interval(0,0);
 	N = S->LastLayer->FirstNode;
 	N->Info = inter;
