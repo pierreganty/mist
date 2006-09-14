@@ -276,7 +276,7 @@ void mist_cmdline_options_handle(int argc, char *argv[ ])
 }
 
 //the list of nodes needs to be sorted
-void ist_downward_closure(ISTSharingTree * S) {
+/*void ist_downward_closure(ISTSharingTree * S) {
 	ISTLayer *L;
 	ISTNode *N, *_N;
 	boolean finished;
@@ -299,6 +299,8 @@ void ist_downward_closure(ISTSharingTree * S) {
 					ist_assign_values_to_interval(N->Info,0,N->Info->Right);
 				} else {
 					_N->Next = N->Next;
+					if (L->LastNode == N)
+						L->LastNode = _N;
 					N->Next = NULL;
 					ist_assign_values_to_interval(N->Info,0,N->Info->Right);
 					ist_add_node_star(L,N);
@@ -306,6 +308,64 @@ void ist_downward_closure(ISTSharingTree * S) {
 			}
 		}
 	}
+}
+*/
+
+static ISTNode *Downward_closure(node, LINK)
+	ISTNode *node;
+	struct LOC_ist_method  *LINK;
+{
+	ISTSon *s;
+	ISTNode *rnode;
+	ISTInterval i;
+	
+	if (ist_not_equal_interval(node->Info,&IST_end_of_list)) {
+		i.Left = 0;
+		i.Right = node->Info->Right;
+		rnode = ist_create_node(&i);
+		node->AuxI = ist_get_magic_number();
+		LINK->rlayer = LINK->rlayer->Next;
+		if (LINK->rlayer == NULL)
+			LINK->rlayer = ist_add_last_layer(LINK->STR);
+		s = node->FirstSon;
+		while (s != NULL) {
+			if (s->Son->AuxI == ist_get_magic_number())
+				ist_add_son(rnode, s->Son->AuxP);
+			else
+				ist_add_son(rnode, Downward_closure(s->Son, LINK));
+			s = s->Next;
+		}
+		LINK->rlayer = LINK->rlayer->Previous;
+	} else {
+		rnode = ist_create_node(node->Info);
+		node->AuxI = ist_get_magic_number();
+	}
+	node->AuxP = ist_add_node(LINK->rlayer, rnode);
+	return (node->AuxP);
+}
+
+
+/* This function returns the copy of the IST provided in parameter */
+ISTSharingTree *ist_downward_closure(ST)
+	ISTSharingTree *ST;
+{
+	struct LOC_ist_method  V;
+	ISTSon *s;
+	ISTNode *rchild;
+
+	ist_new_magic_number();
+	ist_new(&V.STR);
+	if (!ist_is_empty(ST)) {
+		V.rlayer = ist_add_last_layer(V.STR);
+		s = ST->Root->FirstSon;
+		while (s != NULL) {
+			rchild = Downward_closure(s->Son, &V);
+			ist_add_son(V.STR->Root, rchild);
+			s = s->Next;
+		}
+	}
+	V.STR->NbElements = ST->NbElements;
+	return V.STR;
 }
 
 void bound_values(ISTSharingTree * S, int *bound)
@@ -321,14 +381,16 @@ void bound_values(ISTSharingTree * S, int *bound)
 
 ISTSharingTree *bounded_post_rule(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule,int*bound) 
 {
-   ISTSharingTree *result = ist_symbolic_post_of_rules(S,abs,t,rule);
+   ISTSharingTree *result;
+   ISTSharingTree * tmp = ist_symbolic_post_of_rules(S,abs,t,rule);
    printf("ca va bientot planter...\n");
-   if (ist_is_empty(result) == false) {
-      ist_checkup(result);
-      bound_values(result,bound);
-      ist_downward_closure(result);
+   if (ist_is_empty(tmp) == false) {
+      ist_checkup(tmp);
+      bound_values(tmp,bound);
+      result = ist_downward_closure(tmp);
+	  ist_dispose(tmp);
       ist_normalize(result);
-   }
+   } else result = tmp;
    return result;
 }
 
@@ -386,16 +448,17 @@ boolean eec(system, abs, initial_marking, bad, lfp)
 	boolean retval;
 	ISTSharingTree * abs_post_star;
 	ISTSharingTree * inter;
+	ISTSharingTree * downward_closed_initial_marking;
 	boolean finished = false;
 	ISTSharingTree * bpost;
 	size_t i;
 
-	ist_downward_closure(initial_marking);
-	ist_normalize(initial_marking);
-	ist_checkup(initial_marking);
+	downward_closed_initial_marking = ist_downward_closure(initial_marking);
+	ist_normalize(downward_closed_initial_marking);
+	ist_checkup(downward_closed_initial_marking);
 	
 	while (finished == false) {
-		abs_post_star = ist_abstract_post_star(initial_marking,abs,system);
+		abs_post_star = ist_abstract_post_star(downward_closed_initial_marking,abs,system);
 		inter = ist_intersection(abs_post_star,bad);
 		if (ist_is_empty(inter) == true) {
 			ist_dispose(inter);
@@ -405,11 +468,11 @@ boolean eec(system, abs, initial_marking, bad, lfp)
 		} else {
 			ist_dispose(inter);
 		
-			printf("initial_marking\n");
-			ist_checkup(initial_marking);
-			ist_write(initial_marking);
+			printf("downward_closed_initial_marking\n");
+			ist_checkup(downward_closed_initial_marking);
+			ist_write(downward_closed_initial_marking);
 
-			bpost = bounded_post_star(initial_marking,abs,system,abs->bound);	
+			bpost = bounded_post_star(downward_closed_initial_marking,abs,system,abs->bound);	
 			inter = ist_intersection(bpost,bad);
 			if (ist_is_empty(inter) == false) {
 				*lfp = abs_post_star;
@@ -424,6 +487,7 @@ boolean eec(system, abs, initial_marking, bad, lfp)
 			ist_dispose(inter);
 		}
 	}
+	ist_dispose(downward_closed_initial_marking);
 	return retval;
 }
 
@@ -433,7 +497,7 @@ void ic4pn(system, initial_marking, bad)
 {
 	abstraction_t *myabs, *newabs;
 	transition_system_t *sysabs;
-	ISTSharingTree *lfp_eec, *gamma_gfp, *tmp, *_tmp, *safe, *alpha_safe, *iterates, *new_iterates, *alpha_initial_marking, *alpha_bad;
+	ISTSharingTree *lfp_eec, *gamma_gfp, *tmp, *_tmp, *__tmp,*safe, *alpha_safe, *iterates, *new_iterates, *alpha_initial_marking, *alpha_bad;
 	size_t i,j,nb_iteration;
 	boolean out, conclusive, eec_conclusive;
 
@@ -495,7 +559,9 @@ void ic4pn(system, initial_marking, bad)
 			iterates = ist_copy(alpha_safe);
 			puts("Avant dc");
 			ist_checkup(iterates);
-			ist_downward_closure(iterates);
+			tmp = ist_downward_closure(iterates);
+			ist_dispose(iterates);
+			iterates = tmp;
 			ist_normalize(iterates);
 			puts("Après dc");
 			ist_checkup(iterates);
@@ -507,14 +573,18 @@ void ic4pn(system, initial_marking, bad)
 				tmp = abstract_pretild(iterates,myabs,sysabs);
 
 				_tmp=ist_copy(tmp);
-				ist_downward_closure(_tmp);
+				__tmp = ist_downward_closure(_tmp);
+				ist_dispose(_tmp);
+				_tmp = __tmp;
 				assert(ist_exact_subsumption_test(tmp,_tmp)==true);
 				ist_dispose(_tmp);
 				
 				new_iterates = ist_intersection(tmp,alpha_safe);
 				ist_checkup(new_iterates);
 				ist_dispose(tmp);
-				ist_downward_closure(new_iterates);
+				tmp = ist_downward_closure(new_iterates);
+				ist_dispose(new_iterates);
+				new_iterates = tmp;
 				ist_normalize(new_iterates);
 
 				/* We remove the subsumed paths in iterates */
