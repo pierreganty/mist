@@ -354,6 +354,9 @@ ISTSharingTree *bounded_post_rule(ISTSharingTree * S, abstraction_t * abs, trans
       result = ist_downward_closure(tmp);
 	  ist_dispose(tmp);
       ist_normalize(result);
+	  tmp = ist_minimal_form(result);
+	  ist_dispose(result);
+	  result = tmp;
    } else result = tmp;
    return result;
 }
@@ -371,7 +374,8 @@ ISTSharingTree *bounded_post(ISTSharingTree *S, abstraction_t *abs, transition_s
 			tmp2 = ist_union(tmp,result);
 			ist_dispose(tmp);
 			ist_dispose(result);
-			result = tmp2;
+			result = ist_minimal_form(tmp2);
+			ist_dispose(tmp2);
 		} else 
 			ist_dispose(tmp);
 	}
@@ -394,7 +398,8 @@ ISTSharingTree *bounded_post_star(ISTSharingTree * initial_marking, abstraction_
 			tmp2 = ist_union(tmp,result);
 			ist_dispose(tmp);
 			ist_dispose(result);
-			result = tmp2;
+			result = ist_minimal_form(tmp2);
+			ist_dispose(tmp2);
 		} else {
 			ist_dispose(tmp);
 			break;

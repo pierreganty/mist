@@ -80,7 +80,7 @@ ISTSharingTree *ist_concretisation(ISTSharingTree *S, abstraction_t *abs)
 				if (abs->A[i][j] != 0) {
 					/* Place j is not ignored by the abstraction */
 					in_abs[j] = true;
-				}
+				} else t->transfers[i].origin[abs->nbV + j] = 0;
 			}
 		}
 		/* Computation of the concrete values */
