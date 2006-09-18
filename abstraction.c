@@ -79,12 +79,25 @@ void print_abstraction(abs)
 
 }
 
-boolean is_layer_unbounded(layer)
+boolean exists_unbounded_node(layer)
 	ISTLayer *layer;
 {
 	ISTNode *Node=layer->FirstNode;
 	while(Node!=NULL){
 		if(ist_is_unbounded(Node->Info)==true) {
+			return true;
+		}
+		Node=Node->Next;
+	}
+	return false;
+}
+
+boolean exists_bounded_node(layer)
+	ISTLayer *layer;
+{
+	ISTNode *Node=layer->FirstNode;
+	while(Node!=NULL){
+		if(ist_is_unbounded(Node->Info)==false) {
 			return true;
 		}
 		Node=Node->Next;
@@ -98,17 +111,10 @@ ISTSharingTree *ist_abstraction(S,abs)
 {
 	size_t i, j;
 	ISTSharingTree *temp, *temp2, *result;
-	ISTLayer * L;
-	ISTNode * N;
 	transition_t * t = (transition_t *)xmalloc(sizeof(transition_t));
-	boolean * in_abs = (boolean *)xmalloc(abs->nbConcreteV * sizeof(boolean));
 	int *mask;
 
 	if (ist_is_empty(S) == false) {
-		/* initialisation */
-		for(i = 0; i < abs->nbConcreteV;i++)
-			in_abs[i] = false;
-	
 		/* adding of abstract variables */
 		temp = ist_copy(S);
 		ist_add_variables(temp,abs->nbV);
@@ -119,16 +125,11 @@ ISTSharingTree *ist_abstraction(S,abs)
 		t->nbr_transfers = abs->nbV;	
 		for(i=0;i< abs->nbV;i++) {
 			t->transfers[i].target = abs->nbConcreteV+i;
-			t->transfers[i].origin = (integer16 *) xmalloc
-				((abs->nbConcreteV + abs->nbV) * sizeof(integer16)); 
+			t->transfers[i].origin = (integer16 *)xmalloc((abs->nbConcreteV + abs->nbV)*sizeof(integer16)); 
 			for(j=0;j < abs->nbConcreteV;j++) 
-				if (abs->A[i][j] != 0) {
-					t->transfers[i].origin[j] = abs->A[i][j];
-					in_abs[j] = true;
-				}
-			for(j=0; j < abs->nbV;j++) {
+				t->transfers[i].origin[j] = abs->A[i][j];
+			for(j=0; j < abs->nbV;j++)
 				t->transfers[i].origin[abs->nbConcreteV + j] = 0;
-			}
 		}
 		/* Computation of the abstract values */
 		for(i=0; i<t->nbr_transfers;++i) {
@@ -151,18 +152,6 @@ ISTSharingTree *ist_abstraction(S,abs)
 		result = ist_projection(temp2,mask);
 		ist_dispose(temp2);
 		xfree(mask);
-		/*
-		 * assignment of variables not in abstraction (viz. each entry of the column equals to 0)
-		 */
-		for(i = 0, L = result->FirstLayer; i < abs->nbV; i++,L=L->Next) {
-			if (in_abs[i] == false) {
-				N = L->FirstNode;
-				while (N != NULL) {
-					ist_assign_values_to_interval(N->Info,0,INFINITY);
-					N = N->Next;
-				}
-			}		
-		}
 	} else ist_new(&result);
 	return result;
 }
@@ -190,6 +179,8 @@ abstraction_t *refine_abs(cur_abs, S)
 			retval->A[i][j]=0;
 		retval->bound[i]=1;
 	}
+	/* We separate the places bounded in all paths from the places
+	 * unbounded in some paths */
 	/* current : pointer in retval, i : pointer in cur_abs */
 	for(current=0,i=0;i<cur_abs->nbV && current<retval->nbV;++i,++current){
 		/* Did we add a new line ? */
@@ -205,8 +196,9 @@ abstraction_t *refine_abs(cur_abs, S)
 				/* if haven't added a new line yet */
 				if(current == i){
 					if (before_non_null_entry==false){
-						if(is_layer_unbounded(layer) != first_bound ){
-							/* We add a new line. We split unbounded from bounded places in cur_abs->A[i] */
+						if(exists_unbounded_node(layer) != first_bound ){
+							/* We add a new line. We split unbounded from
+							 * bounded places in cur_abs->A[i] */
 							nl_added=true;
 							retval->A[current][j]=0;
 							retval->A[current+1][j]=1;
@@ -214,7 +206,7 @@ abstraction_t *refine_abs(cur_abs, S)
 						first_non_singleton_row=i;
 					} else {
 						/* For the 1st non null entry. We remember if it is unbounded or no */
-						first_bound = is_layer_unbounded(layer);
+						first_bound = exists_unbounded_node(layer);
 						before_non_null_entry=false;
 					}
 				}
@@ -227,13 +219,62 @@ abstraction_t *refine_abs(cur_abs, S)
 	}
 	/* If cur_abs->A == retval->A */
 	if (current==i){
+		/* We reinitialize retval to 0 */
+		for(i=0;i<retval->nbV;++i){
+			retval->A[i]=(integer16 *)xmalloc(cur_abs->nbConcreteV*sizeof(integer16));
+			/* The new abstraction is initialized w/ 0's everywhere */
+			for(j=0;j<cur_abs->nbConcreteV;++j)
+				retval->A[i][j]=0;
+			retval->bound[i]=1;
+		}
+		/* We separate the places bounded in some path from the places
+		 * unbounded in all paths */
+		/* current : pointer in retval, i : pointer in cur_abs */
+		for(current=0,i=0;i<cur_abs->nbV && current<retval->nbV;++i,++current){
+			/* Did we add a new line ? */
+			nl_added=false;
+			/* Is i before the first non null entry ? */
+			before_non_null_entry=true;
+			/* We refine according to the value in S */
+			layer = S->FirstLayer;
+			for(j=0;j<cur_abs->nbConcreteV;++j){
+				if(cur_abs->A[i][j] == 1) {
+					/* we again copy the line */
+					retval->A[current][j]=1;
+					/* if haven't added a new line yet */
+					if(current == i){
+						if (before_non_null_entry==false){
+							if(exists_bounded_node(layer) != first_bound ){
+								/* We add a new line. We split unbounded from
+								 * bounded places in cur_abs->A[i] */
+								nl_added=true;
+								retval->A[current][j]=0;
+								retval->A[current+1][j]=1;
+							}
+							first_non_singleton_row=i;
+						} else {
+							/* For the 1st non null entry. We remember if it is
+							 * unbounded or no */
+							first_bound = exists_bounded_node(layer);
+							before_non_null_entry=false;
+						}
+					}
+				}
+				layer=layer->Next;
+			}
+			if(nl_added == true)
+				++current;
+		}
+	}
+	/* If cur_abs->A == retval->A */
+	if(current==i){
+		puts("DUMB");
 		for(j=0;cur_abs->A[first_non_singleton_row][j]==0;++j);
 		retval->A[first_non_singleton_row][j]=0;
 		retval->A[current][j]=1;
 	}
 	return retval;
 }
-
 
 ISTSharingTree *ist_symbolic_post_of_rules(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule) 
 {
@@ -283,9 +324,6 @@ ISTSharingTree *ist_symbolic_post_of_rules(ISTSharingTree * S, abstraction_t * a
 */
 	//If the IST is not empty, we apply the effect of the function
 	if (ist_is_empty(result) == false) {
-
-		ist_checkup(result);
-		
 		for (i = 0, L = result->FirstLayer; i < abs->nbV; i++, L = L->Next) {
 			for(N = L->FirstNode;N != NULL;N=N->Next) {
 					ist_assign_values_to_interval(N->Info, 
@@ -393,7 +431,7 @@ ISTSharingTree *ist_abstract_post_star(ISTSharingTree * initial_marking, abstrac
 	S = ist_copy(initial_marking);
 	while (true) {
 		tmp = ist_abstract_post(S,abs,t);
-		if ( ist_exact_subsumption_test(tmp,S) == false) {		
+		if (ist_exact_subsumption_test(tmp,S) == false) {		
 			tmp2 = ist_union(tmp,S);
 			ist_dispose(S);
 			ist_dispose(tmp);
@@ -409,7 +447,6 @@ ISTSharingTree *ist_abstract_post_star(ISTSharingTree * initial_marking, abstrac
 /*
  * apply the (0,...,k,INFINITY) abstraction
  */
-
 void abstract_bound(ISTSharingTree *S, abstraction_t * abs) 
 {
 	ISTLayer * L;
@@ -426,74 +463,56 @@ void abstract_bound(ISTSharingTree *S, abstraction_t * abs)
 /*
  * compute the pretild for one transition t for the abstract system
  */
-ISTSharingTree * abstract_place_pretild_rule(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule) 
+ISTSharingTree *adhoc_place_pretild_rule(ISTSharingTree * S, transition_t *t) 
 {
 	ISTSharingTree * result = NULL;
 	ISTSharingTree * temp;
-	ISTLayer * L;
-	int i;
+	size_t i;
 	boolean top;
 
 	if (ist_is_empty(S) == false) {
-	
-		for (i=0,L = S->FirstLayer, top = false; (i < abs->nbV) && (top == false);i++,L = L->Next) {
-			if ((t->transition[rule].cmd_for_place[i].guard.Left > 0) && 
-			(t->transition[rule].cmd_for_place[i].places_abstracted > 1)) {
+		for (i=0, top = false; (i < ist_nb_layers(S)-1) && (top == false);i++) {
+			if ((t->cmd_for_place[i].guard.Left > 0) && 
+			(t->cmd_for_place[i].places_abstracted > 1))
 				top = true;
-			}
 		}
 		if (top == false) {
 			temp = ist_copy(S);
-			ist_complement(temp,abs->nbV);
-			result = ist_pre_of_all_transfer(temp, &t->transition[rule]);
+			ist_complement(temp,ist_nb_layers(S)-1);
+			result = ist_pre_of_rule_plus_transfer(temp,t);
 			ist_dispose(temp);
-			ist_complement(result,abs->nbV);
-		}
-		else {
+			ist_complement(result,ist_nb_layers(S)-1);
+		} else {
 			ist_new(&result);
-			ist_complement(result,abs->nbV);
+			ist_complement(result,ist_nb_layers(S)-1);
 		}
-	} else ist_new(&result);
+	} else 
+		ist_new(&result);
 	return result;	
 }
 
 
 /*
- * compute the abstrat pretild for the abstract system for all transitions
+ * compute the adhoc pretild for the abstract system for all transitions
  *
  */
-
-ISTSharingTree * abstract_place_pretild(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t)
+ISTSharingTree *adhoc_pretild(ISTSharingTree *S, transition_system_t *t)
 {
-	ISTSharingTree * result;
-	ISTSharingTree * temp1;
-	ISTSharingTree * temp2;
-	int i;
+	ISTSharingTree *result;
+	ISTSharingTree *temp1;
+	ISTSharingTree *temp2;
+	size_t i;
 
 	ist_new(&result);
-	ist_complement(result,abs->nbV);
+	ist_complement(result,ist_nb_layers(S)-1);
 	for(i = 0; i < t->limits.nbr_rules; i++) {
-		temp1 = abstract_place_pretild_rule(S,abs,t,i);
+		temp1 = adhoc_place_pretild_rule(S,&t->transition[i]);
 		temp2 = ist_intersection(result,temp1);
 		ist_dispose(result);
 		ist_dispose(temp1);
 		result= temp2;
 	}
-	
 	return result;
-}
-
-/*
- * compute the abstract pretild
- *
- */
-
-ISTSharingTree *abstract_pretild(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t)
-{
-	ISTSharingTree * result;
-	result = abstract_place_pretild(S,abs,t);
-	abstract_bound(result,abs);
-	return result;	
 }
 
 void release_abstraction(abstraction_t *abs)

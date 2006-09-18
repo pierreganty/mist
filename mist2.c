@@ -76,7 +76,7 @@ void ist_put_path_on_screen_with_parameterized_initial_marking(ISTSharingTree * 
 	printf("\n");
 }
 
-void mist(system, initial_marking, frontier) 
+boolean backward_lfp(system, initial_marking, frontier) 
 	transition_system_t *system;
 	ISTSharingTree *frontier, *initial_marking;
 {
@@ -94,7 +94,8 @@ void mist(system, initial_marking, frontier)
 	times(&before) ;
 
 	temp = ist_remove_with_all_invar_exact(frontier, system);
-	ist_dispose(frontier);
+	/* We de not call ist_dispose(frontier); since we do not want
+	 * to modify the IN parameter */
 	frontier = temp;
 	/* reached_elem is set to frontier that is in the "worst case" the empty IST */
 	reached_elem = ist_copy(frontier);
@@ -186,11 +187,8 @@ void mist(system, initial_marking, frontier)
 	comp_s = ((float)after.tms_stime - (float)before.tms_stime)/(float)tick_sec ;
 	printf("Total time of computation (user)   -> %6.3f sec.\n",comp_u);
 	printf("                          (system) -> %6.3f sec.\n",comp_s);
-	puts("Thanks for using this tool");
 
 	ist_dispose(reached_elem);
-	ist_dispose(initial_marking);
-	ist_dispose(frontier);
 	//_____ FOR cOMPLementing operation ____
 	//printf("____/__/ Print old_frontier\n");
 	//ist_write(old_frontier);
@@ -211,6 +209,9 @@ void mist(system, initial_marking, frontier)
 	//printf("____/Check(up) empty intersection \n");
 	//ist_write(ist_intersection(old_frontier,reached_elem));
 	//_____ FOR cOMPLementing operation ____
+	
+	/* Is the system safe ? */
+	return (reached== true ? false : true);
 }
 
 static void print_version() {
@@ -421,6 +422,7 @@ boolean eec(system, abs, initial_marking, bad, lfp)
 	ist_checkup(downward_closed_initial_marking);
 	
 	while (finished == false) {
+		puts("eec: enlarge");
 		abs_post_star = ist_abstract_post_star(downward_closed_initial_marking,abs,system);
 		inter = ist_intersection(abs_post_star,bad);
 		if (ist_is_empty(inter) == true) {
@@ -429,6 +431,7 @@ boolean eec(system, abs, initial_marking, bad, lfp)
 			retval = true;
 			finished = true;
 		} else {
+			puts("eec: expand");
 			ist_dispose(inter);
 		
 			assert(ist_checkup(downward_closed_initial_marking)==true);
@@ -458,9 +461,11 @@ void ic4pn(system, initial_marking, bad)
 {
 	abstraction_t *myabs, *newabs;
 	transition_system_t *sysabs;
-	ISTSharingTree *lfp_eec, *gamma_gfp, *tmp, *_tmp, *__tmp,*safe, *alpha_safe, *iterates, *new_iterates, *alpha_initial_marking, *alpha_bad;
-	size_t i,j,nb_iteration;
-	boolean out, conclusive, eec_conclusive;
+	ISTSharingTree *lfp_eec, *gamma_gfp, *tmp, *_tmp, *safe, *alpha_safe,
+				   *iterates, *new_iterates, *alpha_initial_marking,
+				   *alpha_bad;
+	size_t i,j,nb_iteration, nb_iter_gfp;
+	boolean out, conclusive, eec_conclusive, bw_conclusive;
 
 	/* Memory allocation */
 	myabs=(abstraction_t *)xmalloc(sizeof(abstraction_t));
@@ -490,24 +495,29 @@ void ic4pn(system, initial_marking, bad)
 	while(conclusive == false) {
 		/* We build the abstract system */
 		sysabs=build_sys_using_abs(system,myabs);
+		print_transition_system(sysabs);
 		/* We abstract bad and initial_marking for eec */	
 		alpha_bad = ist_abstraction(bad,myabs);
 		assert(ist_checkup(alpha_bad)==true);
 		alpha_initial_marking = ist_abstraction(initial_marking,myabs);
 		assert(ist_checkup(alpha_initial_marking)==true);
 
+		bw_conclusive=backward_lfp(sysabs,alpha_initial_marking,alpha_bad);
 		eec_conclusive=eec(sysabs,myabs,alpha_initial_marking,alpha_bad,&lfp_eec);
+		/* To be sure that eec is correct */
+		assert(bw_conclusive==eec_conclusive);
+
 		ist_dispose(alpha_initial_marking);
 		ist_dispose(alpha_bad);
 
 		if (eec_conclusive==true) {
 			/* says "safe" because it is indeed safe */
-//			puts("EEC concludes safe with the abstraction");
-//			print_abstraction(myabs);
+			puts("EEC concludes safe with the abstraction");
+			print_abstraction(myabs);
 			conclusive = true;
 		} else { /* refine the abstraction */
-//			print_abstraction(myabs);
-//			puts("The EEC fixpoint");
+			print_abstraction(myabs);
+			puts("The EEC fixpoint");
 			assert(ist_checkup(lfp_eec)==true);
 
 
@@ -528,17 +538,20 @@ void ic4pn(system, initial_marking, bad)
 			assert(ist_checkup(iterates)==true);
 
 			/* compute the gfp for the abstraction */
+			nb_iter_gfp=0;
 			do {
-				assert(ist_checkup(iterates)==true);
-				tmp = abstract_pretild(iterates,myabs,sysabs);
+				++nb_iter_gfp;
+				/* We simplify the iterates */
+				tmp=ist_downward_closure(iterates);
+				ist_dispose(iterates);
+				ist_normalize(tmp);
+				iterates=ist_minimal_form(tmp);
+				ist_dispose(tmp);
 
-				_tmp=ist_copy(tmp);
-				__tmp = ist_downward_closure(_tmp);
-				ist_dispose(_tmp);
-				_tmp = __tmp;
-				assert(ist_exact_subsumption_test(tmp,_tmp)==true);
-				ist_dispose(_tmp);
-				
+				assert(ist_checkup(iterates)==true);
+				assert(ist_nb_layers(iterates)-1==myabs->nbV);
+				tmp = adhoc_pretild(iterates,sysabs);
+
 				new_iterates = ist_intersection(tmp,alpha_safe);
 				assert(ist_checkup(new_iterates)==true);
 				ist_dispose(tmp);
@@ -555,6 +568,7 @@ void ic4pn(system, initial_marking, bad)
 				ist_dispose(iterates);
 				iterates = new_iterates;
 			} while(out == false);
+			printf("nb_iter_gfp = %d\n",nb_iter_gfp);
 
 			/* we compute gamma(gfp) */
 			assert(ist_checkup(iterates)==true);
@@ -571,12 +585,21 @@ void ic4pn(system, initial_marking, bad)
 			conclusive = (ist_is_empty(tmp)==true ? false : true);
 			ist_dispose(tmp);
 
+			/* We compute a concrete iterates */
 			tmp=ist_pre(gamma_gfp,system);
-			ist_dispose(gamma_gfp);
 			ist_complement(tmp,system->limits.nbr_variables);
 			/* Now intersects w/ safe */
 			_tmp=ist_intersection(safe,tmp);
 			ist_dispose(tmp);
+
+			/* We simplify the set */
+			tmp=ist_downward_closure(_tmp);
+			ist_dispose(_tmp);
+			ist_normalize(tmp);
+			_tmp=ist_minimal_form(tmp);
+			ist_dispose(tmp);
+
+			ist_dispose(gamma_gfp);
 
 			/* We build the next abstraction */
 			newabs=refine_abs(myabs,_tmp);
@@ -631,8 +654,12 @@ int main(int argc, char *argv[ ])
 	ic4pn(system,initial_marking,unsafe_cone);
 	//mist(system,initial_marking,unsafe_cone);
 
+	ist_dispose(initial_marking);
+	ist_dispose(unsafe_cone);
+
 	tbsymbol_destroy(&tbsymbol);
 
+	puts("Thanks for using this tool");
 
 	return 0;
 }

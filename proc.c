@@ -21,6 +21,7 @@
 
 #include "proc.h"
 #include "xmalloc.h"
+#include "error.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -82,21 +83,14 @@ inline void ist_dispose_son(son)
 	ISTSon *son;
 {
 
-	/*debug code */
 	ISTSon *ptr;
 	ptr = st_SonsMemory;
+	/* A sanity check */
 	while (ptr != NULL) {
 		if (ptr == son) {
-			printf("Warning Warning Warning....et encore un Warning\n");
+			err_msg("Error: son already disposed\n");
 		} else ptr = ptr->Next;
 	}
-	
-	/*
-	 *
-	 * fin du code de debuggage
-	 * 
-	 */
-	
 	son->Next = st_SonsMemory;
 	st_SonsMemory = son;
 }

@@ -90,3 +90,28 @@ void release_transition_system(transition_system_t *sys)
 			xfree(sys->invariants[j].weight_on_place);
 	xfree(sys);
 }
+
+
+void print_transition_system(transition_system_t *sys)
+{
+	size_t i,j;
+	ISTInterval *true_gd=ist_build_interval(0,INFINITY);
+	printf("System has %d variables, %d transitions, %d invariants\n",sys->limits.nbr_variables, sys->limits.nbr_rules, sys->limits.nbr_invariants);
+	for(i=0;i<sys->limits.nbr_rules;++i){
+ 		printf("transition %d\n",i);
+		for(j=0;j<sys->limits.nbr_variables;++j){
+			if(ist_equal_interval(&sys->transition[i].cmd_for_place[j].guard,true_gd)==false){
+				if(ist_is_unbounded(&sys->transition[i].cmd_for_place[j].guard)==true)
+					printf("X%d in [%3d,INF] ",j,sys->transition[i].cmd_for_place[j].guard.Left);
+				else
+					printf("X%d in [%3d,%3d] ",j,sys->transition[i].cmd_for_place[j].guard.Left,sys->transition[i].cmd_for_place[j].guard.Right);
+			}
+		}
+		printf("\n");
+		for(j=0;j<sys->limits.nbr_variables;++j) {
+			if(sys->transition[i].cmd_for_place[j].delta !=0)
+				printf("delta(X%d)=%3d ",j,sys->transition[i].cmd_for_place[j].delta);
+		}
+		printf("\n");
+	}
+}

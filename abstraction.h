@@ -56,10 +56,8 @@ ISTSharingTree *ist_symbolic_post_of_rules(ISTSharingTree * S, abstraction_t * a
 ISTSharingTree *ist_abstract_post_of_rules(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule);
 ISTSharingTree *ist_abstract_post(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t);
 ISTSharingTree *ist_abstract_post_star(ISTSharingTree * initial_marking, abstraction_t * abs, transition_system_t *t);
-ISTSharingTree *abstract_place_pretild_rule(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule);
-ISTSharingTree *abstract_place_pretild(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t);
-ISTSharingTree *abstract_pretild(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t);
-//void ist_downward_closure(ISTSharingTree *S);
+ISTSharingTree *adhoc_place_pretild_rule(ISTSharingTree * S, transition_t *t);
+ISTSharingTree *adhoc_pretild(ISTSharingTree * S, transition_system_t *t);
 void release_abstraction(abstraction_t *abs);
 
 #endif

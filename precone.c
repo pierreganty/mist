@@ -592,11 +592,10 @@ ISTSharingTree *ist_pre_of_rule_plus_transfer(Prec, transition)
 		modified = KeepMarkingsSatisfyingPostCondition(STInt,transition); 
 	if (ist_is_empty(STInt)== false){
 		if (transition->nbr_transfers > 0) {
-			if (modified == true ) {
+			if (modified == true )
 				/* Because the KeepMarkingsSatisfyingPostCondition may violate
 				 * the second condition */
 				ist_adjust_second_condition(STInt);
-			}
 			Temp = ist_pre_of_all_transfer(STInt, transition);
 			ist_dispose(STInt);
 			STInt = Temp;
