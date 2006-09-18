@@ -789,9 +789,8 @@ ISTSharingTree *ist_pre(prec, system)
 {
 	ISTSharingTree *pre_of_ith_rule, *temp;
 	ISTSharingTree *pre_until_ith_rule;
-	size_t i;
+	size_t i=0;
 	ist_new(&pre_until_ith_rule);
-	i = 0;
 	while (i < system->limits.nbr_rules && (ist_is_empty(prec) == false)){
 		pre_of_ith_rule = ist_pre_of_rule_plus_transfer(prec, &system->transition[i]);
 		if (ist_is_empty(pre_of_ith_rule) == false){ 

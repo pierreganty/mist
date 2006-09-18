@@ -205,7 +205,8 @@ abstraction_t *refine_abs(cur_abs, S)
 						}
 						first_non_singleton_row=i;
 					} else {
-						/* For the 1st non null entry. We remember if it is unbounded or no */
+						/* For the 1st non null entry. We remember if it is
+						 * unbounded or no */
 						first_bound = exists_unbounded_node(layer);
 						before_non_null_entry=false;
 					}
@@ -358,7 +359,6 @@ ISTSharingTree *ist_symbolic_post(ISTSharingTree * S, abstraction_t * abs, trans
 	return result;
 }
 
-
 ISTSharingTree *ist_abstract_post_of_rules(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule) 
 {
 	ISTSharingTree * result;
@@ -416,7 +416,7 @@ ISTSharingTree *ist_abstract_post(ISTSharingTree * S, abstraction_t * abs, trans
 	ist_new(&result);
 	for(i=0;i< t->limits.nbr_rules;i++) {
 		tmp = ist_abstract_post_of_rules(S,abs,t,i);
-		if ( ist_exact_subsumption_test(tmp,result) == false) {
+		if (ist_exact_subsumption_test(tmp,result) == false) {
 			tmp2 = ist_union(tmp,result);
 			ist_dispose(tmp);
 			ist_dispose(result);

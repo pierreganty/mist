@@ -394,6 +394,7 @@ ISTSharingTree *bounded_post_star(ISTSharingTree * initial_marking, abstraction_
 	ist_normalize(result);
 	while (true) {
 		tmp = bounded_post(result,abs,t,bound);
+		/* We should use ist_remove_subsumed_paths instead */
 		if (ist_exact_subsumption_test(tmp,result) == false) {
 			tmp2 = ist_union(tmp,result);
 			ist_dispose(tmp);
@@ -424,11 +425,12 @@ boolean eec(system, abs, initial_marking, bad, lfp)
 
 	downward_closed_initial_marking = ist_downward_closure(initial_marking);
 	ist_normalize(downward_closed_initial_marking);
-	ist_checkup(downward_closed_initial_marking);
+	assert(ist_checkup(downward_closed_initial_marking)==true);
 	
 	while (finished == false) {
-		puts("eec: enlarge");
+		puts("eec: begin enlarge");
 		abs_post_star = ist_abstract_post_star(downward_closed_initial_marking,abs,system);
+		puts("eec: end enlarde");
 		inter = ist_intersection(abs_post_star,bad);
 		if (ist_is_empty(inter) == true) {
 			ist_dispose(inter);
@@ -436,12 +438,11 @@ boolean eec(system, abs, initial_marking, bad, lfp)
 			retval = true;
 			finished = true;
 		} else {
-			puts("eec: expand");
 			ist_dispose(inter);
 		
-			assert(ist_checkup(downward_closed_initial_marking)==true);
-
+			puts("eec: begin expand");
 			bpost = bounded_post_star(downward_closed_initial_marking,abs,system,abs->bound);	
+			puts("eec: end expand");
 			inter = ist_intersection(bpost,bad);
 			if (ist_is_empty(inter) == false) {
 				*lfp = abs_post_star;
@@ -493,8 +494,12 @@ void ic4pn(system, initial_marking, bad)
 	ist_dispose(tmp);
 
 	/* safe = \neg bad */
-	safe=ist_copy(bad);
-	ist_complement(safe,system->limits.nbr_variables);
+	tmp=ist_copy(bad);
+	ist_complement(tmp,system->limits.nbr_variables);
+	/* tmp represents a dc-set */
+	safe=ist_downward_closure(tmp);
+	ist_normalize(safe);
+	/* safe = tmp and each path is a dc-closed */
 
 	nb_iteration=0;
 	while(conclusive == false) {
@@ -526,32 +531,28 @@ void ic4pn(system, initial_marking, bad)
 			assert(ist_checkup(lfp_eec)==true);
 
 
-			/* safe is given by \alpha(\neg bad) /\ lfp_eec */
+			/* safe is given by \alpha(safe) /\ lfp_eec */
 			tmp = ist_abstraction(safe,myabs);
 			_tmp = ist_intersection(lfp_eec,tmp);
 			ist_dispose(tmp);
 			ist_dispose(lfp_eec);
+			tmp = ist_downward_closure(_tmp);
+			ist_normalize(tmp);
+			ist_dispose(_tmp);
+			_tmp=ist_minimal_form(tmp);
+			ist_dispose(tmp);
 			alpha_safe=_tmp;
 
-			/* def of the first iterates of the gfp in the abstract */
+			/* iterates = alpha_safe */
 			iterates = ist_copy(alpha_safe);
 			assert(ist_checkup(iterates)==true);
-			tmp = ist_downward_closure(iterates);
-			ist_dispose(iterates);
-			iterates = tmp;
-			ist_normalize(iterates);
+			assert(ist_equal(iterates,alpha_safe));
 			assert(ist_checkup(iterates)==true);
 
 			/* compute the gfp for the abstraction */
 			nb_iter_gfp=0;
 			do {
 				++nb_iter_gfp;
-				/* We simplify the iterates */
-				tmp=ist_downward_closure(iterates);
-				ist_dispose(iterates);
-				ist_normalize(tmp);
-				iterates=ist_minimal_form(tmp);
-				ist_dispose(tmp);
 
 				assert(ist_checkup(iterates)==true);
 				assert(ist_nb_layers(iterates)-1==myabs->nbV);
@@ -561,9 +562,10 @@ void ic4pn(system, initial_marking, bad)
 				assert(ist_checkup(new_iterates)==true);
 				ist_dispose(tmp);
 				tmp = ist_downward_closure(new_iterates);
+				ist_normalize(tmp);
 				ist_dispose(new_iterates);
-				new_iterates = tmp;
-				ist_normalize(new_iterates);
+				new_iterates = ist_minimal_form(tmp);
+				ist_dispose(tmp);
 				assert(ist_checkup(new_iterates)==true);
 
 				/* We remove the subsumed paths in iterates */
