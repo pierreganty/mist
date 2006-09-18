@@ -78,7 +78,7 @@ build_problem_instance(tree, system, init, unsafe)
 
 }
 
-void release_transition_system(transition_system_t *sys)
+void dispose_transition_system(transition_system_t *sys)
 {
 	size_t i,j;
 	for (i=0;i<sys->limits.nbr_rules;++i){

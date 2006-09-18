@@ -58,6 +58,7 @@ ISTSharingTree *ist_abstract_post(ISTSharingTree * S, abstraction_t * abs, trans
 ISTSharingTree *ist_abstract_post_star(ISTSharingTree * initial_marking, abstraction_t * abs, transition_system_t *t);
 ISTSharingTree *adhoc_place_pretild_rule(ISTSharingTree * S, transition_t *t);
 ISTSharingTree *adhoc_pretild(ISTSharingTree * S, transition_system_t *t);
-void release_abstraction(abstraction_t *abs);
+void dispose_abstraction(abstraction_t *abs);
+boolean exists_bounded_node(ISTLayer *layer);
 
 #endif

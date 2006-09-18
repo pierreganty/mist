@@ -471,6 +471,8 @@ void ic4pn(system, initial_marking, bad)
 				   *iterates, *new_iterates, *alpha_initial_marking,
 				   *alpha_bad;
 	size_t i,j,nb_iteration, nb_iter_gfp;
+	integer16 sum;
+	ISTLayer *L;
 	boolean out, conclusive, eec_conclusive, bw_conclusive;
 
 	/* Memory allocation */
@@ -530,18 +532,27 @@ void ic4pn(system, initial_marking, bad)
 			puts("The EEC fixpoint");
 			assert(ist_checkup(lfp_eec)==true);
 
-
-			/* safe is given by \alpha(safe) /\ lfp_eec */
-			tmp = ist_abstraction(safe,myabs);
-			_tmp = ist_intersection(lfp_eec,tmp);
-			ist_dispose(tmp);
-			ist_dispose(lfp_eec);
-			tmp = ist_downward_closure(_tmp);
-			ist_normalize(tmp);
+			/* safe is given by safe /\ gamma(lfp_eec) */
+			_tmp=ist_concretisation(lfp_eec,myabs);
+			tmp=ist_intersection(safe,_tmp);
 			ist_dispose(_tmp);
-			_tmp=ist_minimal_form(tmp);
+			ist_dispose(safe);
+			safe=tmp;
+			tmp = ist_downward_closure(safe);
+			ist_normalize(tmp);
+			ist_dispose(safe);
+			safe=ist_minimal_form(tmp);
+
+			/* alpha_safe is given by \alpha(safe). Note that alpha <= lfp_eec */
+			tmp = ist_abstraction(safe,myabs);
+			_tmp = ist_downward_closure(tmp);
+			ist_normalize(_tmp);
 			ist_dispose(tmp);
-			alpha_safe=_tmp;
+			tmp=ist_minimal_form(_tmp);
+			ist_dispose(_tmp);
+			alpha_safe=tmp;
+			
+			ist_dispose(lfp_eec);
 
 			/* iterates = alpha_safe */
 			iterates = ist_copy(alpha_safe);
@@ -601,25 +612,63 @@ void ic4pn(system, initial_marking, bad)
 			/* Now intersects w/ safe */
 			_tmp=ist_intersection(safe,tmp);
 			ist_dispose(tmp);
-
-			/* We simplify the set */
 			tmp=ist_downward_closure(_tmp);
 			ist_dispose(_tmp);
 			ist_normalize(tmp);
-			_tmp=ist_minimal_form(tmp);
+			new_iterates=ist_minimal_form(tmp);
 			ist_dispose(tmp);
 
-			ist_dispose(gamma_gfp);
 
 			/* We build the next abstraction */
-			newabs=refine_abs(myabs,_tmp);
-			assert(newabs->nbV > myabs->nbV);
+			newabs=refine_abs(myabs,new_iterates);
+			i=0;
+			while(newabs->nbV<0 && i<system->limits.nbr_rules){
+				/* We toggle nbV for dispose_abstraction to work */
+				newabs->nbV=-newabs->nbV;
+				dispose_abstraction(newabs);
+				tmp=ist_pre_of_rule_plus_transfer(gamma_gfp,&system->transition[i]);
+				ist_complement(tmp,system->limits.nbr_variables);
+				/* Now intersects w/ safe */
+				_tmp=ist_intersection(safe,tmp);
+				ist_dispose(tmp);
+				/* We simplify the set */
+				tmp=ist_downward_closure(_tmp);
+				ist_dispose(_tmp);
+				ist_normalize(tmp);
+				_tmp=ist_minimal_form(tmp);
+				ist_dispose(tmp);
+				/* We build the next abstraction */
+				newabs=refine_abs(myabs,_tmp);
+				++i;
+			}
+			ist_dispose(gamma_gfp);
+
+			if(newabs->nbV<0){
+				/* We toggle nbV for this piece of code to work */
+				newabs->nbV=-newabs->nbV;
+				puts("We isolate one place in the first non singleton bounded set.");
+				for(i=0;i<myabs->nbV;++i) {
+					for(sum=0,j=0;j<myabs->nbConcreteV;++j,sum+=myabs->A[i][j]);
+					if(sum>1){
+						for(L=new_iterates->FirstLayer,j=0;myabs->A[i][j]==0;++j,L=L->Next);
+						if(exists_bounded_node(L)) {
+							newabs->A[i][j]=0;
+							newabs->A[newabs->nbV-1][j]=1;
+							break;
+						}
+					}
+				}
+			}
+			/* Be careful about this one */
+			ist_dispose(new_iterates);
 			assert(newabs->nbConcreteV == myabs->nbConcreteV);
-			release_abstraction(myabs);
+			assert(newabs->nbV = myabs->nbV+1);
+			dispose_abstraction(myabs);
 			myabs=newabs;
+			assert(newabs->nbV >0);
 		}
 		/* We release the abstract system */
-		release_transition_system(sysabs);
+		dispose_transition_system(sysabs);
 		printf("End of iteration %d\n",++nb_iteration);
 	}
 }

@@ -162,7 +162,6 @@ abstraction_t *refine_abs(cur_abs, S)
 	ISTSharingTree *S;
 {
 	size_t i,j,current;
-	integer16 sum;
 	boolean before_non_null_entry,first_bound,nl_added;
 	abstraction_t *retval;
 	ISTLayer *layer;
@@ -268,17 +267,20 @@ abstraction_t *refine_abs(cur_abs, S)
 	}
 	/* If cur_abs->A == retval->A */
 	if(current==i){
-		puts("We isolate one place in the first non singleton set.");
+		/* we fail to refine using S*/
+		puts("Refinement failed.");
+		retval->nbV=-retval->nbV;
+
+		/* puts("We isolate one place in the first non singleton set.");
 		for(i=0;i<cur_abs->nbV;++i) {
 			for(sum=0,j=0;j<cur_abs->nbConcreteV;++j,sum+=cur_abs->A[i][j]);
 			if(sum>1){
 				for(j=0;cur_abs->A[i][j]==0;++j);
 				retval->A[i][j]=0;
 				retval->A[current][j]=1;
-				/* we isolate one place only */
 				break;
 			}
-		}
+		}*/
 	}
 	return retval;
 }
@@ -527,7 +529,7 @@ ISTSharingTree *adhoc_pretild(ISTSharingTree *S, transition_system_t *t)
 	return result;
 }
 
-void release_abstraction(abstraction_t *abs)
+void dispose_abstraction(abstraction_t *abs)
 {
 	size_t i;
 	for(i=0;i<abs->nbV;++i)
