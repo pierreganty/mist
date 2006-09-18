@@ -161,7 +161,8 @@ abstraction_t *refine_abs(cur_abs, S)
 	abstraction_t *cur_abs;
 	ISTSharingTree *S;
 {
-	size_t i,j,current,first_non_singleton_row;
+	size_t i,j,current;
+	integer16 sum;
 	boolean before_non_null_entry,first_bound,nl_added;
 	abstraction_t *retval;
 	ISTLayer *layer;
@@ -203,7 +204,6 @@ abstraction_t *refine_abs(cur_abs, S)
 							retval->A[current][j]=0;
 							retval->A[current+1][j]=1;
 						}
-						first_non_singleton_row=i;
 					} else {
 						/* For the 1st non null entry. We remember if it is
 						 * unbounded or no */
@@ -252,7 +252,6 @@ abstraction_t *refine_abs(cur_abs, S)
 								retval->A[current][j]=0;
 								retval->A[current+1][j]=1;
 							}
-							first_non_singleton_row=i;
 						} else {
 							/* For the 1st non null entry. We remember if it is
 							 * unbounded or no */
@@ -269,10 +268,17 @@ abstraction_t *refine_abs(cur_abs, S)
 	}
 	/* If cur_abs->A == retval->A */
 	if(current==i){
-		puts("DUMB");
-		for(j=0;cur_abs->A[first_non_singleton_row][j]==0;++j);
-		retval->A[first_non_singleton_row][j]=0;
-		retval->A[current][j]=1;
+		puts("We isolate one place in the first non singleton set.");
+		for(i=0;i<cur_abs->nbV;++i) {
+			for(sum=0,j=0;j<cur_abs->nbConcreteV;++j,sum+=cur_abs->A[i][j]);
+			if(sum>1){
+				for(j=0;cur_abs->A[i][j]==0;++j);
+				retval->A[i][j]=0;
+				retval->A[current][j]=1;
+				/* we isolate one place only */
+				break;
+			}
+		}
 	}
 	return retval;
 }

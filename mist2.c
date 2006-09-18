@@ -430,7 +430,7 @@ boolean eec(system, abs, initial_marking, bad, lfp)
 	while (finished == false) {
 		puts("eec: begin enlarge");
 		abs_post_star = ist_abstract_post_star(downward_closed_initial_marking,abs,system);
-		puts("eec: end enlarde");
+		puts("eec: end enlarge");
 		inter = ist_intersection(abs_post_star,bad);
 		if (ist_is_empty(inter) == true) {
 			ist_dispose(inter);
@@ -580,8 +580,11 @@ void ic4pn(system, initial_marking, bad)
 			/* we compute gamma(gfp) */
 			assert(ist_checkup(iterates)==true);
 			
-			gamma_gfp = ist_concretisation(iterates,myabs);
+			/* we take gamma(gfp) /\ safe */
+			tmp = ist_concretisation(iterates,myabs);
 			ist_dispose(iterates);
+			gamma_gfp = ist_intersection(tmp,safe);
+			ist_dispose(tmp);
 
 			assert(ist_checkup(gamma_gfp)==true);
 
