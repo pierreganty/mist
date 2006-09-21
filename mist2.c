@@ -151,7 +151,7 @@ boolean backward_lfp(system, initial_marking, frontier)
 #ifdef INTERVAL
 				printf("\n\tStarting minimization of reached states\n\t");
 				ist_stat(reached_elem);
-				ist_minimize_tree_sim_based(reached_elem);
+				ist_minimal_form_sim_based(reached_elem);
 				printf("\t");
 				ist_stat(reached_elem);
 				/* 
@@ -344,12 +344,12 @@ void bound_values(ISTSharingTree * S, int *bound)
 			ist_assign_values_to_interval(N->Info,min(N->Info->Left,bound[i]),min(N->Info->Right,bound[i]));
 }
 
-ISTSharingTree *bounded_post_rule(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule,int*bound) 
+/* should be ISTSharingTree *S, abstraction_t *abs, transition_t *t */
+ISTSharingTree *bounded_post_rule(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule, int*bound) 
 {
    ISTSharingTree *result;
    ISTSharingTree * tmp = ist_symbolic_post_of_rules(S,abs,t,rule);
    if (ist_is_empty(tmp) == false) {
-      ist_checkup(tmp);
       bound_values(tmp,bound);
       result = ist_downward_closure(tmp);
 	  ist_dispose(tmp);
@@ -361,7 +361,7 @@ ISTSharingTree *bounded_post_rule(ISTSharingTree * S, abstraction_t * abs, trans
    return result;
 }
 
-ISTSharingTree *bounded_post(ISTSharingTree *S, abstraction_t *abs, transition_system_t *t, int*bound) {
+ISTSharingTree *bounded_post(ISTSharingTree *S, abstraction_t *abs, transition_system_t *t, int* bound) {
 	ISTSharingTree *result;
 	ISTSharingTree *tmp;
 	ISTSharingTree *tmp2;
@@ -428,9 +428,9 @@ boolean eec(system, abs, initial_marking, bad, lfp)
 	assert(ist_checkup(downward_closed_initial_marking)==true);
 	
 	while (finished == false) {
-		puts("eec: begin enlarge");
+		printf("eec: ENLARGE begin\t");
 		abs_post_star = ist_abstract_post_star(downward_closed_initial_marking,abs,system);
-		puts("eec: end enlarge");
+		puts("end");
 		inter = ist_intersection(abs_post_star,bad);
 		if (ist_is_empty(inter) == true) {
 			ist_dispose(inter);
@@ -440,9 +440,9 @@ boolean eec(system, abs, initial_marking, bad, lfp)
 		} else {
 			ist_dispose(inter);
 		
-			puts("eec: begin expand");
+			printf("eec: EXPAND begin\t");
 			bpost = bounded_post_star(downward_closed_initial_marking,abs,system,abs->bound);	
-			puts("eec: end expand");
+			puts("end");
 			inter = ist_intersection(bpost,bad);
 			if (ist_is_empty(inter) == false) {
 				*lfp = abs_post_star;
@@ -471,8 +471,6 @@ void ic4pn(system, initial_marking, bad)
 				   *iterates, *new_iterates, *alpha_initial_marking,
 				   *alpha_bad;
 	size_t i,j,nb_iteration, nb_iter_gfp;
-	integer16 sum;
-	ISTLayer *L;
 	boolean out, conclusive, eec_conclusive, bw_conclusive;
 
 	/* Memory allocation */
@@ -507,7 +505,6 @@ void ic4pn(system, initial_marking, bad)
 	while(conclusive == false) {
 		/* We build the abstract system */
 		sysabs=build_sys_using_abs(system,myabs);
-		print_transition_system(sysabs);
 		/* We abstract bad and initial_marking for eec */	
 		alpha_bad = ist_abstraction(bad,myabs);
 		assert(ist_checkup(alpha_bad)==true);
@@ -528,7 +525,6 @@ void ic4pn(system, initial_marking, bad)
 			print_abstraction(myabs);
 			conclusive = true;
 		} else { /* refine the abstraction */
-			print_abstraction(myabs);
 			puts("The EEC fixpoint");
 			assert(ist_checkup(lfp_eec)==true);
 
@@ -590,15 +586,13 @@ void ic4pn(system, initial_marking, bad)
 
 			/* we compute gamma(gfp) */
 			assert(ist_checkup(iterates)==true);
-			
-			/* we take gamma(gfp) /\ safe */
-			tmp = ist_concretisation(iterates,myabs);
+			gamma_gfp = ist_concretisation(iterates,myabs);
 			ist_dispose(iterates);
-			gamma_gfp = ist_intersection(tmp,safe);
-			ist_dispose(tmp);
+			iterates = ist_copy(gamma_gfp);
 
-			assert(ist_checkup(gamma_gfp)==true);
+			assert(ist_checkup(iterates)==true);
 
+			puts("¬");
 			ist_complement(gamma_gfp,system->limits.nbr_variables);
 
 			/* conclusive = true implies initial_marking \nsubseteq gamma_gfp */
@@ -607,7 +601,10 @@ void ic4pn(system, initial_marking, bad)
 			ist_dispose(tmp);
 
 			/* We compute a concrete iterates */
+			puts("pre o ¬");
 			tmp=ist_pre(gamma_gfp,system);
+			ist_dispose(gamma_gfp);
+			puts("¬ o pre o ¬");
 			ist_complement(tmp,system->limits.nbr_variables);
 			/* Now intersects w/ safe */
 			_tmp=ist_intersection(safe,tmp);
@@ -615,54 +612,21 @@ void ic4pn(system, initial_marking, bad)
 			tmp=ist_downward_closure(_tmp);
 			ist_dispose(_tmp);
 			ist_normalize(tmp);
+			puts("< min(cpre(gamma_gfp) & safe )");
 			new_iterates=ist_minimal_form(tmp);
+			puts("min(cpre(gamma_gfp) & safe )");
 			ist_dispose(tmp);
 
-
 			/* We build the next abstraction */
-			newabs=refine_abs(myabs,new_iterates);
-			i=0;
-			while(newabs->nbV<0 && i<system->limits.nbr_rules){
-				/* We toggle nbV for dispose_abstraction to work */
-				newabs->nbV=-newabs->nbV;
-				dispose_abstraction(newabs);
-				tmp=ist_pre_of_rule_plus_transfer(gamma_gfp,&system->transition[i]);
-				ist_complement(tmp,system->limits.nbr_variables);
-				/* Now intersects w/ safe */
-				_tmp=ist_intersection(safe,tmp);
-				ist_dispose(tmp);
-				/* We simplify the set */
-				tmp=ist_downward_closure(_tmp);
-				ist_dispose(_tmp);
-				ist_normalize(tmp);
-				_tmp=ist_minimal_form(tmp);
-				ist_dispose(tmp);
-				/* We build the next abstraction */
-				newabs=refine_abs(myabs,_tmp);
-				++i;
-			}
-			ist_dispose(gamma_gfp);
-
-			if(newabs->nbV<0){
-				/* We toggle nbV for this piece of code to work */
-				newabs->nbV=-newabs->nbV;
-				puts("We isolate one place in the first non singleton bounded set.");
-				for(i=0;i<myabs->nbV;++i) {
-					for(sum=0,j=0;j<myabs->nbConcreteV;++j,sum+=myabs->A[i][j]);
-					if(sum>1){
-						for(L=new_iterates->FirstLayer,j=0;myabs->A[i][j]==0;++j,L=L->Next);
-						if(exists_bounded_node(L)) {
-							newabs->A[i][j]=0;
-							newabs->A[newabs->nbV-1][j]=1;
-							break;
-						}
-					}
-				}
-			}
-			/* Be careful about this one */
+			puts("Current abstraction:");
+			print_abstraction(myabs);
+			newabs=refine_abs(myabs,iterates,new_iterates);
+			puts("New abstraction:");
+			print_abstraction(newabs);
+			ist_dispose(iterates);
 			ist_dispose(new_iterates);
 			assert(newabs->nbConcreteV == myabs->nbConcreteV);
-			assert(newabs->nbV = myabs->nbV+1);
+			assert(newabs->nbV > myabs->nbV);
 			dispose_abstraction(myabs);
 			myabs=newabs;
 			assert(newabs->nbV >0);
@@ -710,11 +674,12 @@ int main(int argc, char *argv[ ])
 	ist_init_system();
 	printf("DONE\n");
 
+	//backward_lfp(system,initial_marking,unsafe_cone);
 	ic4pn(system,initial_marking,unsafe_cone);
-	//mist(system,initial_marking,unsafe_cone);
 
 	ist_dispose(initial_marking);
 	ist_dispose(unsafe_cone);
+	dispose_transition_system(system);
 
 	tbsymbol_destroy(&tbsymbol);
 

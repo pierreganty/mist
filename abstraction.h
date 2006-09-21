@@ -44,7 +44,7 @@ void print_abstraction(abstraction_t *abs);
 
 /* Only works for Petri Nets w/o invariants */
 transition_system_t *build_sys_using_abs(transition_system_t *sys, abstraction_t *abs);
-abstraction_t *refine_abs(abstraction_t *cur_abs, ISTSharingTree *S);
+abstraction_t *refine_abs(abstraction_t *cur_abs, ISTSharingTree *S, ISTSharingTree *cpreS);
 ISTSharingTree *ist_abstraction(ISTSharingTree *S, abstraction_t *abs);
 
 

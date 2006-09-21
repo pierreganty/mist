@@ -102,9 +102,9 @@ void print_transition_system(transition_system_t *sys)
 		for(j=0;j<sys->limits.nbr_variables;++j){
 			if(ist_equal_interval(&sys->transition[i].cmd_for_place[j].guard,true_gd)==false){
 				if(ist_is_unbounded(&sys->transition[i].cmd_for_place[j].guard)==true)
-					printf("X%d in [%3d,INF] ",j,sys->transition[i].cmd_for_place[j].guard.Left);
+					printf("X%d in [%ld,INF] ",j,sys->transition[i].cmd_for_place[j].guard.Left);
 				else
-					printf("X%d in [%3d,%3d] ",j,sys->transition[i].cmd_for_place[j].guard.Left,sys->transition[i].cmd_for_place[j].guard.Right);
+					printf("X%d in [%ld,%ld] ",j,sys->transition[i].cmd_for_place[j].guard.Left,sys->transition[i].cmd_for_place[j].guard.Right);
 			}
 		}
 		printf("\n");

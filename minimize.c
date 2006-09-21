@@ -858,7 +858,7 @@ boolean ist_prune_within_tree_sim_based(S)
 
 
 /*minimize the ST S*/
-void ist_minimize_tree_sim_based(S)
+void ist_minimal_form_sim_based(S)
 	ISTSharingTree *S;
 {
 	boolean Modified;
