@@ -30,6 +30,8 @@ init
 
 target
     x3 >= 1, x4 >= 1
+    x3 >= 2
+    x4 >= 2
 
 invariants
 	x0=1, x2=1, x3=2
