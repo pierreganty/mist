@@ -2,8 +2,8 @@ DEFS=@DEFS@ -DTRANSFERT
 INCLUDES=-I.
 bin_PROGRAMS = mist2
 mist2_SOURCES = \
-	abstraction.h\
-	abstraction.c\
+	abstraction.c \
+	abstraction.h \
 	basis.c \
 	basis.h \
 	checkup.c \
@@ -20,8 +20,6 @@ mist2_SOURCES = \
 	complement.h \
 	computesim.c \
 	computesim.h \
-	concretisation.c \
-	concretisation.h \
 	def.h \
 	determinize.c \
 	determinize.h \

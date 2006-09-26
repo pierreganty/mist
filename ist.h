@@ -6,7 +6,6 @@
 #include"checkup.h"
 #include"computesim.h"
 #include"complement.h"
-#include"concretisation.h"
 #include"determinize.h"
 #include"father_mangmt.h"
 #include"interval.h"

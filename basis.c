@@ -1000,3 +1000,59 @@ ISTSharingTree * ist_projection(ISTSharingTree * S, integer16 *mask) {
 	return STR;
 }
 
+static ISTNode *Downward_closure(node, LINK)
+	ISTNode *node;
+	struct LOC_ist_method  *LINK;
+{
+	ISTSon *s;
+	ISTNode *rnode;
+	ISTInterval i;
+	
+	if (ist_not_equal_interval(node->Info,&IST_end_of_list)) {
+		i.Left = 0;
+		i.Right = node->Info->Right;
+		rnode = ist_create_node(&i);
+		node->AuxI = ist_get_magic_number();
+		LINK->rlayer = LINK->rlayer->Next;
+		if (LINK->rlayer == NULL)
+			LINK->rlayer = ist_add_last_layer(LINK->STR);
+		s = node->FirstSon;
+		while (s != NULL) {
+			if (s->Son->AuxI == ist_get_magic_number())
+				ist_add_son(rnode, s->Son->AuxP);
+			else
+				ist_add_son(rnode, Downward_closure(s->Son, LINK));
+			s = s->Next;
+		}
+		LINK->rlayer = LINK->rlayer->Previous;
+	} else {
+		rnode = ist_create_node(node->Info);
+		node->AuxI = ist_get_magic_number();
+	}
+	node->AuxP = ist_add_node(LINK->rlayer, rnode);
+	return (node->AuxP);
+}
+
+
+/* This function returns the copy of the IST provided in parameter */
+ISTSharingTree *ist_downward_closure(ST)
+	ISTSharingTree *ST;
+{
+	struct LOC_ist_method  V;
+	ISTSon *s;
+	ISTNode *rchild;
+
+	ist_new_magic_number();
+	ist_new(&V.STR);
+	if (!ist_is_empty(ST)) {
+		V.rlayer = ist_add_last_layer(V.STR);
+		s = ST->Root->FirstSon;
+		while (s != NULL) {
+			rchild = Downward_closure(s->Son, &V);
+			ist_add_son(V.STR->Root, rchild);
+			s = s->Next;
+		}
+	}
+	V.STR->NbElements = ST->NbElements;
+	return V.STR;
+}
