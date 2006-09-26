@@ -27,7 +27,7 @@
 /*
 * This modules provides methods and a data structure to manipulate lists of IST
 * nodes.  This is used  for instance in the modules: determinize, complement,
-* precone.
+* predtrans.
 */
 
 /* Declaration of structures */

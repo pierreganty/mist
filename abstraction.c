@@ -65,15 +65,13 @@ void print_abstraction(abs)
 	abstraction_t *abs;
 {
 	size_t i,j;
-	printf("The system is %d variables.\n",(int) abs->nbV);
-	puts("The abstraction:");
-	puts("	For the merging:");
+	puts("abs: For the merging:");
 	for(i=0;i<abs->nbV;++i){
 		for(j=0;j<abs->nbConcreteV;++j)
 			printf("%d",(int) abs->A[i][j]);
 		puts("");
 	}
-	puts("	For the bounds:");
+	puts("abs: For the bounds:");
 	for(i=0;i<abs->nbV;++i)
 		printf("%d",(int) abs->bound[i]);
 	puts("");
@@ -292,78 +290,21 @@ abstraction_t *refine_abs(cur_abs, S, cpreS)
 	return retval;
 }
 
-ISTSharingTree *ist_symbolic_post_of_rules(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule) 
+/* result is a downward closed set */
+ISTSharingTree *ist_abstract_post_of_rules(ISTSharingTree * S, abstraction_t * abs, transition_t *t) 
 {
-	ISTSharingTree * result;
+	ISTSharingTree *result, * tmp, *G;
 	ISTLayer * L;
 	ISTNode * N;
 	size_t i;
 	ISTInterval **g = (ISTInterval **)xmalloc(abs->nbV * sizeof(ISTInterval *));
-	ISTSharingTree *G;
 
-	for(i = 0;i < abs->nbV;i++) {
-		g[i] = ist_copy_interval(&t->transition[rule].cmd_for_place[i].guard);
-	}
+	for(i = 0;i < abs->nbV;i++)
+		g[i] = ist_copy_interval(&t->cmd_for_place[i].guard);
 	ist_new(&G);
 	ist_add(G,g,abs->nbV);
-	for(i= 0;i< abs->nbV;i++) {
+	for(i= 0;i< abs->nbV;i++)
 		ist_dispose_info(g[i]);
-	}
-	xfree(g);
-
-	result = ist_intersection(S,G);
-	ist_dispose(G);
-	/* If the IST is not empty, we apply the effect of the function */
-	if (ist_is_empty(result) == false) {
-		for (i = 0, L = result->FirstLayer; i < abs->nbV; i++, L = L->Next) {
-			for(N = L->FirstNode;N != NULL;N=N->Next) {
-					ist_assign_values_to_interval(N->Info, 
-							N->Info->Left + t->transition[rule].cmd_for_place[i].delta,
-							N->Info->Right + t->transition[rule].cmd_for_place[i].delta);
-			}
-		}	
-	} 
-	return result;
-}
-
-ISTSharingTree *ist_symbolic_post(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t) {
-
-	size_t i;
-	ISTSharingTree *result, *tmp, *tmp2;
-	
-	ist_new(&result);
-	for(i=0;i< t->limits.nbr_rules;i++) {
-		tmp = ist_symbolic_post_of_rules(S,abs,t,i);
-		if ( ist_exact_subsumption_test(tmp,result) == false) {
-			tmp2 = ist_union(tmp,result);
-			ist_dispose(tmp);
-			ist_dispose(result);
-			result = tmp2;
-		} else {
-			ist_dispose(tmp);
-		}
-	}
-	return result;
-}
-
-ISTSharingTree *ist_abstract_post_of_rules(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule) 
-{
-	ISTSharingTree *result, * tmp;
-	ISTLayer * L;
-	ISTNode * N;
-	int i;
-
-	ISTInterval **g = (ISTInterval **)xmalloc(abs->nbV * sizeof(ISTInterval *));
-	ISTSharingTree *G;
-
-	for(i = 0;i < abs->nbV;i++) {
-		g[i] = ist_copy_interval(&t->transition[rule].cmd_for_place[i].guard);
-	}
-	ist_new(&G);
-	ist_add(G,g,abs->nbV);
-	for(i= 0;i< abs->nbV;i++) {
-		ist_dispose_info(g[i]);
-	}
 	xfree(g);
 
 	result = ist_intersection(S,G);
@@ -375,10 +316,8 @@ ISTSharingTree *ist_abstract_post_of_rules(ISTSharingTree * S, abstraction_t * a
 			N = L->FirstNode;
 	    		while (N != NULL) {
 				if ((N->Info->Right != INFINITY) &&
-					(N->Info->Right + t->transition[rule].cmd_for_place[i].delta <=
-					abs->bound[i])) 
-					ist_assign_values_to_interval(N->Info,0,N->Info->Right + t->transition[rule].cmd_for_place[i].delta);
-					
+					(N->Info->Right + t->cmd_for_place[i].delta <= abs->bound[i])) 
+					ist_assign_values_to_interval(N->Info,0,N->Info->Right + t->cmd_for_place[i].delta);
 				else
 					ist_assign_values_to_interval(N->Info,0,N->Info->Right = INFINITY);
 				N = N->Next;
@@ -396,29 +335,36 @@ ISTSharingTree *ist_abstract_post(ISTSharingTree * S, abstraction_t * abs, trans
 {
 	size_t i;
 	ISTSharingTree * result, * tmp, * tmp2;
+	boolean empty;
 
 	ist_new(&result);
 	for(i=0;i< t->limits.nbr_rules;i++) {
-		tmp = ist_abstract_post_of_rules(S,abs,t,i);
-		if (ist_exact_subsumption_test(tmp,result) == false) {
-			tmp2 = ist_union(tmp,result);
-			ist_dispose(tmp);
+		tmp = ist_abstract_post_of_rules(S,abs,&t->transition[i]);
+		tmp2 = ist_remove_subsumed_paths(tmp,result);
+		empty = ist_is_empty(tmp2);
+		ist_dispose(tmp2);
+		if (empty==false) {
+			tmp2=ist_union(tmp,result);	
 			ist_dispose(result);
 			result = ist_minimal_form(tmp2);
-			ist_dispose(tmp2);
-		} else 
-			ist_dispose(tmp);
+		}
+		ist_dispose(tmp);
 	}
 	return result;
 }
 
-ISTSharingTree *ist_abstract_post_star(ISTSharingTree * initial_marking, abstraction_t * abs, transition_system_t *t) {
-	ISTSharingTree * S, * tmp, * tmp2;
+ISTSharingTree *ist_abstract_post_star(ISTSharingTree * initial_marking, abstraction_t * abs, transition_system_t *t) 
+{
+	ISTSharingTree *S, *tmp, *tmp2;
+	boolean empty;
 
 	S = ist_copy(initial_marking);
 	while (true) {
 		tmp = ist_abstract_post(S,abs,t);
-		if (ist_exact_subsumption_test(tmp,S) == false) {		
+		tmp2 =  ist_remove_subsumed_paths(tmp,S);
+		empty = ist_is_empty(tmp2);
+		ist_dispose(tmp2);
+		if (empty==false) {		
 			tmp2 = ist_union(tmp,S);
 			ist_dispose(S);
 			ist_dispose(tmp);

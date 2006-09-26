@@ -27,8 +27,10 @@
 
 /*
  * This module aims at verifying that an IST respects his definition
+ * and print some stats about it.
  */
 
 boolean ist_checkup(ISTSharingTree *S) ;
+void ist_stat(ISTSharingTree *S) ;
 
 #endif

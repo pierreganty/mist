@@ -20,8 +20,8 @@
  */
 
 
-#ifndef __PRECONE_H
-#define __PRECONE_H
+#ifndef __PREDTRANS_H
+#define __PREDTRANS_H
 
 #include "proc.h"
 #include "transsystem.h"
@@ -34,13 +34,18 @@ ISTSharingTree *ist_intersection_with_formula_transfer(ISTSharingTree *ST1, tran
 ISTSharingTree *ist_pre_of_all_transfer(ISTSharingTree *S, transition_t *transition);
 ISTSharingTree *ist_post_of_transfer(ISTSharingTree *S, transfers_t *transfers);
 ISTSharingTree *ist_pre_of_rule_plus_transfer(ISTSharingTree *Prec, transition_t *transition);
-/* Post operator only implemented for system with transfert */
+/* Enumerative Post operator for system w/ transfers */
 ISTSharingTree *ist_enumerative_post(ISTSharingTree *forward_p, transition_system_t *system);
-ISTSharingTree *ist_enumerative_post_transition(ISTSharingTree *forward_p, transition_system_t *system, int transition);
-/* Computation of the Pre ... with TransSharingTree (DEPRECATED) */
-ISTSharingTree *ist_pre_of_rules (ISTSharingTree *prec);
-/* Pre operator */
+ISTSharingTree *ist_enumerative_post_transition(ISTSharingTree *forward_p, transition_system_t *system, size_t transition);
+/* Symbolic Post operator for system w/o transfers */
+ISTSharingTree *ist_symbolic_post_of_rules(ISTSharingTree * S, transition_t *t);
+ISTSharingTree *ist_symbolic_post(ISTSharingTree * S, transition_system_t *t);
+
+/* Computation of the Pre ... with TransSharingTree (DEPRECATED)
+ISTSharingTree *ist_pre_of_rules(ISTSharingTree *prec); */
+
+/* Symbolic Pre operator for system w/ transfers */
 ISTSharingTree *ist_pre(ISTSharingTree *S, transition_system_t *system);
-ISTSharingTree *ist_pruned_pre(ISTSharingTree *Prec, ISTSharingTree *ReachedElem, transition_system_t *system) ;
+ISTSharingTree *ist_pre_pruned_wth_inv_and_prev_iterates(ISTSharingTree *Prec, ISTSharingTree *ReachedElem, transition_system_t *system);
 
 #endif

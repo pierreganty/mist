@@ -25,7 +25,7 @@
 #include "listnode.h"
 #include "transsystem.h"
 #include "abstraction.h"
-#include "precone.h"
+#include "predtrans.h"
 #include "normalize.h"
 #include "xmalloc.h"
 #include "basis.h"

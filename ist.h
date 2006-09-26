@@ -16,10 +16,9 @@
 #include"minimizeinvarheuristic.h"
 #include"minimizeinvarexact.h"
 #include"normalize.h"
-#include"precone.h"
+#include"predtrans.h"
 #include"proc.h"
 #include"remove.h"
-#include"stat.h"
 #include"transtree.h"
 #include"list_ist.h"
 

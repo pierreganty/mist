@@ -22,7 +22,7 @@
 #include "normalize.h"
 #include <sys/time.h>
 #include <time.h>
-#include "stat.h"
+#include "checkup.h"
 
 void ist_merge_sons(Source, Target)
 	ISTNode *Source, *Target;

@@ -19,7 +19,7 @@
    Copyright 2003, Pierre Ganty, 2006 Laurent Van Begin
  */
 
-#include "precone.h"
+#include "predtrans.h"
 #include "basis.h"
 #include "minimizeinvarheuristic.h"
 #include "minimize.h"
@@ -32,6 +32,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <assert.h>
 
 
 #ifdef TRANSFERT
@@ -734,7 +735,7 @@ ISTSharingTree *ist_pre_of_rules(prec)
 #endif
 
 
-ISTSharingTree *ist_pruned_pre(prec, reached_elem, system)
+ISTSharingTree *ist_pre_pruned_wth_inv_and_prev_iterates(prec, reached_elem, system)
 	ISTSharingTree *prec, *reached_elem;
 	transition_system_t *system;
 {
@@ -795,7 +796,6 @@ ISTSharingTree *ist_pre(prec, system)
 		pre_of_ith_rule = ist_pre_of_rule_plus_transfer(prec, &system->transition[i]);
 		if (ist_is_empty(pre_of_ith_rule) == false){ 
 			ist_normalize(pre_of_ith_rule);
-			ist_remove_with_invar_heuristic(pre_of_ith_rule, i, system);
 
 			if ((ist_is_empty(pre_of_ith_rule) == false) && (ist_is_empty(pre_until_ith_rule) == false)){ 
 				temp = ist_remove_subsumed_paths(pre_of_ith_rule,pre_until_ith_rule);
@@ -834,6 +834,8 @@ ISTSharingTree *ist_enumerative_post(forward_p, system)
 	ISTInterval tokens_transfered;
 	size_t i, j, k, l;
 	boolean stop;
+
+	assert(ist_nb_layers(forward_p)-1==system->limits.nbr_variables);
 
 	ist_new(&res);
 	/* Allocation of memory */
@@ -927,7 +929,7 @@ ISTSharingTree *ist_enumerative_post(forward_p, system)
 ISTSharingTree *ist_enumerative_post_transition(forward_p, system, transition)
 	ISTSharingTree *forward_p;
 	transition_system_t *system;
-	int transition;
+	size_t transition;
 {
 	ISTSharingTree *res;
 	ISTSon **path;
@@ -936,6 +938,8 @@ ISTSharingTree *ist_enumerative_post_transition(forward_p, system, transition)
 	ISTInterval tokens_transfered;
 	size_t i, k, l;
 	boolean stop;
+
+	assert(ist_nb_layers(forward_p)-1==system->limits.nbr_variables);
 
 	ist_new(&res);
 	/* Allocation of memory */
@@ -1027,3 +1031,60 @@ ISTSharingTree *ist_enumerative_post_transition(forward_p, system, transition)
 
 	return res;
 }
+
+ISTSharingTree *ist_symbolic_post_of_rules(ISTSharingTree * S, transition_t *t) 
+{
+	ISTSharingTree * result;
+	ISTLayer * L;
+	ISTNode * N;
+	size_t i, nbV;
+	nbV=ist_nb_layers(S)-1;
+	ISTInterval **g = (ISTInterval **)xmalloc(nbV* sizeof(ISTInterval *));
+	ISTSharingTree *G;
+
+	for(i = 0;i < nbV;i++) {
+		g[i] = ist_copy_interval(&t->cmd_for_place[i].guard);
+	}
+	ist_new(&G);
+	ist_add(G,g,nbV);
+	for(i= 0;i< nbV;i++) {
+		ist_dispose_info(g[i]);
+	}
+	xfree(g);
+
+	result = ist_intersection(S,G);
+	ist_dispose(G);
+	/* If the IST is not empty, we apply the effect of the function */
+	if (ist_is_empty(result) == false) {
+		for (i = 0, L = result->FirstLayer; i < nbV; i++, L = L->Next) {
+			for(N = L->FirstNode;N != NULL;N=N->Next) {
+					ist_assign_values_to_interval(N->Info, 
+							N->Info->Left + t->cmd_for_place[i].delta,
+							N->Info->Right + t->cmd_for_place[i].delta);
+			}
+		}	
+	} 
+	return result;
+}
+
+ISTSharingTree *ist_symbolic_post(ISTSharingTree * S, transition_system_t *t) {
+
+	size_t i;
+	ISTSharingTree *result, *tmp, *tmp2;
+	
+	assert(ist_nb_layers(S)-1==t->limits.nbr_variables);
+	ist_new(&result);
+	for(i=0;i< t->limits.nbr_rules;i++) {
+		tmp = ist_symbolic_post_of_rules(S,&t->transition[i]);
+		if ( ist_exact_subsumption_test(tmp,result) == false) {
+			tmp2 = ist_union(tmp,result);
+			ist_dispose(tmp);
+			ist_dispose(result);
+			result = tmp2;
+		} else {
+			ist_dispose(tmp);
+		}
+	}
+	return result;
+}
+

@@ -20,7 +20,7 @@
  */
 
 #include "checkup.h"
-#include "stat.h"
+#include "basis.h"
 #include "error.h"
 #include <stddef.h>
 #include <stdio.h>
@@ -425,4 +425,47 @@ boolean ist_checkup(S)
 	}
 	ist_stat(S);
 	return retval;
+}
+
+static size_t ist_count_number_of_arcs_layer(Layer)
+    ISTLayer *Layer;
+{
+	ISTNode *Node;
+	size_t Sol;
+
+	Node = Layer->FirstNode;
+	Sol = 0;
+	while (Node != NULL) {
+		Sol += ist_number_of_sons(Node);
+		Node = Node->Next;
+	}
+	return Sol;
+}
+
+
+static size_t ist_count_number_of_arcs(S)
+    ISTSharingTree *S;
+{
+	size_t Sol;
+	ISTLayer *Layer;
+
+	Sol = ist_number_of_sons(S->Root);
+	Layer = S->FirstLayer;
+	while (Layer != S->LastLayer) {
+		Sol += ist_count_number_of_arcs_layer(Layer);
+		Layer = Layer->Next;
+	}
+	return Sol;
+}
+
+
+/*print statistics about the sharing tree S*/
+void ist_stat(S)
+    ISTSharingTree *S;
+{
+    size_t NbArcs;
+
+    NbArcs = ist_count_number_of_arcs(S);
+    printf("Elems: %7d Nodes: %5d Arcs: %5d Layers: %2d\n",
+	    ist_nb_elements(S), ist_nb_nodes(S), NbArcs, ist_nb_layers(S));
 }

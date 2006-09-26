@@ -64,6 +64,8 @@ rules(T_PTR_tree entry) {
 		for (j = 0; j < nbr_var; j++) {
 			ist_assign_values_to_interval(&sys->transition[i].cmd_for_place[j].guard, 0L,  INFINITY);
 			sys->transition[i].cmd_for_place[j].delta = 0L;
+			/* In the case of places merged the genuine system is the abstraction of itself */
+			sys->transition[i].cmd_for_place[j].places_abstracted=1;
 		}
 		for (k = 0; k < MAXNBTRANS; ++k){
 			/* We allocate memory for each transfert */

@@ -886,32 +886,6 @@ void ist_minimal_form_sim_based(S)
 		ist_dispose_fathers_info(S);
 }
 
-/* 
- * This function does NOT WORK. To do this, one have to develop a function 'à la'
- * ist_prune_within_tree_sim_based adapted to deal 2 ISTs.
-*/
-void ist_prune_tree_sim_based(T, S)
-	ISTSharingTree *T, *S;
-{
-	boolean Continue;
-
-	ist_construct_fathers_info(S);
-	ist_construct_fathers_info(T);
-
-	Continue = true;
-	while ((Continue == true) & (ist_is_empty(S) == false)) {
-		ComputeFSimul2(T, S);
-		ComputeBSimul2(T, S);
-		Continue = ist_prune_within_tree_sim_based(S);
-	}
-
-	if (ist_is_empty(S) == false) {
-		ist_dispose_fathers_info(S);
-		DisposeInfoRelAndBackRel(S);
-	}
-	ist_dispose_fathers_info(T);
-}
-
 boolean ist_exact_subsumption_test(T,S)
 	ISTSharingTree *T, *S;
 {

@@ -21,7 +21,6 @@
 
 #include "computesim.h"
 #include "basis.h"
-#include "stat.h"
 #include "error.h"
 #include <stdio.h>
 #include <stdlib.h>

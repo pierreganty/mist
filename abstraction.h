@@ -27,7 +27,7 @@
 #include"proc.h"
 #include"transsystem.h"
 #include"basis.h"
-#include"precone.h"
+#include"predtrans.h"
 #include"remove.h"
 #include"complement.h"
 #include"minimize.h"
@@ -47,13 +47,8 @@ transition_system_t *build_sys_using_abs(transition_system_t *sys, abstraction_t
 abstraction_t *refine_abs(abstraction_t *cur_abs, ISTSharingTree *S, ISTSharingTree *cpreS);
 ISTSharingTree *ist_abstraction(ISTSharingTree *S, abstraction_t *abs);
 
-
-ISTSharingTree *ist_symbolic_post_of_rules(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule);
-ISTSharingTree *ist_symbolic_post(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t);
-
 /* abstract operators */
-ISTSharingTree *ist_symbolic_post_of_rules(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule);
-ISTSharingTree *ist_abstract_post_of_rules(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t, int rule);
+ISTSharingTree *ist_abstract_post_of_rules(ISTSharingTree * S, abstraction_t * abs, transition_t *t);
 ISTSharingTree *ist_abstract_post(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t);
 ISTSharingTree *ist_abstract_post_star(ISTSharingTree * initial_marking, abstraction_t * abs, transition_system_t *t);
 ISTSharingTree *adhoc_place_pretild_rule(ISTSharingTree * S, transition_t *t);

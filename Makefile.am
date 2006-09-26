@@ -50,14 +50,12 @@ mist2_SOURCES = \
 	normalize.c \
 	normalize.h \
 	parser.y \
-	precone.c \
-	precone.h \
+	predtrans.c \
+	predtrans.h \
 	proc.c \
 	proc.h \
 	remove.c \
 	remove.h \
-	stat.c 	\
-	stat.h 	\
 	tbsymbol.c \
 	tbsymbol.h \
 	tbsymbolinfo.c \
