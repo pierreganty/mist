@@ -1032,36 +1032,31 @@ ISTSharingTree *ist_enumerative_post_transition(forward_p, system, transition)
 	return res;
 }
 
-ISTSharingTree *ist_symbolic_post_of_rules(ISTSharingTree * S, transition_t *t) 
+ISTSharingTree *ist_symbolic_post_of_rules(ISTSharingTree *S, transition_t *t) 
 {
 	ISTSharingTree * result;
 	ISTLayer * L;
 	ISTNode * N;
 	size_t i, nbV;
 	nbV=ist_nb_layers(S)-1;
-	ISTInterval **g = (ISTInterval **)xmalloc(nbV* sizeof(ISTInterval *));
+	ISTInterval **g = (ISTInterval **)xmalloc(nbV*sizeof(ISTInterval *));
 	ISTSharingTree *G;
 
-	for(i = 0;i < nbV;i++) {
+	for(i = 0;i < nbV;i++)
 		g[i] = ist_copy_interval(&t->cmd_for_place[i].guard);
-	}
 	ist_new(&G);
 	ist_add(G,g,nbV);
-	for(i= 0;i< nbV;i++) {
+	for(i= 0;i< nbV;i++)
 		ist_dispose_info(g[i]);
-	}
 	xfree(g);
 
 	result = ist_intersection(S,G);
 	ist_dispose(G);
 	/* If the IST is not empty, we apply the effect of the function */
 	if (ist_is_empty(result) == false) {
-		for (i = 0, L = result->FirstLayer; i < nbV; i++, L = L->Next) {
-			for(N = L->FirstNode;N != NULL;N=N->Next) {
-					ist_assign_values_to_interval(N->Info, 
-							N->Info->Left + t->cmd_for_place[i].delta,
-							N->Info->Right + t->cmd_for_place[i].delta);
-			}
+		for (i=0, L = result->FirstLayer; i < nbV; i++, L = L->Next) {
+			for(N = L->FirstNode;N != NULL;N=N->Next) 
+					ist_add_value_to_interval(N->Info,t->cmd_for_place[i].delta);
 		}	
 	} 
 	return result;

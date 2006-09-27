@@ -387,41 +387,43 @@ boolean ist_checkup(S)
     ISTSharingTree *S; 
 { 
 	boolean retval=true;
-	if (first_cond_is_violated(S)) {
-		err_msg("Error: First Cond violated!\n"); 
-		retval=false;
-	}
-	if (second_cond_is_violated(S)) {
-		err_msg("Error: Second Cond violated!\n"); 
-		retval=false;
-	}
-	if (exists_layers_not_ordered(S)) {
-		err_msg("Error: Non-ordered nodes in a layer!\n"); 
-		retval=false;
-	}
-	if (exists_irrellevant_info(S)) {
-		err_msg("Error: Irrelevant info in node!\n"); 
-		retval=false;
-	}
-	if (exists_sons_not_ordered(S)) {
-		err_msg("Error: Non-ordered sons!\n"); 
-		retval=false;
-	}
-	if (exists_node_without_son(S)) {
-		err_msg("Error: Node without sons!\n"); 
-		retval=false;
-	}
-	if (exists_node_without_father(S)) {
-		err_msg("Error: Son without father!\n"); 
-		retval=false;
-	}
-	if (exists_son_twice(S)) {
-		err_msg("Error: A node with two pointers to the same node!\n"); 
-		retval=false;
-	}
-	if (mismatch_in_counting_fathers(S)) {
-		err_msg("Error: NbFathers not handled properly!\n"); 
-		retval=false;
+	if(ist_is_empty(S)==false) {
+		if (first_cond_is_violated(S)) {
+			err_msg("Error: First Cond violated!\n"); 
+			retval=false;
+		}
+		if (second_cond_is_violated(S)) {
+			err_msg("Error: Second Cond violated!\n"); 
+			retval=false;
+		}
+		if (exists_layers_not_ordered(S)) {
+			err_msg("Error: Non-ordered nodes in a layer!\n"); 
+			retval=false;
+		}
+		if (exists_irrellevant_info(S)) {
+			err_msg("Error: Irrelevant info in node!\n"); 
+			retval=false;
+		}
+		if (exists_sons_not_ordered(S)) {
+			err_msg("Error: Non-ordered sons!\n"); 
+			retval=false;
+		}
+		if (exists_node_without_son(S)) {
+			err_msg("Error: Node without sons!\n"); 
+			retval=false;
+		}
+		if (exists_node_without_father(S)) {
+			err_msg("Error: Son without father!\n"); 
+			retval=false;
+		}
+		if (exists_son_twice(S)) {
+			err_msg("Error: A node with two pointers to the same node!\n"); 
+			retval=false;
+		}
+		if (mismatch_in_counting_fathers(S)) {
+			err_msg("Error: NbFathers not handled properly!\n"); 
+			retval=false;
+		}
 	}
 	ist_stat(S);
 	return retval;

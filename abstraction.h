@@ -51,20 +51,23 @@ abstraction_t *refine_abs(abstraction_t *cur_abs, ISTSharingTree *S, ISTSharingT
 ISTSharingTree *ist_abstraction(ISTSharingTree *S, abstraction_t *abs);
 ISTSharingTree *ist_concretisation(ISTSharingTree *S, abstraction_t * abs);
 
-void abstract_bound(ISTSharingTree *S, integer16 *bound);
-void bound_values(ISTSharingTree *S, integer16 *bound);
-
-
 /* abstract operators */
-ISTSharingTree *ist_abstract_post_of_rules(ISTSharingTree *S, abstraction_t *abs, transition_t *t);
-ISTSharingTree *ist_abstract_post(ISTSharingTree *S, abstraction_t *abs, transition_system_t *t);
-ISTSharingTree *ist_abstract_post_star(ISTSharingTree *initial_marking, abstraction_t *abs, transition_system_t *t);
+/* the abstract post is only for petri nets. Moreover you have to pass
+ * the approximation functio in parameter. */
 
+ISTSharingTree 
+*ist_abstract_post_of_rules(ISTSharingTree *S, void (*approx)(ISTSharingTree
+			*S, integer16 *b), integer16 *bound, transition_t *t);
+ISTSharingTree 
+*ist_abstract_post(ISTSharingTree * S, void (*approx)(ISTSharingTree
+			*S, integer16 *b), integer16 *bound, transition_system_t *t);
+ISTSharingTree 
+*ist_abstract_post_star(ISTSharingTree *initial_marking, void
+		(*approx)(ISTSharingTree *S, integer16* b), integer16 *bound,
+		transition_system_t *t);
+
+/* the pretild works for transfers */
 ISTSharingTree *adhoc_place_pretild_rule(ISTSharingTree *S, transition_t *t);
 ISTSharingTree *adhoc_pretild(ISTSharingTree *S, transition_system_t *t);
-
-ISTSharingTree *bounded_post_rule(ISTSharingTree *S, integer16 *bound, transition_t *t);
-ISTSharingTree *bounded_post(ISTSharingTree *S, abstraction_t *abs, transition_system_t *t);
-ISTSharingTree *bounded_post_star(ISTSharingTree * initial_marking, abstraction_t * abs, transition_system_t *t);
 
 #endif

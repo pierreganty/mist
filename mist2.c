@@ -37,7 +37,7 @@
 
 
 /* For printing the error trace */
-void ist_put_path_on_screen_with_parameterized_initial_marking(ISTSharingTree * initial_marking,THeadListIST * list_ist, transition_system_t * rules) 
+void ist_print_error_trace(ISTSharingTree * initial_marking,THeadListIST * list_ist, transition_system_t * rules) 
 {
 	ISTSharingTree *S, *post, *Siter, *intersect;
 	size_t i;
@@ -83,7 +83,7 @@ boolean backward_lfp(system, initial_marking, frontier)
 	boolean reached;
 	THeadListIST List;
 	
-	/* Now we declare variables to measure the time consumed by the tool */
+	/* Now we declare variables to measure the time consumed by the function */
 	long int tick_sec=0 ;
 	struct tms before, after;
 	float comp_u, comp_s ;
@@ -144,21 +144,11 @@ boolean backward_lfp(system, initial_marking, frontier)
 				 */
 				ist_dispose(reached_elem);
 				reached_elem = ist_union(temp, frontier);
-#ifdef INTERVAL
-				printf("\n\tStarting minimization of reached states\n\t");
-				ist_stat(reached_elem);
-				ist_minimal_form_sim_based(reached_elem);
-				printf("\t");
-				ist_stat(reached_elem);
-				/* 
-				 * Here we prune 1toN inclusion 
-				 * We use heuristic, our computation are based on the simulation relation 
+				/* To minimize we can use:
+				 * ist_minimal_form or ist_minimal_form_sim_based
 				 */
-#endif
 				puts("After union, the reached symbolic state space is:");
 				ist_checkup(reached_elem);
-
-				//				ist_dispose(old_frontier);
 				ist_insert_at_the_beginning_list_ist(&List,old_frontier);
 				old_frontier = frontier;
 			}
@@ -176,7 +166,7 @@ boolean backward_lfp(system, initial_marking, frontier)
 #endif
 	}
 	if (reached == true)
-		ist_put_path_on_screen_with_parameterized_initial_marking(initial_marking,&List,system);
+		ist_print_error_trace(initial_marking,&List,system);
 	times(&after);
 	tick_sec = sysconf (_SC_CLK_TCK) ;
 	comp_u = ((float)after.tms_utime - (float)before.tms_utime)/(float)tick_sec ;
@@ -185,26 +175,6 @@ boolean backward_lfp(system, initial_marking, frontier)
 	printf("                          (system) -> %6.3f sec.\n",comp_s);
 
 	ist_dispose(reached_elem);
-	//_____ FOR cOMPLementing operation ____
-	//printf("____/__/ Print old_frontier\n");
-	//ist_write(old_frontier);
-	//reached_elem =ist_copy(old_frontier);
-	//printf("____/__/ Print complement of old_frontier\n");
-	//printf("____/Checkup before determinization\n");
-	//ist_checkup(old_frontier);
-	//ist_determinize(old_frontier);
-	//printf("____/Checkup after determinization before complementation \n");
-	//ist_checkup(old_frontier);
-	//ist_dump_graph("deter.dot",old_frontier);
-	//ist_write(old_frontier);
-	//ist_complement(old_frontier);
-	//printf("____/Checkup after complementation \n");
-	//ist_checkup(old_frontier);
-	//ist_write(old_frontier);
-	//ist_dump_graph("compl.dot",old_frontier);
-	//printf("____/Check(up) empty intersection \n");
-	//ist_write(ist_intersection(old_frontier,reached_elem));
-	//_____ FOR cOMPLementing operation ____
 	
 	/* Is the system safe ? */
 	return (reached== true ? false : true);
@@ -230,7 +200,7 @@ static void head_msg()
 	puts("There is absolutely no warranty for mist2. See the COPYING for details.");
 }
 
-void mist_cmdline_options_handle(int argc, char *argv[ ]) 
+static void mist_cmdline_options_handle(int argc, char *argv[ ]) 
 {
 	int c;
 
@@ -272,6 +242,34 @@ void mist_cmdline_options_handle(int argc, char *argv[ ])
 	}
 }
 
+/*
+ * apply the (0,...,k,INFINITY) abstraction.
+ * OUT: for each layer the list of nodes remains sorted.
+ */
+void abstract_bound(ISTSharingTree *S, integer16 *bound) 
+{
+	ISTLayer *L;
+	ISTNode *N;
+	size_t i;
+
+	for(L = S->FirstLayer, i = 0 ; L != S->LastLayer ; L = L->Next, i++) 
+		for(N = L->FirstNode ; N != NULL ; N = N->Next) 
+			if (!ist_less_or_equal_value(N->Info->Right,bound[i]))
+				N->Info->Right=INFINITY;
+}
+
+void bound_values(ISTSharingTree *S, integer16 *bound)
+{
+	ISTLayer *L;
+	ISTNode *N;
+	size_t i;
+	
+	for(i=0,L = S->FirstLayer;L != S->LastLayer;i++,L = L->Next)
+		for(N= L->FirstNode;N != NULL;N = N->Next)
+			ist_assign_values_to_interval(N->Info,min(N->Info->Left,bound[i]),min(N->Info->Right,bound[i]));
+}
+
+
 /* lfp is a out parameter which contains de lfp */
 boolean eec(system, abs, initial_marking, bad, lfp)
 	transition_system_t *system;
@@ -293,7 +291,9 @@ boolean eec(system, abs, initial_marking, bad, lfp)
 	while (finished == false) {
 		printf("eec: ENLARGE begin\t");
 		fflush(NULL);
-		abs_post_star = ist_abstract_post_star(downward_closed_initial_marking,abs,system);
+		/* To OVERapproximate we use abstract_bound */
+		abs_post_star = ist_abstract_post_star(downward_closed_initial_marking,abstract_bound,abs->bound,system);
+		assert(ist_checkup(abs_post_star)==true);
 		puts("end");
 		inter = ist_intersection(abs_post_star,bad);
 		if (ist_is_empty(inter) == true) {
@@ -306,7 +306,9 @@ boolean eec(system, abs, initial_marking, bad, lfp)
 		
 			printf("eec: EXPAND begin\t");
 			fflush(NULL);
-			bpost = bounded_post_star(downward_closed_initial_marking,abs,system);	
+			/* To UNDERapproximate we use bound_values */
+			bpost = ist_abstract_post_star(downward_closed_initial_marking,bound_values,abs->bound,system);	
+			assert(ist_checkup(bpost)==true);
 			puts("end");
 			inter = ist_intersection(bpost,bad);
 			if (ist_is_empty(inter) == false) {
@@ -367,6 +369,7 @@ void ic4pn(system, initial_marking, bad)
 	/* tmp represents a dc-set */
 	safe=ist_downward_closure(tmp);
 	ist_normalize(safe);
+	ist_dispose(tmp);
 	/* safe = tmp and each path is a dc-closed */
 
 	nb_iteration=0;
@@ -400,8 +403,10 @@ void ic4pn(system, initial_marking, bad)
 		} else { /* refine the abstraction */
 			puts("The EEC fixpoint");
 			assert(ist_checkup(lfp_eec)==true);
+			puts("----------------"):
 			/* safe is given by safe /\ gamma(lfp_eec) */
 			_tmp=ist_concretisation(lfp_eec,myabs);
+			ist_dispose(lfp_eec);
 			tmp=ist_intersection(safe,_tmp);
 			ist_dispose(_tmp);
 			ist_dispose(safe);
@@ -420,13 +425,11 @@ void ic4pn(system, initial_marking, bad)
 			ist_dispose(_tmp);
 			alpha_safe=tmp;
 			
-			ist_dispose(lfp_eec);
 
 			/* iterates = alpha_safe */
 			iterates = ist_copy(alpha_safe);
 			assert(ist_checkup(iterates)==true);
 			assert(ist_equal(iterates,alpha_safe));
-			assert(ist_checkup(iterates)==true);
 
 			/* compute the gfp for the abstraction */
 			iterator=0;
@@ -466,8 +469,10 @@ void ic4pn(system, initial_marking, bad)
 
 			puts("gamma_gfp");
 			//ist_write(gamma_gfp);
+			assert(ist_checkup(gamma_gfp)==true);
 			puts("¬ (gamma_gfp)");
 			ist_complement(gamma_gfp,system->limits.nbr_variables);
+			assert(ist_checkup(gamma_gfp)==true);
 			//ist_write(gamma_gfp);
 
 			/* conclusive = true implies initial_marking \nsubseteq gamma_gfp */
@@ -479,13 +484,15 @@ void ic4pn(system, initial_marking, bad)
 			puts("pre o ¬ (gamma_gfp)");
 			tmp=ist_pre(gamma_gfp,system);
 			ist_dispose(gamma_gfp);
-			//ist_write(tmp);
+			assert(ist_checkup(tmp)==true);
 			puts("min o v o ¬ o pre o ¬ (gamma_gfp)");
 			ist_complement(tmp,system->limits.nbr_variables);
 			_tmp=ist_downward_closure(tmp);
+			ist_normalize(_tmp);
 			ist_dispose(tmp);
 			tmp=ist_minimal_form(_tmp);
-			//ist_write(tmp);
+			ist_dispose(_tmp);
+			assert(ist_checkup(tmp)==true);
 
 			/* Now intersects w/ safe */
 			_tmp=ist_intersection(safe,tmp);

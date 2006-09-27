@@ -74,6 +74,7 @@ void print_abstraction(abs)
 	abstraction_t *abs;
 {
 	size_t i,j;
+	printf("abs: %d variables.\n",abs->nbV);
 	puts("abs: For the merging:");
 	for(i=0;i<abs->nbV;++i){
 		for(j=0;j<abs->nbConcreteV;++j)
@@ -372,120 +373,74 @@ abstraction_t *refine_abs(cur_abs, S, cpreS)
 	return retval;
 }
 
-/* OUT: Result is a downward closed set */
-ISTSharingTree *ist_abstract_post_of_rules(ISTSharingTree *S, abstraction_t *abs, transition_t *t) 
+
+ISTSharingTree 
+*ist_abstract_post_of_rules(ISTSharingTree *S, void (*approx)(ISTSharingTree
+			*S, integer16 *b), integer16 *bound, transition_t *t) 
 {
-	ISTSharingTree *result, * tmp, *G;
-	ISTLayer * L;
-	ISTNode * N;
-	size_t i;
-	ISTInterval **g = (ISTInterval **)xmalloc(abs->nbV * sizeof(ISTInterval *));
-
-	for(i = 0;i < abs->nbV;i++)
-		g[i] = ist_copy_interval(&t->cmd_for_place[i].guard);
-	ist_new(&G);
-	ist_add(G,g,abs->nbV);
-	for(i= 0;i< abs->nbV;i++)
-		ist_dispose_info(g[i]);
-	xfree(g);
-
-	result = ist_intersection(S,G);
-	ist_dispose(G);
-
-	//If the IST is not empty, we apply the effect of the function
-	if (ist_is_empty(result) == false) {
-		for (i = 0, L = result->FirstLayer; i < abs->nbV; i++, L = L->Next) {
-			N = L->FirstNode;
-			while (N != NULL) {
-				assert(N->Info->Right<=abs->bound[i]);
-					ist_add_value_to_interval(N->Info,t->cmd_for_place[i].delta);
-				N = N->Next;
-			}
-		}
-		ist_normalize(result);
-		abstract_bound(result,abs->bound);
-		tmp=ist_downward_closure(result);
-		ist_normalize(tmp);
-		ist_dispose(result);
-		result = ist_minimal_form(tmp);
-		ist_dispose(tmp);
-	}
-	return result;
+   ISTSharingTree *tmp;
+   ISTSharingTree *res = ist_symbolic_post_of_rules(S,t);
+   if (ist_is_empty(res) == false) {
+      tmp = ist_downward_closure(res);
+	  ist_dispose(res);
+      if(approx)
+		  approx(tmp,bound);
+      ist_normalize(tmp);
+	  res = ist_minimal_form(tmp);
+	  ist_dispose(tmp);
+   } 
+   return res;
 }
 
-ISTSharingTree *ist_abstract_post(ISTSharingTree * S, abstraction_t * abs, transition_system_t *t) 
+ISTSharingTree 
+*ist_abstract_post(ISTSharingTree *S, void (*approx)(ISTSharingTree
+			*S, integer16 *b), integer16 *bound, transition_system_t *t) 
 {
 	size_t i;
-	ISTSharingTree * result, * tmp, * tmp2;
-	boolean empty;
+	ISTSharingTree *res, *tmp, *_tmp;
 
-	ist_new(&result);
+	ist_new(&res);
 	for(i=0;i< t->limits.nbr_rules;i++) {
-		tmp = ist_abstract_post_of_rules(S,abs,&t->transition[i]);
-		tmp2 = ist_remove_subsumed_paths(tmp,result);
-		empty = ist_is_empty(tmp2);
-		ist_dispose(tmp2);
-		if (empty==false) {
-			tmp2=ist_union(tmp,result);	
-			ist_dispose(result);
-			result = ist_minimal_form(tmp2);
-		}
+		tmp = ist_abstract_post_of_rules(S,approx,bound,&t->transition[i]);
+		_tmp = ist_remove_subsumed_paths(tmp,S);
 		ist_dispose(tmp);
+		if (ist_is_empty(_tmp)==false) {
+			tmp = ist_remove_subsumed_paths(S,_tmp);
+			res = ist_union(tmp,_tmp);
+			ist_dispose(tmp);
+		}
+		ist_dispose(_tmp);
 	}
-	return result;
+	return res;
 }
 
-ISTSharingTree *ist_abstract_post_star(ISTSharingTree * initial_marking, abstraction_t * abs, transition_system_t *t) 
+/* Assume initial_marking is a downward closed marking and the ist is minimal */
+ISTSharingTree 
+*ist_abstract_post_star(ISTSharingTree *initial_marking, void
+		(*approx)(ISTSharingTree *S, integer16* b), integer16 *bound,
+		transition_system_t *t) 
 {
-	ISTSharingTree *S, *tmp, *tmp2;
-	boolean empty;
+	ISTSharingTree *S, *tmp, *_tmp;
 
 	S = ist_copy(initial_marking);
-	abstract_bound(S,abs->bound);
+	if(approx)
+		approx(S,bound);
+	ist_normalize(S);
 	while (true) {
-		tmp = ist_abstract_post(S,abs,t);
-		tmp2 =  ist_remove_subsumed_paths(tmp,S);
-		empty = ist_is_empty(tmp2);
-		ist_dispose(tmp2);
-		if (empty==false) {		
-			tmp2 = ist_union(tmp,S);
-			ist_dispose(S);
+		tmp = ist_abstract_post(S,approx,bound,t);
+		_tmp =  ist_remove_subsumed_paths(tmp,S);
+		ist_dispose(tmp);
+		if (ist_is_empty(_tmp)==false) {		
+			tmp = ist_remove_subsumed_paths(S,_tmp);
+			S = ist_union(tmp,_tmp);
 			ist_dispose(tmp);
-			S = ist_minimal_form(tmp2);
-			ist_dispose(tmp2);
+			ist_dispose(_tmp);
 		} else {
-			ist_dispose(tmp);
+			ist_dispose(_tmp);
 			break;
 		}
 	}
 	return S;	
-}
-
-/*
- * apply the (0,...,k,INFINITY) abstraction.
- * OUT: for each layer the list of nodes remains sorted.
- */
-void abstract_bound(ISTSharingTree *S, integer16 *bound) 
-{
-	ISTLayer * L;
-	ISTNode * N;
-	size_t i;
-
-	for(L = S->FirstLayer, i = 0 ; L != S->LastLayer ; L = L->Next, i++) 
-		for(N = L->FirstNode ; N != NULL ; N = N->Next) 
-			if (!ist_less_or_equal_value(N->Info->Right,bound[i]))
-				ist_assign_values_to_interval(N->Info,N->Info->Left,INFINITY);
-}
-
-void bound_values(ISTSharingTree *S, integer16 *bound)
-{
-	ISTNode *N;
-	ISTLayer *L;
-	size_t i;
-	
-	for(i=0,L = S->FirstLayer;L != S->LastLayer;i++,L = L->Next)
-		for(N= L->FirstNode;N != NULL;N = N->Next)
-			ist_assign_values_to_interval(N->Info,min(N->Info->Left,bound[i]),min(N->Info->Right,bound[i]));
 }
 
 
@@ -540,72 +495,3 @@ ISTSharingTree *adhoc_pretild(ISTSharingTree *S, transition_system_t *t)
 	}
 	return result;
 }
-
-
-ISTSharingTree *bounded_post_rule(ISTSharingTree *S, integer16 *bound, transition_t *t) 
-{
-   ISTSharingTree *result;
-   ISTSharingTree * tmp = ist_symbolic_post_of_rules(S,t);
-   if (ist_is_empty(tmp) == false) {
-      bound_values(tmp,bound);
-      result = ist_downward_closure(tmp);
-	  ist_dispose(tmp);
-      ist_normalize(result);
-	  tmp = ist_minimal_form(result);
-	  ist_dispose(result);
-	  result = tmp;
-   } else result = tmp;
-   return result;
-}
-
-ISTSharingTree *bounded_post(ISTSharingTree *S, abstraction_t *abs, transition_system_t *t) {
-	ISTSharingTree *result;
-	ISTSharingTree *tmp;
-	ISTSharingTree *tmp2;
-	size_t i;
-	
-	ist_new(&result);
-	for(i = 0;i<t->limits.nbr_rules;i++) {
-		tmp = bounded_post_rule(S,abs->bound,&t->transition[i]);
-		if (ist_is_empty(tmp) == false) {
-			tmp2 = ist_union(tmp,result);
-			ist_dispose(tmp);
-			ist_dispose(result);
-			result = ist_minimal_form(tmp2);
-			ist_dispose(tmp2);
-		} else 
-			ist_dispose(tmp);
-	}
-	return result;
-}
-
-ISTSharingTree *bounded_post_star(ISTSharingTree * initial_marking, abstraction_t * abs, transition_system_t *t) {
-	ISTSharingTree *result;
-	ISTSharingTree *tmp;
-	ISTSharingTree *tmp2;
-	boolean empty;
-
-
-	result = ist_copy(initial_marking);
-	bound_values(result,abs->bound);
-	ist_normalize(result);
-	while (true) {
-		tmp = bounded_post(result,abs,t);
-		tmp2=ist_remove_subsumed_paths(tmp,result);
-		empty=ist_is_empty(tmp2);
-		ist_dispose(tmp2);
-		if (empty == false) {
-			tmp2 = ist_union(tmp,result);
-			ist_dispose(tmp);
-			ist_dispose(result);
-			result = ist_minimal_form(tmp2);
-			ist_dispose(tmp2);
-		} else {
-			ist_dispose(tmp);
-			break;
-		}
-	}
-	return result;
-}
-
-

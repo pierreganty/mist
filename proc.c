@@ -85,12 +85,12 @@ inline void ist_dispose_son(son)
 
 	ISTSon *ptr;
 	ptr = st_SonsMemory;
-	/* A sanity check */
+	/* A sanity check which is VERY TIME CONSUMING !!!
 	while (ptr != NULL) {
 		if (ptr == son) {
 			err_msg("Error: son already disposed\n");
 		} else ptr = ptr->Next;
-	}
+	} */
 	son->Next = st_SonsMemory;
 	st_SonsMemory = son;
 }
