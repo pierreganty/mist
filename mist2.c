@@ -535,14 +535,18 @@ void ic4pn(system, initial_marking, bad)
 				iterator=0; 
 				while(iterator < system->limits.nbr_rules && newabs->nbV == myabs->nbV) {
 					dispose_abstraction(newabs);
+					/* _tmp = cpre[t_iterator] */
 					tmp=adhoc_place_pretild_rule(iterates,&system->transition[iterator]);
 					_tmp=ist_downward_closure(tmp);
 					ist_normalize(_tmp);
 					ist_dispose(tmp);	
-					tmp=ist_minimal_form(_tmp);
+
+					tmp=ist_intersection(_tmp,safe);
 					ist_dispose(_tmp);
-					newabs = refine_abs(myabs,iterates,tmp);
-					ist_dispose(tmp);
+					_tmp=ist_minimal_form(tmp);
+
+					newabs = refine_abs(myabs,iterates,_tmp);
+					ist_dispose(_tmp);
 					++iterator;
 				}
 			} else if (newabs->bound[0]==0) {
@@ -559,8 +563,11 @@ void ic4pn(system, initial_marking, bad)
 					_tmp=ist_downward_closure(tmp);
 					ist_normalize(_tmp);
 					ist_dispose(tmp);	
-					tmp=ist_minimal_form(_tmp);
+
+					tmp=ist_intersection(_tmp,safe);
 					ist_dispose(_tmp);
+					_tmp=ist_minimal_form(tmp);
+
 					candidate_abs=refine_abs(myabs,iterates,tmp);
 					ist_dispose(tmp);
 					++iterator;
