@@ -273,10 +273,11 @@ abstraction_t *refine_abs(cur_abs, S, cpreS)
 			j=0;
 			while(L!=NULL && _L!=NULL){
 				if(cur_abs->A[i][j]==1){
+					/* Does a new bound appear in cpreS ? */
 					_N=_L->FirstNode;
 					while(_N!=NULL) {
 						/* Take a node in cpreS layer j and search for a samed
-						 * node in S layer j if so NewB[j]==0 */
+						 * node in S layer j if so NewB[j]==1 */
 						N=L->FirstNode;
 						matched=false;
 						while(N!=NULL){
@@ -287,6 +288,22 @@ abstraction_t *refine_abs(cur_abs, S, cpreS)
 						if (matched==false)
 							NewB[j]=1;
 						_N=_N->Next;
+					}
+					/* Does a bound disappear in S ? */
+					N=L->FirstNode;
+					while(N!=NULL) {
+						/* Take a node in cpreS layer j and search for a samed
+						 * node in S layer j if so NewB[j]==1 */
+						_N=L->FirstNode;
+						matched=false;
+						while(_N!=NULL){
+							if(ist_equal_interval(_N->Info,N->Info))
+								matched=true;
+							_N=N->Next;
+						 }
+						if (matched==false)
+							NewB[j]=1;
+						N=N->Next;
 					}
 				}
 				L=L->Next;
@@ -446,10 +463,10 @@ ISTSharingTree
 /*
  * compute the adhoc pretild for one transition t
  */
-ISTSharingTree *adhoc_place_pretild_rule(ISTSharingTree * S, transition_t *t) 
+ISTSharingTree *adhoc_place_pretild_rule(ISTSharingTree *S, transition_t *t) 
 {
-	ISTSharingTree * result = NULL;
-	ISTSharingTree * temp;
+	ISTSharingTree *result = NULL;
+	ISTSharingTree *temp;
 	size_t i;
 	boolean top;
 
