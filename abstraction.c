@@ -64,10 +64,12 @@ build_sys_using_abs(sys,abs)
 void dispose_abstraction(abstraction_t *abs)
 {
 	size_t i;
-	for(i=0;i<abs->nbV;++i)
-		free(abs->A[i]);
-	free(abs->bound);
-	free(abs);
+	if(abs->nbV > 0) {
+		for(i=0;i<abs->nbV;++i)
+			xfree(abs->A[i]);
+		xfree(abs->bound);
+	}
+	xfree(abs);
 }
 
 void print_abstraction(abs)
@@ -313,8 +315,8 @@ abstraction_t *refine_abs(cur_abs, S, cpreS)
 					retval->bound=(integer16 *)xmalloc(retval->nbV*sizeof(integer16));
 					for(k=0;k<retval->nbV;++k){
 						retval->A[k]=(integer16 *)xmalloc(cur_abs->nbConcreteV*sizeof(integer16));
-						/* The new abstraction is a copy of the current one with a new line w/
-						 * 0's. */
+						/* The new abstraction is a copy of the current one
+						 * with a new line w/ 0's. */
 						for(j=0;j<cur_abs->nbConcreteV;++j)
 							retval->A[k][j]=(k < cur_abs->nbV ? cur_abs->A[k][j] : 0);
 						retval->bound[k]=1;
@@ -342,11 +344,12 @@ abstraction_t *refine_abs(cur_abs, S, cpreS)
 
 			for(k=0;k<retval->nbV;++k){
 				retval->A[k]=(integer16 *)xmalloc(cur_abs->nbConcreteV*sizeof(integer16));
-				/* The new abstraction is a copy of the current one with for the Rows2Add last lines w/
-				 * 0's. */
+				/* The new abstraction is a copy of the current one with for
+				 * the Rows2Add last lines w/ 0's. We set bounds to 0 meaning
+				 * that our refinement is built upon arbitrary criteria. */
 				for(j=0;j<cur_abs->nbConcreteV;++j)
 					retval->A[k][j]= (k<cur_abs->nbV ? cur_abs->A[k][j] : 0);
-				retval->bound[k]=1;
+				retval->bound[k]=0;
 			}
 			/* we split each of Rows2Split. Btw we have NewB == cur_abs->A[for each Rows2Split] */
 			for(k=0;k<Rows2Add;++k){
@@ -361,11 +364,6 @@ abstraction_t *refine_abs(cur_abs, S, cpreS)
 					}
 				}
 			}
-			printf("Row(s)");
-			for(k=0;k<Rows2Add;++k)
-				printf(" %d",Rows2Split[k]);
-			printf(" splitted\n");
-
 		}
 	}
 	if(Rows2Split!=NULL)
@@ -432,6 +430,7 @@ ISTSharingTree
 		ist_dispose(tmp);
 		if (ist_is_empty(_tmp)==false) {		
 			tmp = ist_remove_subsumed_paths(S,_tmp);
+			ist_dispose(S);
 			S = ist_union(tmp,_tmp);
 			ist_dispose(tmp);
 			ist_dispose(_tmp);

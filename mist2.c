@@ -270,24 +270,25 @@ void bound_values(ISTSharingTree *S, integer16 *bound)
 }
 
 
-/* lfp is a out parameter which contains de lfp */
+/*
+ * lfp is a out parameter which contains de lfp
+ * WORKS FOR PETRI NET ONLY
+ */
 boolean eec(system, abs, initial_marking, bad, lfp)
 	transition_system_t *system;
 	abstraction_t *abs; /* For the bounds on the places */
 	ISTSharingTree *initial_marking, *bad, **lfp;
 {
 	boolean retval;
-	ISTSharingTree * abs_post_star;
-	ISTSharingTree * inter;
-	ISTSharingTree * downward_closed_initial_marking;
-	boolean finished = false;
-	ISTSharingTree * bpost;
+	ISTSharingTree *abs_post_star, *inter, *downward_closed_initial_marking, *bpost, *tmp, *_tmp;
+	boolean finished;
 	size_t i;
 
 	downward_closed_initial_marking = ist_downward_closure(initial_marking);
 	ist_normalize(downward_closed_initial_marking);
 	assert(ist_checkup(downward_closed_initial_marking)==true);
-	
+
+	finished=false;
 	while (finished == false) {
 		printf("eec: ENLARGE begin\t");
 		fflush(NULL);
@@ -295,36 +296,59 @@ boolean eec(system, abs, initial_marking, bad, lfp)
 		abs_post_star = ist_abstract_post_star(downward_closed_initial_marking,abstract_bound,abs->bound,system);
 		assert(ist_checkup(abs_post_star)==true);
 		puts("end");
+		*lfp = abs_post_star;
 		inter = ist_intersection(abs_post_star,bad);
-		if (ist_is_empty(inter) == true) {
-			ist_dispose(inter);
-			*lfp = abs_post_star;
+		finished=ist_is_empty(inter);
+		ist_dispose(inter);
+		if (finished==true) 
+			/* finished==true -> the system is safe */
 			retval = true;
-			finished = true;
-		} else {
-			ist_dispose(inter);
-		
+		else {
 			printf("eec: EXPAND begin\t");
 			fflush(NULL);
-			/* To UNDERapproximate we use bound_values */
-			bpost = ist_abstract_post_star(downward_closed_initial_marking,bound_values,abs->bound,system);	
+			/* use bpost = ist_abstract_post_star(downward_closed_initial_marking,bound_values,abs->bound,system)
+			 * if you want compute the lfp. Instead we make something more
+			 * efficient by testing, at each iteration, for the emptiness of
+			 * intersection w/ bad. */
+
+			bpost = ist_copy(downward_closed_initial_marking);
+			bound_values(bpost,abs->bound);
+			ist_normalize(bpost);
+			inter=ist_intersection(bpost,bad);
+			finished= ist_is_empty(inter) == true ? false : true;
+			ist_dispose(inter);
+			while (finished==false) {
+				tmp = ist_abstract_post(bpost,bound_values,abs->bound,system);
+				_tmp =  ist_remove_subsumed_paths(tmp,bpost);
+				ist_dispose(tmp);
+				if (ist_is_empty(_tmp)==false) {		
+					inter=ist_intersection(_tmp,bad);
+					finished=ist_is_empty(inter) == true ? false : true;
+					ist_dispose(inter);
+					tmp = ist_remove_subsumed_paths(bpost,_tmp);
+					ist_dispose(bpost);
+					bpost = ist_union(tmp,_tmp);
+					ist_dispose(tmp);
+					ist_dispose(_tmp);
+				} else {
+					ist_dispose(_tmp);
+					break;
+				}
+			}
 			assert(ist_checkup(bpost)==true);
+			ist_dispose(bpost);
 			puts("end");
-			inter = ist_intersection(bpost,bad);
-			if (ist_is_empty(inter) == false) {
-				*lfp = abs_post_star;
-				retval = false;
-				finished = true;
-			} else {
+			if (finished==true)
+				/* finished==true -> we hitted the bad states, the system is unsafe */
+				retval=false;
+			else {
+				/* One more iteration is needed because both bpost and
+				 * abs_post_star does not allow to conclude */
 				ist_dispose(abs_post_star);
-				for (i=0;i< system->limits.nbr_variables;i++)
-					++abs->bound[i];
 				printf("eec: BOUNDS\t");
-				for(i=0;i<abs->nbV;printf("%d ",abs->bound[i++]));
+				for(i=0;i<abs->nbV;printf("%d ",++abs->bound[i++]));
 				printf("\n");
 			}
-			ist_dispose(bpost);
-			ist_dispose(inter);
 		}
 	}
 	ist_dispose(downward_closed_initial_marking);
@@ -335,13 +359,13 @@ void ic4pn(system, initial_marking, bad)
 	transition_system_t *system;
 	ISTSharingTree *bad, *initial_marking;
 {
-	abstraction_t *myabs, *newabs;
+	abstraction_t *myabs, *newabs, *candidate_abs;
 	transition_system_t *sysabs;
 	ISTSharingTree *lfp_eec, *gamma_gfp, *tmp, *_tmp, *safe, *alpha_safe,
 				   *iterates, *new_iterates, *alpha_initial_marking,
 				   *alpha_bad;
 	size_t i,j,nb_iteration, iterator;
-	boolean out, conclusive, eec_conclusive, bw_conclusive;
+	boolean out, conclusive, eec_conclusive;
 
 	/* Memory allocation */
 	myabs=(abstraction_t *)xmalloc(sizeof(abstraction_t));
@@ -387,10 +411,7 @@ void ic4pn(system, initial_marking, bad)
 		alpha_initial_marking = ist_abstraction(initial_marking,myabs);
 		assert(ist_checkup(alpha_initial_marking)==true);
 
-		bw_conclusive=backward_lfp(sysabs,alpha_initial_marking,alpha_bad);
 		eec_conclusive=eec(sysabs,myabs,alpha_initial_marking,alpha_bad,&lfp_eec);
-		/* To be sure that eec is correct */
-		assert(bw_conclusive==eec_conclusive);
 
 		ist_dispose(alpha_initial_marking);
 		ist_dispose(alpha_bad);
@@ -403,7 +424,7 @@ void ic4pn(system, initial_marking, bad)
 		} else { /* refine the abstraction */
 			puts("The EEC fixpoint");
 			assert(ist_checkup(lfp_eec)==true);
-			puts("----------------"):
+			puts("----------------");
 			/* safe is given by safe /\ gamma(lfp_eec) */
 			_tmp=ist_concretisation(lfp_eec,myabs);
 			ist_dispose(lfp_eec);
@@ -508,19 +529,53 @@ void ic4pn(system, initial_marking, bad)
 			/* We build the next abstraction */
 			newabs=refine_abs(myabs,iterates,new_iterates);
 			ist_dispose(new_iterates);
-			iterator=0; 
-			/* We go through this loop to refine transition per transition */
-			while(iterator < system->limits.nbr_rules && newabs->nbV == myabs->nbV) {
-				dispose_abstraction(newabs);
-				tmp=adhoc_place_pretild_rule(iterates,&system->transition[iterator]);
-				_tmp=ist_downward_closure(tmp);
-				ist_normalize(_tmp);
-				ist_dispose(tmp);	
-				tmp=ist_minimal_form(_tmp);
-				ist_dispose(_tmp);
-				newabs = refine_abs(myabs,iterates,tmp);
-				ist_dispose(tmp);
-				++iterator;
+			if(newabs->nbV == myabs->nbV) {
+				/* No refinement based on iterates and new_iterates was possible
+				 * so we proceed transition by transition. */
+				iterator=0; 
+				while(iterator < system->limits.nbr_rules && newabs->nbV == myabs->nbV) {
+					dispose_abstraction(newabs);
+					tmp=adhoc_place_pretild_rule(iterates,&system->transition[iterator]);
+					_tmp=ist_downward_closure(tmp);
+					ist_normalize(_tmp);
+					ist_dispose(tmp);	
+					tmp=ist_minimal_form(_tmp);
+					ist_dispose(_tmp);
+					newabs = refine_abs(myabs,iterates,tmp);
+					ist_dispose(tmp);
+					++iterator;
+				}
+			} else if (newabs->bound[0]==0) {
+				/* refine_abs proposed an ARBITRARY refinement based on iterates and new_iterates. 
+				 * We search for a NON ARBITRARY refinement looking at the new iterates for each single transition. */
+				candidate_abs = (abstraction_t *)xmalloc(sizeof(abstraction_t));
+				/* A dummy abstraction that we dispose immediately. */
+				candidate_abs->nbV=0;
+				/* For dispose_abstraction to behave correctly */
+				iterator=0;
+				do {
+					dispose_abstraction(candidate_abs);
+					tmp=adhoc_place_pretild_rule(iterates,&system->transition[iterator]);
+					_tmp=ist_downward_closure(tmp);
+					ist_normalize(_tmp);
+					ist_dispose(tmp);	
+					tmp=ist_minimal_form(_tmp);
+					ist_dispose(_tmp);
+					candidate_abs=refine_abs(myabs,iterates,tmp);
+					ist_dispose(tmp);
+					++iterator;
+				} while(iterator < system->limits.nbr_rules && candidate_abs->bound[0]==0);
+				if (candidate_abs->bound[0]!=0) {
+					/* We found a NON ARBITRARY refinement looking at the iterates for each single transition. */
+					dispose_abstraction(newabs);
+					/* We found a better refinement than newabs so we dispose it. */
+					newabs = candidate_abs;
+					/* newabs->bound[i] == 1 for each i holds. */
+				} else {
+					/* newabs is our new abstraction. We have to set newabs->bound[i]=1. */
+					puts("Arbitrary refinement took place.");
+					for (i=0;i<newabs->nbV;newabs->bound[i++]=1);
+				}
 			}
 			/* we dispose iterates and myabs */
 			ist_dispose(iterates);
@@ -529,7 +584,7 @@ void ic4pn(system, initial_marking, bad)
 			dispose_abstraction(myabs);
 			 
 			myabs=newabs;
-			assert(newabs->nbV >0);
+			assert(newabs->nbV>0);
 		}
 		/* We release the abstract system */
 		dispose_transition_system(sysabs);
