@@ -240,152 +240,209 @@ ISTSharingTree *ist_concretisation(ISTSharingTree *S, abstraction_t *abs)
 	return result;
 }
 
-/* We assume exists i s.t. sum cur_abs->A[i][j] > 1 */
-abstraction_t *refine_abs(cur_abs, S, cpreS)
-	abstraction_t *cur_abs;
-	ISTSharingTree *S, *cpreS;
+/* ASSUME row has at least two entries greater or equal than 1 */
+static integer16 *refined_variables(integer16 *row, ISTSharingTree *S, ISTSharingTree *cpreS)
 {
+	size_t length, j;
+	integer16 *NewB;
+	length=ist_nb_layers(S)-1;
+	ISTLayer *L,*_L;
+	ISTNode *N,*_N;
+	boolean matched;
+
+	/* We allocate and initialize the value to return */
+	NewB = (integer16 *)xmalloc(length*sizeof(integer16));
+	for(j=0;j<length;NewB[j++]=0); 
+
+	L = S->FirstLayer;
+	_L = cpreS->FirstLayer;
+	j=0;
+	while(L!=NULL && _L!=NULL){
+		if(row[j]==1){
+			/* Does a new bound appear in cpreS ? */
+			_N=_L->FirstNode;
+			while(_N!=NULL) {
+				/* Take a node in cpreS layer j and search for a samed
+				 * node in S layer j if so NewB[j]==1 */
+				N=L->FirstNode;
+				matched=false;
+				while(N!=NULL){
+					if(ist_equal_interval(_N->Info,N->Info))
+						matched=true;
+					N=N->Next;
+				}
+				if (matched==false)
+					NewB[j]=1;
+				_N=_N->Next;
+			}
+			/* Does a bound disappear in S ? */
+			N=L->FirstNode;
+			while(N!=NULL) {
+				/* Take a node in cpreS layer j and search for a samed
+				 * node in S layer j if so NewB[j]==1 */
+				_N=L->FirstNode;
+				matched=false;
+				while(_N!=NULL){
+					if(ist_equal_interval(_N->Info,N->Info))
+						matched=true;
+					_N=_N->Next;
+				}
+				if (matched==false)
+					NewB[j]=1;
+				N=N->Next;
+			}
+		}
+		L=L->Next;
+		_L=_L->Next;
+		++j;
+	}
+	return NewB;
+}
+
+static abstraction_t *add_row(abstraction_t *abs, size_t nb_row, integer16 *NewB)
+{
+
+	size_t j,k;
 	abstraction_t *retval;
-	ISTLayer *L, *_L;
-	ISTNode *N, *_N;
+
+	retval = (abstraction_t *)xmalloc(sizeof(abstraction_t));
+	/* we add exactly one row  */
+	retval->nbV=abs->nbV+1;
+	retval->nbConcreteV = abs->nbConcreteV;
+	retval->A=(integer16 **)xmalloc(retval->nbV*sizeof(integer16));
+	retval->bound=(integer16 *)xmalloc(retval->nbV*sizeof(integer16));
+	/* we copy abs into retval */
+	for(k=0;k<retval->nbV;++k) {
+		retval->bound[k]=1;
+		retval->A[k]=(integer16 *)xmalloc(retval->nbConcreteV*sizeof(integer16));
+		for(j=0;j<retval->nbConcreteV;++j)
+			/* the added row is set to 0's. */
+			retval->A[k][j]=(k < abs->nbV ? abs->A[k][j] : 0);
+	}
+	/* we split the nb_row according to NewB */
+	if (NewB != NULL) {
+		/* If NewB is NULL we do nothing */
+		for(j=0;j<retval->nbConcreteV;++j){
+			if(NewB[j]==1) {
+				retval->A[nb_row][j] = 0;
+				retval->A[retval->nbV-1][j]= 1;
+			}
+		}
+	}
+	return retval;
+}
+
+
+abstraction_t *refine_abs(cur_abs, S, cpreS, safe, sys)
+	abstraction_t *cur_abs;
+	ISTSharingTree *S, *cpreS, *safe;
+	transition_system_t *sys;
+{
+	abstraction_t *refined_abs, *p;
+	ISTSharingTree *cpre_t_S, *tmp, *_tmp;
 	integer16 *NewB, sum, sumB;
-	size_t i, j, k, splitted, Rows2Add=0, *Rows2Split=NULL;
-	boolean matched, nl_added=false;
+	size_t i, j, k, splitted, nb_row;
 
-	assert(ist_nb_layers(S)==ist_nb_layers(cpreS));
+	p=cur_abs;
 
-	NewB = (integer16 *)xmalloc(cur_abs->nbConcreteV*sizeof(integer16));
-	retval=(abstraction_t *)xmalloc(sizeof(abstraction_t));
-	/* The number of concrete places never changes */
-	retval->nbConcreteV=cur_abs->nbConcreteV;
-
-	/* For each row i */
+	/* For each row i in the current abstraction */
 	for(i=0;i<cur_abs->nbV;++i) {
-		/* We set NewB to 0's and we count the non null entries of cur_abs->A[i] */
-		for(sum=0,j=0;j<cur_abs->nbConcreteV;++j) {
-			NewB[j]=0;
-			sum+=cur_abs->A[i][j];
-		}
-		if(sum>1){
-			/* Row i is not a singleton */
-			L = S->FirstLayer;
-			_L = cpreS->FirstLayer;
-			j=0;
-			while(L!=NULL && _L!=NULL){
-				if(cur_abs->A[i][j]==1){
-					/* Does a new bound appear in cpreS ? */
-					_N=_L->FirstNode;
-					while(_N!=NULL) {
-						/* Take a node in cpreS layer j and search for a samed
-						 * node in S layer j if so NewB[j]==1 */
-						N=L->FirstNode;
-						matched=false;
-						while(N!=NULL){
-							if(ist_equal_interval(_N->Info,N->Info))
-								matched=true;
-							N=N->Next;
-						 }
-						if (matched==false)
-							NewB[j]=1;
-						_N=_N->Next;
-					}
-					/* Does a bound disappear in S ? */
-					N=L->FirstNode;
-					while(N!=NULL) {
-						/* Take a node in cpreS layer j and search for a samed
-						 * node in S layer j if so NewB[j]==1 */
-						_N=L->FirstNode;
-						matched=false;
-						while(_N!=NULL){
-							if(ist_equal_interval(_N->Info,N->Info))
-								matched=true;
-							_N=N->Next;
-						 }
-						if (matched==false)
-							NewB[j]=1;
-						N=N->Next;
-					}
-				}
-				L=L->Next;
-				_L=_L->Next;
-				++j;
-			}
-			for(sumB=0,j=0;j<cur_abs->nbConcreteV;sumB+=NewB[j++]);
-			if(sumB==0) {
-				/* No bound of row i are refined */
-			} else {
-				/* i is a non singleton row and some bound are refined */
-				assert(sumB<=sum);
-				if (sumB==sum) {
-					/* all the bounds of row i are refined we remember it for
-					 * later if we have no better split to make */
-					/* We append one entry to Rows2Split, and we remember i in it */ 
-					++Rows2Add;
-					Rows2Split = (size_t *)xrealloc(Rows2Split,Rows2Add*sizeof(size_t));
-					Rows2Split[Rows2Add-1]=i;
-				} else {
-					/* some (but not all) bounds of row i are refined we split
-					 * row i according to NewB */
-					/* we add exactly one row */
-					retval->nbV=(cur_abs->nbV+1);
-					retval->A=(integer16 **)xmalloc(retval->nbV*sizeof(integer16));
-					retval->bound=(integer16 *)xmalloc(retval->nbV*sizeof(integer16));
-					for(k=0;k<retval->nbV;++k){
-						retval->A[k]=(integer16 *)xmalloc(cur_abs->nbConcreteV*sizeof(integer16));
-						/* The new abstraction is a copy of the current one
-						 * with a new line w/ 0's. */
-						for(j=0;j<cur_abs->nbConcreteV;++j)
-							retval->A[k][j]=(k < cur_abs->nbV ? cur_abs->A[k][j] : 0);
-						retval->bound[k]=1;
-					}
-					for(j=0;j<cur_abs->nbConcreteV;++j){
-						if(NewB[j]==1) {
-							retval->A[i][j] = 0;
-							retval->A[retval->nbV-1][j]= 1;
+		/* compute sum */
+		for(sum=0,j=0;j<p->nbConcreteV;sum+=cur_abs->A[i][j++]);
+		if(sum > 1){
+			/* there are places to separate on row i */
+			NewB = refined_variables(p->A[i],S,cpreS);
+			for(sumB=0,j=0;j<p->nbConcreteV;sumB+=NewB[j++]);
+			if (0 < sumB) {
+				/* We have to refine this row */
+				if (sumB < sum)	{
+					/* CASE 1: Some but not all bounds are refined */
+					refined_abs = add_row(p,i,NewB);
+					/* to not modify cur_abs which is a in parameter */
+					if (p!= cur_abs)
+						dispose_abstraction(p);
+					p = refined_abs;
+				} 
+				xfree(NewB);	
+				if (sumB == sum) {
+					/* CASE 2: All the bounds of row i are refined. */
+					nb_row = p->nbV;
+					/* We remember how many rows counts the abstraction p */
+					for (k=0; nb_row==p->nbV && k<sys->limits.nbr_rules;++k){
+						tmp = adhoc_pretild_rule(S,&sys->transition[k]);
+						_tmp = ist_intersection(tmp,safe);
+						ist_dispose(tmp);
+						tmp = ist_downward_closure(_tmp);
+						ist_normalize(tmp);
+						ist_dispose(_tmp);
+						cpre_t_S = ist_minimal_form(tmp);
+						ist_dispose(tmp);
+						assert(ist_checkup(cpre_t_S)==true);
+						/* This time using cpre_t_S */
+						NewB = refined_variables(p->A[i],S,cpre_t_S);
+						for(sumB=0,j=0;j<p->nbConcreteV;sumB+=NewB[j++]);
+						if (0 < sumB && sumB < sum)	{
+							/* Some but not all bounds are refined */
+							refined_abs = add_row(p,i,NewB);
+							/* to not modify cur_abs which is a in parameter */
+							if (p!= cur_abs)
+								dispose_abstraction(p);
+							p = refined_abs;
+							/* recompute sum since p->A[i] has been modified */
+							for(sum=0,j=0;j<p->nbConcreteV;sum+=p->A[i][j++]);
 						}
+						xfree(NewB);
+						ist_dispose(cpre_t_S);
 					}
-					nl_added=true;
+					if (nb_row == p->nbV) {
+						/* CASE 2a: No clue about separating places of row i.
+						 * So, we carry on an arbitrary split of row i */
+						refined_abs=add_row(p,i,NULL);
+						/* refined_abs is p w/ one row more */
+						for(splitted=0,j=0;j<refined_abs->nbConcreteV;++j) {
+							if(refined_abs->A[i][j]==1 && splitted < (integer16) sum/2 ) {
+								refined_abs->A[i][j] = 0;
+								refined_abs->A[refined_abs->nbV-1][j] = 1;
+								++splitted;
+							}
+						}
+						/* to not modify cur_abs which is a in parameter */
+						if (p!= cur_abs)
+							dispose_abstraction(p);
+						p = refined_abs;
+					} else
+						printf("%d rows added by the trans/trans \
+								refinement\n",p->nbV-nb_row);
 				}
-			}
-			/* Once a place is added we stop */
-			if(nl_added==true)
-				break;
+			} else
+				/* We do nothing but release the NewB array. */
+				xfree(NewB);
 		}
-		/* we process the last row of cur_abs and no row has been added to retval  */
-		if(i==cur_abs->nbV-1 && nl_added==false) {
-			/* we add exactly Rows2Add rows */
-			retval->nbV=(cur_abs->nbV+Rows2Add);
-			/* we realloc memory for retval */
-			retval->A=(integer16 **)xmalloc(retval->nbV*sizeof(integer16));
-			retval->bound=(integer16 *)xmalloc(retval->nbV*sizeof(integer16));
-
-			for(k=0;k<retval->nbV;++k){
-				retval->A[k]=(integer16 *)xmalloc(cur_abs->nbConcreteV*sizeof(integer16));
-				/* The new abstraction is a copy of the current one with for
-				 * the Rows2Add last lines w/ 0's. We set bounds to 0 meaning
-				 * that our refinement is built upon arbitrary criteria. */
-				for(j=0;j<cur_abs->nbConcreteV;++j)
-					retval->A[k][j]= (k<cur_abs->nbV ? cur_abs->A[k][j] : 0);
-				retval->bound[k]=0;
-			}
-			/* we split each of Rows2Split. Btw we have NewB == cur_abs->A[for each Rows2Split] */
-			for(k=0;k<Rows2Add;++k){
-				/* we compute the sum for row Rows2Split[k] */
-				assert(Rows2Split[k]<cur_abs->nbV+k);
-				for(sum=0,j=0;j<cur_abs->nbConcreteV;sum+=cur_abs->A[Rows2Split[k]][j++]);
-				for(splitted=0,j=0;j<cur_abs->nbConcreteV;++j) {
-					if(cur_abs->A[Rows2Split[k]][j]==1 && splitted < (integer16) sum/2 ) {
-						retval->A[Rows2Split[k]][j] = 0;
-						retval->A[cur_abs->nbV+k][j] = 1;
+	}
+	if (p==cur_abs) {
+		/* So far no refinenement has been proposed. So we split a non singleton row */
+		for(i=0;i<cur_abs->nbV;++i) {
+			/* compute sum */
+			for(sum=0,j=0;j<cur_abs->nbConcreteV;sum+=cur_abs->A[i][j++]);
+			if(sum > 1) {
+				p=add_row(cur_abs,i,NULL);
+				/* we add a row and we split row i into two sets. */
+				for(splitted=0,j=0;j<p->nbConcreteV;++j) {
+					if(p->A[i][j]==1 && splitted < (integer16) sum/2 ) {
+						p->A[i][j] = 0;
+						p->A[p->nbV-1][j] = 1;
 						++splitted;
 					}
 				}
 			}
 		}
 	}
-	if(Rows2Split!=NULL)
-		xfree(Rows2Split);
-	return retval;
+	/* A sanity check */
+	for(i=0;i<p->nbV;++i) {
+		for(sum=0,j=0;j<p->nbConcreteV;sum+=p->A[i][j++]);
+		assert(sum>0);
+	}
+	return p;
 }
 
 
@@ -463,7 +520,7 @@ ISTSharingTree
 /*
  * compute the adhoc pretild for one transition t
  */
-ISTSharingTree *adhoc_place_pretild_rule(ISTSharingTree *S, transition_t *t) 
+ISTSharingTree *adhoc_pretild_rule(ISTSharingTree *S, transition_t *t) 
 {
 	ISTSharingTree *result = NULL;
 	ISTSharingTree *temp;
@@ -503,7 +560,7 @@ ISTSharingTree *adhoc_pretild(ISTSharingTree *S, transition_system_t *t)
 	ist_new(&result);
 	ist_complement(result,ist_nb_layers(S)-1);
 	for(i = 0; i < t->limits.nbr_rules; i++) {
-		temp1 = adhoc_place_pretild_rule(S,&t->transition[i]);
+		temp1 = adhoc_pretild_rule(S,&t->transition[i]);
 		temp2 = ist_intersection(result,temp1);
 		ist_dispose(result);
 		ist_dispose(temp1);

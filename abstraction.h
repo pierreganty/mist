@@ -46,7 +46,8 @@ void dispose_abstraction(abstraction_t *abs);
 
 /* Only works for Petri Nets w/o invariants */
 transition_system_t *build_sys_using_abs(transition_system_t *sys, abstraction_t *abs);
-abstraction_t *refine_abs(abstraction_t *cur_abs, ISTSharingTree *S, ISTSharingTree *cpreS);
+abstraction_t *refine_abs(abstraction_t *cur_abs, ISTSharingTree *S,
+		ISTSharingTree *cpreS, ISTSharingTree *safe, transition_system_t *sys);
 
 ISTSharingTree *ist_abstraction(ISTSharingTree *S, abstraction_t *abs);
 ISTSharingTree *ist_concretisation(ISTSharingTree *S, abstraction_t * abs);
@@ -67,7 +68,7 @@ ISTSharingTree
 		transition_system_t *t);
 
 /* the pretild works for transfers */
-ISTSharingTree *adhoc_place_pretild_rule(ISTSharingTree *S, transition_t *t);
+ISTSharingTree *adhoc_pretild_rule(ISTSharingTree *S, transition_t *t);
 ISTSharingTree *adhoc_pretild(ISTSharingTree *S, transition_system_t *t);
 
 #endif

@@ -359,7 +359,7 @@ void ic4pn(system, initial_marking, bad)
 	transition_system_t *system;
 	ISTSharingTree *bad, *initial_marking;
 {
-	abstraction_t *myabs, *newabs, *candidate_abs;
+	abstraction_t *myabs, *newabs;
 	transition_system_t *sysabs;
 	ISTSharingTree *lfp_eec, *gamma_gfp, *tmp, *_tmp, *safe, *alpha_safe,
 				   *iterates, *new_iterates, *alpha_initial_marking,
@@ -486,7 +486,9 @@ void ic4pn(system, initial_marking, bad)
 			ist_dispose(iterates);
 			iterates = ist_copy(gamma_gfp);
 
-			assert(ist_checkup(iterates)==true);
+			/* tmp=ist_intersection(gamma_gfp,safe);
+			assert(ist_equal(gamma_gfp,tmp)==true);
+			ist_dispose(tmp); */
 
 			puts("gamma_gfp");
 			//ist_write(gamma_gfp);
@@ -523,71 +525,18 @@ void ic4pn(system, initial_marking, bad)
 			ist_normalize(tmp);
 			puts("min(cpre(gamma_gfp) & safe )");
 			new_iterates=ist_minimal_form(tmp);
-			//ist_write(new_iterates);
 			ist_dispose(tmp);
 
 			/* We build the next abstraction */
-			newabs=refine_abs(myabs,iterates,new_iterates);
-			ist_dispose(new_iterates);
-			if(newabs->nbV == myabs->nbV) {
-				/* No refinement based on iterates and new_iterates was possible
-				 * so we proceed transition by transition. */
-				iterator=0; 
-				while(iterator < system->limits.nbr_rules && newabs->nbV == myabs->nbV) {
-					dispose_abstraction(newabs);
-					/* _tmp = cpre[t_iterator] */
-					tmp=adhoc_place_pretild_rule(iterates,&system->transition[iterator]);
-					_tmp=ist_downward_closure(tmp);
-					ist_normalize(_tmp);
-					ist_dispose(tmp);	
-
-					tmp=ist_intersection(_tmp,safe);
-					ist_dispose(_tmp);
-					_tmp=ist_minimal_form(tmp);
-
-					newabs = refine_abs(myabs,iterates,_tmp);
-					ist_dispose(_tmp);
-					++iterator;
-				}
-			} else if (newabs->bound[0]==0) {
-				/* refine_abs proposed an ARBITRARY refinement based on iterates and new_iterates. 
-				 * We search for a NON ARBITRARY refinement looking at the new iterates for each single transition. */
-				candidate_abs = (abstraction_t *)xmalloc(sizeof(abstraction_t));
-				/* A dummy abstraction that we dispose immediately. */
-				candidate_abs->nbV=0;
-				/* For dispose_abstraction to behave correctly */
-				iterator=0;
-				do {
-					dispose_abstraction(candidate_abs);
-					tmp=adhoc_place_pretild_rule(iterates,&system->transition[iterator]);
-					_tmp=ist_downward_closure(tmp);
-					ist_normalize(_tmp);
-					ist_dispose(tmp);	
-
-					tmp=ist_intersection(_tmp,safe);
-					ist_dispose(_tmp);
-					_tmp=ist_minimal_form(tmp);
-
-					candidate_abs=refine_abs(myabs,iterates,tmp);
-					ist_dispose(tmp);
-					++iterator;
-				} while(iterator < system->limits.nbr_rules && candidate_abs->bound[0]==0);
-				if (candidate_abs->bound[0]!=0) {
-					/* We found a NON ARBITRARY refinement looking at the iterates for each single transition. */
-					dispose_abstraction(newabs);
-					/* We found a better refinement than newabs so we dispose it. */
-					newabs = candidate_abs;
-					/* newabs->bound[i] == 1 for each i holds. */
-				} else {
-					/* newabs is our new abstraction. We have to set newabs->bound[i]=1. */
-					puts("Arbitrary refinement took place.");
-					for (i=0;i<newabs->nbV;newabs->bound[i++]=1);
-				}
-			}
-			/* we dispose iterates and myabs */
-			ist_dispose(iterates);
+			assert(ist_checkup(iterates)==true);
+			assert(ist_checkup(new_iterates)==true);
+			newabs=refine_abs(myabs,iterates,new_iterates,safe,system);
+			/* Some sanity checks. */
 			assert(newabs->nbConcreteV == myabs->nbConcreteV);
 			assert(newabs->nbV > myabs->nbV);
+			/* we dispose iterates new_iterates and myabs */
+			ist_dispose(iterates);
+			ist_dispose(new_iterates);
 			dispose_abstraction(myabs);
 			 
 			myabs=newabs;
