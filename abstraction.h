@@ -43,6 +43,7 @@ typedef struct abstraction_t {
 /* To display the content and free the abstraction_t data structure */
 void print_abstraction(abstraction_t *abs);
 void dispose_abstraction(abstraction_t *abs);
+abstraction_t *glb(abstraction_t *abs1, abstraction_t *abs2);
 
 /* Only works for Petri Nets w/o invariants */
 transition_system_t *build_sys_using_abs(transition_system_t *sys, abstraction_t *abs);

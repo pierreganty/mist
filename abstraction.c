@@ -90,6 +90,53 @@ void print_abstraction(abs)
 
 }
 
+abstraction_t *glb(abstraction_t *abs1, abstraction_t *abs2) 
+{
+	abstraction_t *retval;
+	size_t i,j,k,rows,sum;
+	assert(abs1->nbConcreteV==abs2->nbConcreteV);
+
+	/* Count the number of sets in the resulting partition */
+	rows=0;
+	for (i=0;i<abs1->nbV;++i) {
+		for (j=0;j<abs2->nbV;++j) {
+			/* We look for an common place */
+			for(k=0; k<abs1->nbConcreteV && abs1->A[i][k]+abs2->A[j][k]< 2; ++k);
+			if(abs1->A[i][k]+abs2->A[j][k]>= 2)
+				++rows;
+				
+		}
+		
+	}
+	/* Memory allocation */
+	retval=(abstraction_t *)xmalloc(sizeof(abstraction_t));
+	/* We copy the number of places of the original system into the abstraction */
+	retval->nbConcreteV=abs1->nbConcreteV;
+	/* We start with a unique abstract place */
+	retval->nbV=rows;
+	retval->bound=(integer16 *)xmalloc(retval->nbV*sizeof(integer16));
+	retval->A=(integer16 **)xmalloc(retval->nbV*sizeof(integer16));
+	for(i=0;i<retval->nbV;++i)
+		retval->A[i]=(integer16 *)xmalloc(retval->nbConcreteV*sizeof(integer16));
+	/* Initial abstraction */
+	for(i=0;i<retval->nbV;++i) {
+		retval->bound[i]=1;
+	}
+	rows=0;
+	for (i=0;i<abs1->nbV;++i) {
+		for (j=0;j<abs2->nbV;++j) {
+			for(k=0; k<abs1->nbConcreteV; ++k) {
+				/* set to 1 if k is a common place of abs1[i] and abs2[j] */
+				retval->A[rows][k]=(abs1->A[i][k]+abs2->A[j][k]>= 2 ? 1 : 0);
+			}
+			for(sum=0,k=0;k<retval->nbConcreteV;sum+=retval->A[rows][k++]);
+			rows+=(sum>=1?1:0);
+			assert(rows<=retval->nbV);
+		}
+	}
+	return retval;
+}
+
 static void ist_add_variables(ISTSharingTree *S,integer16 nb_var) 
 {
 	size_t i;
