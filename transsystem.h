@@ -36,7 +36,7 @@
 #define MAXI            					50
 
 /* This is the last relevant define */
-#define MAXNBTRANS				 			50
+#define MAXNBTRANS				 			60
 
 /*
  * Shorten the names should be a good idea, e.g.

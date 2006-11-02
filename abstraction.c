@@ -102,7 +102,7 @@ abstraction_t *glb(abstraction_t *abs1, abstraction_t *abs2)
 		for (j=0;j<abs2->nbV;++j) {
 			/* We look for an common place */
 			for(k=0; k<abs1->nbConcreteV && abs1->A[i][k]+abs2->A[j][k]< 2; ++k);
-			if(abs1->A[i][k]+abs2->A[j][k]>= 2)
+			if(k != abs1->nbConcreteV)
 				++rows;
 				
 		}
@@ -137,6 +137,156 @@ abstraction_t *glb(abstraction_t *abs1, abstraction_t *abs2)
 	return retval;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////
+// precieuse methods																   //	
+/////////////////////////////////////////////////////////////////////////////////////////
+
+int ** partition_lines(int **matrix,int max_line, int max_row, int line1, int line2) {
+	int nb_var_ij =0;
+	int i,j,l;
+	int ** result;
+	
+	for(i=0;i<max_row;++i) 
+		nb_var_ij += matrix[line1][i] + matrix[line2][i];
+
+	//allocation	
+	result = (int **)xmalloc((max_row - nb_var_ij + 1) * sizeof(int *));
+	for(i = 0;i< max_row - nb_var_ij + 1;++i)
+		result[i] = (int *)xmalloc(max_row * sizeof(int));
+
+	//create the fuision of line1 and line2
+	for(i=0; i < max_row;++i)
+		result[0][i] = matrix[line1][i] + matrix[line2][i];
+	//forall variables not in line1 and line2, 
+	//we create a singleton element in the partition
+	for(i=0,l=1;i< max_row;++i) {
+		if (result[0][i] == 0) {
+			for(j=0;j < max_row;++j)
+				result[l][j] = 0;
+			result[l][i] = 1;
+			++l;
+		}
+	}
+	return result;
+}
+
+int ** line_fusion(int **matrix,int max_line, int max_row, int line1, int line2) {
+	int ** result;
+	int i,j,l;
+
+	//allocation of memory
+	result = (int **)xmalloc((max_line -1) * sizeof(int*));	
+	for(i=0;i < max_line -1;++i) {
+		result[i] = (int *)xmalloc(max_row * sizeof(int));
+	}
+
+	//copy of all the lines that are not fusioned
+	for(i = 0, l=0; i < max_line;++i) {
+		if (i != line1 && i != line2) {
+			for(j=0;j< max_row;++j) {
+				result[l][j] = matrix[i][j];
+			}
+			++l;
+		}
+	}
+	//fusion of line1 and line2
+	for(i = 0; i < max_row;++i){
+		result[max_line -2][i] = matrix[line1][i] + matrix[line2][i];
+	}
+	return result;
+}
+
+//build a more general partition that defines an abstraction that allow the represent S exactly
+abstraction_t * new_abstraction(ISTSharingTree *S,int nb_var) {
+	int **result;
+	abstraction_t * result_abs;
+	int **tmp;
+	ISTSharingTree * alpha_S;
+	ISTSharingTree * approx_S;
+	int  max_line,max_row, i,j,l, nb_var_ij;
+	boolean found;
+	abstraction_t abs;
+
+//	int a,b;
+	
+	abs.nbConcreteV = nb_var;
+	
+	//allocation of memory + initialisation
+	result = (int **)xmalloc(nb_var * sizeof(int*));	
+	for(i=0;i < nb_var;++i) {
+		result[i] = (int *)xmalloc(nb_var * sizeof(int));
+		for(j = 0;j< nb_var;++j)
+			result[i][j] = 0;
+		result[i][i] = 1;
+	}
+	max_line = nb_var;
+	max_row = nb_var;
+
+	found = true;
+	while (found == true) {
+		found = false;
+		//we check lines pairwise to find a pair to fusion
+		for(i = 0; (i < max_line) && (found == false);++i) 
+			for(j=0;(j<max_line) && (found == false);++j)
+				if (i!=j) {
+
+					tmp = partition_lines(result,max_line,max_row,i,j);
+					nb_var_ij = 0;
+					for(l=0;l<max_row;++l) 
+						nb_var_ij += result[i][l] + result[j][l];
+					
+					abs.A = tmp;
+					abs.nbV = nb_var - nb_var_ij +1;
+
+//					printf("approx\n");
+//					print_abstraction(&abs);
+					
+					alpha_S = ist_abstraction(S,&abs);
+					approx_S = ist_concretisation(alpha_S,&abs);
+					for(l = 0;l < abs.nbV;++l) 
+						xfree(abs.A[l]);
+					xfree(abs.A);
+
+//					printf("approx_S\n");
+//					ist_write(approx_S);
+
+					if (ist_exact_subsumption_test(approx_S,S) == true) {
+						//we can build a more general partition, the old one useless
+						//computation of the new partition
+						tmp = line_fusion(result,max_line,max_row,i,j);
+						for(l = 0;l< max_line;++l)
+							xfree(result[l]);
+						xfree(result);
+						result = tmp;
+						--max_line;
+						found = true;
+
+//						printf("new abstraction\n");
+//						for(a=0;a < max_line;++a) {
+//							for(b=0;b < max_row;++b) {
+//								printf("%d ",result[a][b]);
+//							}
+//							printf("\n");
+//						}
+								
+					} 
+					ist_dispose(alpha_S);
+					ist_dispose(approx_S);
+				}
+		
+	}
+	result_abs = (abstraction_t *)xmalloc(sizeof(abstraction_t));
+	result_abs->nbConcreteV = max_row;
+	result_abs->nbV = max_line;
+	result_abs->A = result;
+	result_abs->bound = (int *)xmalloc(result_abs->nbV * sizeof(int));
+	for(i=0;i < result_abs->nbV;++i)
+		result_abs->bound[i] = 1;
+	return result_abs;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+
 static void ist_add_variables(ISTSharingTree *S,integer16 nb_var) 
 {
 	size_t i;
@@ -165,6 +315,7 @@ ISTSharingTree *ist_abstraction(S,abs)
 	ISTSharingTree *S;
 	abstraction_t *abs;
 {
+
 	size_t i, j;
 	ISTSharingTree *temp, *temp2, *result;
 	transition_t * t = (transition_t *)xmalloc(sizeof(transition_t));
@@ -193,6 +344,7 @@ ISTSharingTree *ist_abstraction(S,abs)
 			ist_dispose(temp);
 			temp = temp2;
 		}
+
 		for(i=0; i < abs->nbV;i++) 
 			xfree(t->transfers[i].origin);
 		xfree(t);	

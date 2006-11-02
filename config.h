@@ -16,9 +16,6 @@
    */
 #define HAVE_ALLOCA_H 1
 
-/* Define to 1 if you have the <assert.h> header file. */
-#define HAVE_ASSERT_H 1
-
 /* Define to 1 if you don't have `vprintf' but do have `_doprnt.' */
 /* #undef HAVE_DOPRNT */
 

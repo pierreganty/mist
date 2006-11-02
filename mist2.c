@@ -367,6 +367,8 @@ void ic4pn(system, initial_marking, bad)
 	size_t i,j,nb_iteration, iterator;
 	boolean out, conclusive, eec_conclusive;
 
+	abstraction_t * abs_tmp;
+
 	/* Memory allocation */
 	myabs=(abstraction_t *)xmalloc(sizeof(abstraction_t));
 	/* We copy the number of places of the original system into the abstraction */
@@ -527,19 +529,37 @@ void ic4pn(system, initial_marking, bad)
 			new_iterates=ist_minimal_form(tmp);
 			ist_dispose(tmp);
 
-			/* We build the next abstraction */
-			assert(ist_checkup(iterates)==true);
-			assert(ist_checkup(new_iterates)==true);
-			newabs=refine_abs(myabs,iterates,new_iterates,safe,system);
-			/* Some sanity checks. */
-			assert(newabs->nbConcreteV == myabs->nbConcreteV);
-			assert(newabs->nbV > myabs->nbV);
-			/* we dispose iterates new_iterates and myabs */
-			ist_dispose(iterates);
-			ist_dispose(new_iterates);
+
+			/////////////////////////////////////////////////////
+			// new refinement                                  //
+			/////////////////////////////////////////////////////
+
+			puts("new_iterates");
+			ist_write(new_iterates);
+			
+			abs_tmp = new_abstraction(new_iterates,system->limits.nbr_variables);
+			puts("abs_tmp");
+			print_abstraction(abs_tmp);
+			newabs = glb(abs_tmp,myabs);
+			puts("newabs");
+			print_abstraction(newabs);
 			dispose_abstraction(myabs);
+			dispose_abstraction(abs_tmp);
+			myabs = newabs;
+			
+			/* We build the next abstraction */
+//			assert(ist_checkup(iterates)==true);
+//			assert(ist_checkup(new_iterates)==true);
+//			newabs=refine_abs(myabs,iterates,new_iterates,safe,system);
+			/* Some sanity checks. */
+//			assert(newabs->nbConcreteV == myabs->nbConcreteV);
+//			assert(newabs->nbV > myabs->nbV);
+			/* we dispose iterates new_iterates and myabs */
+//			ist_dispose(iterates);
+//			ist_dispose(new_iterates);
+//			dispose_abstraction(myabs);
 			 
-			myabs=newabs;
+//			myabs=newabs;
 			assert(newabs->nbV>0);
 		}
 		/* We release the abstract system */
