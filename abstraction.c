@@ -123,9 +123,9 @@ abstraction_t *glb(abstraction_t *abs1, abstraction_t *abs2)
 		retval->bound[i]=1;
 	}
 	rows=0;
-	for (i=0;i<abs1->nbV;++i) {
-		for (j=0;j<abs2->nbV;++j) {
-			for(k=0; k<abs1->nbConcreteV; ++k) {
+	for (i=0;(i<abs1->nbV) && (rows < retval->nbV);++i) {
+		for (j=0;(j<abs2->nbV) && (rows < retval->nbV);++j) {
+			for(k=0; (k<abs1->nbConcreteV) && (rows < retval->nbV); ++k) {
 				/* set to 1 if k is a common place of abs1[i] and abs2[j] */
 				retval->A[rows][k]=(abs1->A[i][k]+abs2->A[j][k]>= 2 ? 1 : 0);
 			}
