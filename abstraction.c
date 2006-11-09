@@ -116,10 +116,8 @@ abstraction_t *glb(abstraction_t *abs1, abstraction_t *abs2)
 	retval->nbV=rows;
 	retval->bound=(integer16 *)xmalloc(retval->nbV*sizeof(integer16));
 	retval->A=(integer16 **)xmalloc(retval->nbV*sizeof(integer16));
-	for(i=0;i<retval->nbV;++i)
-		retval->A[i]=(integer16 *)xmalloc(retval->nbConcreteV*sizeof(integer16));
-	/* Initial abstraction */
 	for(i=0;i<retval->nbV;++i) {
+		retval->A[i]=(integer16 *)xmalloc(retval->nbConcreteV*sizeof(integer16));
 		retval->bound[i]=1;
 	}
 	rows=0;
@@ -673,10 +671,11 @@ ISTSharingTree
 	ist_new(&res);
 	for(i=0;i< t->limits.nbr_rules;i++) {
 		tmp = ist_abstract_post_of_rules(S,approx,bound,&t->transition[i]);
-		_tmp = ist_remove_subsumed_paths(tmp,S);
+		_tmp = ist_remove_subsumed_paths(tmp,res);
 		ist_dispose(tmp);
 		if (ist_is_empty(_tmp)==false) {
-			tmp = ist_remove_subsumed_paths(S,_tmp);
+			tmp = ist_remove_subsumed_paths(res,_tmp);
+			ist_dispose(res);
 			res = ist_union(tmp,_tmp);
 			ist_dispose(tmp);
 		}
