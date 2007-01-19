@@ -43,8 +43,8 @@ ISTSharingTree *ist_compute_subsumed_paths_within_tree(ISTSharingTree *S) ;
 ISTSharingTree *ist_minimal_form(ISTSharingTree *S) ;
 
 /* Minimization approximated with the simulation relation */
-boolean ist_prune_within_tree_sim_based( ISTSharingTree *S); 
 void ist_minimal_form_sim_based( ISTSharingTree *S);
+void ist_prune_tree_sim_based( ISTSharingTree *S, ISTSharingTree *T); 
 boolean ist_exact_subsumption_test(ISTSharingTree *T,ISTSharingTree *S);
 
 #endif
