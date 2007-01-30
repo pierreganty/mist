@@ -39,13 +39,13 @@ typedef struct TransLayer {
     struct TransLayer *Previous, *Next;
 } TransLayer;
 
-typedef struct Transition {
+typedef struct Transition_t {
     ISTInterval Guard;
     long Delta;
-}Transition;
+}Transition_t;
 
 typedef struct TransNode {
-    struct Transition Info;
+    struct Transition_t Info;
     integer16 NbFathers;
     struct TransSon *FirstSon;
     integer32 AuxI;
@@ -74,9 +74,9 @@ typedef struct TransSon {
 /*  variables for ist_add: */
 struct LOC_TransSTAdd {
     TransSharingTree *ST;
-    Transition* Info;
+    Transition_t* Info;
     integer16 LInfo, depth;
-    Transition v;
+    Transition_t v;
     TransLayer *layer;
     TransNode *nodep;
     boolean newelement;
@@ -88,7 +88,7 @@ struct LOC_TransSTAdd {
 TransSon *Trans_st_NewSon() ;
 void Trans_st_DisposeSon(TransSon *son) ;
 void Trans_st_AddSon(TransNode *node, TransNode *child) ;
-TransNode *Trans_st_HasSon(TransNode *node, Transition value) ;
+TransNode *Trans_st_HasSon(TransNode *node, Transition_t value) ;
 void Trans_st_CopySons(TransNode *orgnode, TransNode *tgtnode) ;
 void Trans_st_ReplaceSon(TransNode *node, TransNode *oldchild, TransNode *newchild) ;
 boolean Trans_st_SameSons(TransNode *node1, TransNode *node2) ;
@@ -98,7 +98,7 @@ void Trans_st_DisposeNode(TransNode *node) ;
 void Trans_st_RemoveNode(TransLayer *layer, TransNode *node) ;
 TransNode *Trans_st_ExistsNode(TransLayer *layer, TransNode *node) ;
 TransNode *Trans_st_AddNode(TransLayer *layer, TransNode *node) ;
-TransNode *Trans_st_CreateNode(Transition value) ;
+TransNode *Trans_st_CreateNode(Transition_t value) ;
 TransLayer *Trans_st_NewLayer() ;
 void Trans_st_DisposeLayer(TransLayer *layer) ;
 TransLayer *Trans_st_AddLasTransLayer(TransSharingTree *ST) ;
@@ -116,11 +116,11 @@ void Trans_st_DisposeShar3(TransSharingTree *ST) ;
 void TransSTNew(TransSharingTree **ST) ;
 void TransSTDispose(TransSharingTree *ST) ;
 TransNode *Trans_Add(TransNode *node, boolean inlayer, boolean mustchange, struct LOC_TransSTAdd *LINK) ;
-boolean TransSTAdd(TransSharingTree *ST_, Transition *Info_, integer16 LInfo_) ;
+boolean TransSTAdd(TransSharingTree *ST_, Transition_t *Info_, integer16 LInfo_) ;
 
 
 
-void TransSTWriteElem(Transition **path,long l);
-void Trans_st_Write(TransNode *N,Transition **path,long i,long l);
+void TransSTWriteElem(Transition_t **path,long l);
+void Trans_st_Write(TransNode *N,Transition_t **path,long i,long l);
 void TransSTWrite(TransSharingTree *S,long l);
 #endif 

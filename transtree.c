@@ -90,7 +90,7 @@ void Trans_st_AddSon(TransNode *node, TransNode *child)
     }
 }
  
-TransNode *Trans_st_HasSon(TransNode *node, Transition value)
+TransNode *Trans_st_HasSon(TransNode *node, Transition_t value)
 {
     TransNode *Result;
     TransSon *s;
@@ -329,7 +329,7 @@ TransNode *Trans_st_AddNode(TransLayer *layer, TransNode *node)
 	layer->LastNode = node;
     return node; 
 }
-TransNode *Trans_st_CreateNode(Transition value) 
+TransNode *Trans_st_CreateNode(Transition_t value) 
 {
     TransNode *node;
 
@@ -439,7 +439,7 @@ void TransSTNew(TransSharingTree **ST)
 {
     TransNode *node;
     TransSharingTree *WITH;
-    Transition troot;
+    Transition_t troot;
 
     troot.Delta = 0;
     troot.Guard = IST_beg_of_list;
@@ -516,7 +516,7 @@ void TransSTDispose(TransSharingTree *ST) {
     }
 }
 
-boolean TransSTAdd(TransSharingTree *ST_, Transition *Info_, integer16 LInfo_) 
+boolean TransSTAdd(TransSharingTree *ST_, Transition_t *Info_, integer16 LInfo_) 
 {
 	struct LOC_TransSTAdd V;
 	TransNode *son, *res;
@@ -553,7 +553,7 @@ boolean TransSTAdd(TransSharingTree *ST_, Transition *Info_, integer16 LInfo_)
 
 
 void TransSTWriteElem(path, l)
-    Transition **path;
+    Transition_t **path;
     long l;
 {
     long i;
@@ -573,7 +573,7 @@ void TransSTWriteElem(path, l)
 
 void Trans_st_Write(N, path, i, l)
     TransNode *N;
-    Transition **path;
+    Transition_t **path;
     long i, l;
 {
     TransSon *s;
@@ -605,8 +605,8 @@ void TransSTWrite(S,l)
        il y a  la fonction ist_nb_layers pour ca */
 {
     /* A vector of pointer to intervals */
-    Transition **path;
-    path = (Transition **)xmalloc((l-1)*sizeof(Transition *));
+    Transition_t **path;
+    path = (Transition_t **)xmalloc((l-1)*sizeof(Transition_t *));
     printf("<<< Impression des elements d'un TransST d'adr %p\n",S);
     if (S != NULL)
 	Trans_st_Write(S->Root, path, 0L, l);
