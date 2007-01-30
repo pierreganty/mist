@@ -356,7 +356,7 @@ boolean eec(system, abs, initial_marking, bad, lfp)
 }
 
 //pre tild[T] + pretild[t] for some t\in T if we do not refine
-/*
+
 void ic4pn(system, initial_marking, bad) 
 	transition_system_t *system;
 	ISTSharingTree *bad, *initial_marking;
@@ -596,10 +596,11 @@ void ic4pn(system, initial_marking, bad)
 		printf("end of iteration %d\n",++nb_iteration);
 	}
 }
-*/
 
 
 
+/*
+// computation of the abstract greatest fixpoint starting from the computations of previous iterations
 void ic4pn(system, initial_marking, bad) 
 	transition_system_t *system;
 	ISTSharingTree *bad, *initial_marking;
@@ -807,7 +808,7 @@ void ic4pn(system, initial_marking, bad)
 		printf("end of iteration %d\n",++nb_iteration);
 	}
 }
-
+*/
 
 
 /*

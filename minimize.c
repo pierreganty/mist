@@ -16,7 +16,7 @@
    along with mist2; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-   Copyright 2003, Pierre Ganty. Copyright 2006, Laurent Van Begin 
+   Copyright 2003, Pierre Ganty. Copyright 2006,2007 Laurent Van Begin 
  */
 
 #include "minimize.h"
@@ -908,4 +908,44 @@ boolean ist_exact_subsumption_test(T,S)
 		res = true;
 
 	return res;
+}
+
+
+void merge_intervals_sons(ISTNode *N) {
+	ISTSon * S1, * S2, * tmp;
+
+	S1 = N->FirstSon;
+	while(S1 != NULL) {
+		S2 = S1->Next;
+		while (S2 != NULL) {
+		//Assumption: sons are sorted by intervals lexicographically
+			if ((ist_greater_or_equal_value(S1->Son->Info->Right,S2->Son->Info->Left)==true) && 
+				(ist_same_sons(S1->Son,S2->Son) == true)) {
+				S1->Son->Info->Right = max(S1->Son->Info->Right,S2->Son->Info->Right);
+				tmp = S2->Next;
+				ist_remove_son(N,S2->Son);
+				S2 = tmp;
+			} else						
+				S2= S2->Next;
+		}
+		S1 = S1->Next;		
+	}
+}
+
+void ist_merge_intervals(ISTSharingTree *ST) {
+	ISTLayer * L;
+	ISTNode *N;
+
+	if (ist_is_empty(ST) == false) {
+		L = ST->LastLayer->Previous;
+		while (L != NULL) {
+			N = L->FirstNode;
+			while (N != NULL) {
+				merge_intervals_sons(N);
+				N = N->Next;
+			}
+			L = L->Previous;
+		}
+		merge_intervals_sons(ST->Root);
+	}
 }

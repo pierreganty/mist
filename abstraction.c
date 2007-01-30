@@ -661,9 +661,31 @@ ISTSharingTree
    return res;
 }
 
-ISTSharingTree 
+//ISTSharingTree 
+//*ist_abstract_post(ISTSharingTree *S, void (*approx)(ISTSharingTree
+//			*S, integer16 *b), integer16 *bound, transition_system_t *t) 
+//{
+//	size_t i;
+//	ISTSharingTree *res, *tmp, *_tmp;
+//
+//	ist_new(&res);
+//	for(i=0;i< t->limits.nbr_rules;i++) {
+//		tmp = ist_abstract_post_of_rules(S,approx,bound,&t->transition[i]);
+//		_tmp = ist_remove_subsumed_paths(tmp,S);
+//		ist_dispose(tmp);
+//		if (ist_is_empty(_tmp)==false) {
+//			tmp = ist_remove_subsumed_paths(S,_tmp);
+//			res = ist_union(tmp,_tmp);
+//			ist_dispose(tmp);
+//		}
+//		ist_dispose(_tmp);
+//	}
+//	return res;
+//}
+
+ISTSharingTree
 *ist_abstract_post(ISTSharingTree *S, void (*approx)(ISTSharingTree
-			*S, integer16 *b), integer16 *bound, transition_system_t *t) 
+			*S, integer16 *b), integer16 *bound, transition_system_t *t)
 {
 	size_t i;
 	ISTSharingTree *res, *tmp, *_tmp;

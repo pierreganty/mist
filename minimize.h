@@ -16,7 +16,7 @@
    along with mist2; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-   Copyright 2003, 2004, Pierre Ganty
+   Copyright 2003, 2004, Pierre Ganty 2007, Laurent Van Begin
  */
 
 #ifndef __MINIMIZE_H
@@ -47,4 +47,8 @@ void ist_minimal_form_sim_based( ISTSharingTree *S);
 void ist_prune_tree_sim_based( ISTSharingTree *S, ISTSharingTree *T); 
 boolean ist_exact_subsumption_test(ISTSharingTree *T,ISTSharingTree *S);
 
+
+/* merge contiguous intervals */
+
+void ist_merge_intervals(ISTSharingTree *ST);
 #endif
