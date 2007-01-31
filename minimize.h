@@ -49,6 +49,6 @@ boolean ist_exact_subsumption_test(ISTSharingTree *T,ISTSharingTree *S);
 
 
 /* merge contiguous intervals */
-
 void ist_merge_intervals(ISTSharingTree *ST);
+
 #endif

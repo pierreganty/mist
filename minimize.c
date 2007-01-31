@@ -919,7 +919,7 @@ void merge_intervals_sons(ISTNode *N) {
 		S2 = S1->Next;
 		while (S2 != NULL) {
 		//Assumption: sons are sorted by intervals lexicographically
-			if ((ist_greater_or_equal_value(S1->Son->Info->Right,S2->Son->Info->Left)==true) && 
+		  if ((ist_greater_or_equal_value(S1->Son->Info->Right,S2->Son->Info->Left)==true || (S1->Son->Info->Right == S2->Son->Info->Left -1)) && 
 				(ist_same_sons(S1->Son,S2->Son) == true)) {
 				S1->Son->Info->Right = max(S1->Son->Info->Right,S2->Son->Info->Right);
 				tmp = S2->Next;
