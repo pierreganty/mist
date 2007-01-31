@@ -1094,6 +1094,7 @@ int main(int argc, char *argv[ ])
 	tree_dump(atree, callback_tree_before, callback_tree_after, callback_leaf);
 #endif
 
+		
 	build_problem_instance(atree, &system, &initial_marking, &unsafe_cone);
 	printf(".. DONE\n");
 	printf("System has %3d variables, %3d transitions and %2d actual invariants\n",system->limits.nbr_variables, system->limits.nbr_rules, system->limits.nbr_invariants);
@@ -1103,6 +1104,21 @@ int main(int argc, char *argv[ ])
 	ist_init_system();
 	printf("DONE\n");
 
+
+	/*  debug */
+
+	printf("Debut test\n");
+	
+	ISTSharingTree *tmp = ist_copy(initial_marking);
+	ist_complement(tmp,system->limits.nbr_variables);
+	tmp = ist_union(initial_marking,tmp);
+	tmp = ist_merge_intervals(tmp);
+	ist_write(tmp);
+
+	printf("fin test\n");
+	/////////////////////////////
+
+	
 	//backward_lfp(system,initial_marking,unsafe_cone);
 	ic4pn(system,initial_marking,unsafe_cone);
 

@@ -911,41 +911,121 @@ boolean ist_exact_subsumption_test(T,S)
 }
 
 
-void merge_intervals_sons(ISTNode *N) {
-	ISTSon * S1, * S2, * tmp;
+ISTNode *merge_intervals(ISTNode * N,ISTLayer * current_layer,ISTSharingTree * S) {
+	ISTSon * S1, *S2;
+	int val;
+	ISTNode * rnode, * new_sons, * tmp_N;
+	TMemo1 *memo;
+	ISTLayer * rlayer;
+	
+	if (ist_equal_interval(N->Info,&IST_end_of_list)) {
+		rnode = ist_add_node(current_layer, ist_create_node(&IST_end_of_list));
+	} else {
+		rlayer = current_layer->Next;
+		if (rlayer == NULL)
+			rlayer = ist_add_last_layer(S);
+		
+		//computation of sons
+		rnode = ist_create_node(N->Info);
+		S1 = N->FirstSon;
+		while (S1 != NULL) {
+			memo = ist_get_memoization1(S1->Son,S1->Son);
+			if (memo == NULL) {
+				tmp_N =  merge_intervals(S1->Son,rlayer,S);
+				ist_add_son(rnode,tmp_N);
+			} else
+				ist_add_son(rnode,memo->r);
+			S1 = S1->Next;
+		}
+		//merge sons
+		ist_new_magic_number();
+		val = ist_get_magic_number();
+		new_sons = ist_create_node(N->Info);
+		S1 = rnode->FirstSon;
+		while(S1 != NULL) {
+			//if the sons has not been already fusioned
+			if(S1->Son->AuxI != val) {
+				tmp_N = ist_create_node(S1->Son->Info);
+				ist_copy_sons(S1->Son,tmp_N);
+				S2 = S1->Next; 
+				while (S2 != NULL) {
+					//Assumption: sons are sorted by intervals lexicographically
+					//if the son is already marked, it has been already merged, otherwise if the intervals
+					//can be fusioned and sons has same successors
+					if (S2->Son->AuxI != val)
+						if (((ist_greater_or_equal_value(tmp_N->Info->Right,S2->Son->Info->Left)==true) || 
+						 (tmp_N->Info->Right == S2->Son->Info->Left-1)) 
+						&& (ist_same_sons(tmp_N,S2->Son) == true)) {
+							tmp_N->Info->Right = max(tmp_N->Info->Right,S2->Son->Info->Right);
+							S2->Son->AuxI = val;
+					} 						
+					S2= S2->Next;
+				}
+				tmp_N = ist_add_node(rlayer,tmp_N);
+				ist_add_son(new_sons,tmp_N);
+			}
+			S1 = S1->Next;		
+		}
+		ist_remove_sons(rnode);
+		ist_dispose_node(rnode);	
+		rnode = ist_add_node(current_layer,new_sons);
+	}
+	ist_put_memoization1(N,N,rnode);
+	return rnode;
+}
 
-	S1 = N->FirstSon;
+ISTSharingTree * ist_merge_intervals(ISTSharingTree *ST) {
+	ISTSharingTree * Sol;
+	ISTSon * S1, *S2;
+	ISTNode * tmp_N, * new_sons;
+	int val;
+	ISTLayer * rlayer;
+
+	ist_new(&Sol);
+	ist_new_memo1_number();
+	S1 = ST->Root->FirstSon;
+	rlayer = ist_add_last_layer(Sol);
+	while(S1 != NULL){
+		tmp_N = merge_intervals(S1->Son,rlayer,Sol);
+		ist_add_son(Sol->Root,tmp_N);
+		S1 = S1->Next;
+	}
+	//fusion of sons
+	ist_new_magic_number();
+	val = ist_get_magic_number();
+	S1 = Sol->Root->FirstSon;
+	new_sons = ist_create_node(Sol->Root->Info);
 	while(S1 != NULL) {
-		S2 = S1->Next;
-		while (S2 != NULL) {
-		//Assumption: sons are sorted by intervals lexicographically
-		  if ((ist_greater_or_equal_value(S1->Son->Info->Right,S2->Son->Info->Left)==true || (S1->Son->Info->Right == S2->Son->Info->Left -1)) && 
-				(ist_same_sons(S1->Son,S2->Son) == true)) {
-				S1->Son->Info->Right = max(S1->Son->Info->Right,S2->Son->Info->Right);
-				tmp = S2->Next;
-				ist_remove_son(N,S2->Son);
-				S2 = tmp;
-			} else						
+		//if the sons has not been already fusioned
+		if(S1->Son->AuxI != val) {
+			tmp_N = ist_create_node(S1->Son->Info);
+			ist_copy_sons(S1->Son,tmp_N);
+			S2 = S1->Next; 
+			while (S2 != NULL) {
+				//Assumption: sons are sorted by intervals lexicographically
+				//if the son is already marked, it has been already merged, otherwise if the intervals
+				//can be fusioned and sons has same successors
+				if (S2->Son->AuxI != val)
+					if (((ist_greater_or_equal_value(tmp_N->Info->Right,S2->Son->Info->Left)==true) || 
+					 (tmp_N->Info->Right == S2->Son->Info->Left-1)) 
+					&& (ist_same_sons(tmp_N,S2->Son) == true)) {
+						tmp_N->Info->Right = max(tmp_N->Info->Right,S2->Son->Info->Right);
+						S2->Son->AuxI = val;
+				} 						
 				S2= S2->Next;
+			}
+			tmp_N = ist_add_node(rlayer,tmp_N);
+			ist_add_son(new_sons,tmp_N);
 		}
 		S1 = S1->Next;		
 	}
-}
+	//we put the new sons of N
+	ist_remove_sons(Sol->Root);
+	ist_dispose_node(Sol->Root);
+	Sol->Root = new_sons;
 
-void ist_merge_intervals(ISTSharingTree *ST) {
-	ISTLayer * L;
-	ISTNode *N;
+	ist_remove_node_without_father(Sol);
+	ist_normalize(Sol);
 
-	if (ist_is_empty(ST) == false) {
-		L = ST->LastLayer->Previous;
-		while (L != NULL) {
-			N = L->FirstNode;
-			while (N != NULL) {
-				merge_intervals_sons(N);
-				N = N->Next;
-			}
-			L = L->Previous;
-		}
-		merge_intervals_sons(ST->Root);
-	}
+	return Sol;
 }

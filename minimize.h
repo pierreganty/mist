@@ -24,7 +24,7 @@
 
 #include "def.h"
 #include "proc.h"
-
+#include "remove.h"
 
 /*
  * As explained in [Gan02] the ISTs do not have a canonical from. (However CST
@@ -49,6 +49,5 @@ boolean ist_exact_subsumption_test(ISTSharingTree *T,ISTSharingTree *S);
 
 
 /* merge contiguous intervals */
-void ist_merge_intervals(ISTSharingTree *ST);
-
+ISTSharingTree * ist_merge_intervals(ISTSharingTree *ST);
 #endif
