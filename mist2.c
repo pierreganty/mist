@@ -1105,20 +1105,6 @@ int main(int argc, char *argv[ ])
 	printf("DONE\n");
 
 
-	/*  debug */
-
-	printf("Debut test\n");
-	
-	ISTSharingTree *tmp = ist_copy(initial_marking);
-	ist_complement(tmp,system->limits.nbr_variables);
-	tmp = ist_union(initial_marking,tmp);
-	tmp = ist_merge_intervals(tmp);
-	ist_write(tmp);
-
-	printf("fin test\n");
-	/////////////////////////////
-
-	
 	//backward_lfp(system,initial_marking,unsafe_cone);
 	ic4pn(system,initial_marking,unsafe_cone);
 
