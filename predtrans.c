@@ -1084,21 +1084,21 @@ ISTSharingTree *ist_symbolic_post(ISTSharingTree * S, transition_system_t *t) {
 }
 
 
-void ist_pre_cedric(ISTSharingTree * S, int var) {
+void ist_dec_layer(ISTSharingTree * S, int layer) {
 	ISTLayer * L;
 	ISTNode * N;
 	int current_layer = 1;
 
 	L = S->FirstLayer;
-	while(current_layer != var) {
+	while(current_layer != layer) {
 		current_layer++;
 		L = L->Next;
 
 	}
 	N = L->FirstNode;
 	while (N != NULL) {
-		N->Info->Left = max(0,N->Info->Left - 1);
-		N->Info->Right = max(0,N->Info->Right -1);
+	        N->Info->Left--;
+	        N->Info->Right--;
 		N = N->Next;
 	}
 }
