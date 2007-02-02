@@ -48,4 +48,7 @@ ISTSharingTree *ist_pre_of_rules(ISTSharingTree *prec); */
 ISTSharingTree *ist_pre(ISTSharingTree *S, transition_system_t *system);
 ISTSharingTree *ist_pre_pruned_wth_inv_and_prev_iterates(ISTSharingTree *Prec, ISTSharingTree *ReachedElem, transition_system_t *system);
 
+
+void ist_pre_cedric(ISTSharingTree * S, int var);
+
 #endif
