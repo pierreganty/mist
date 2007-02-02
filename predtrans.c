@@ -1084,16 +1084,15 @@ ISTSharingTree *ist_symbolic_post(ISTSharingTree * S, transition_system_t *t) {
 }
 
 
-void ist_dec_layer(ISTSharingTree * S, int layer) {
+void ist_dec_layer(ISTSharingTree * S, int layer) {  
 	ISTLayer * L;
 	ISTNode * N;
-	int current_layer = 1;
+	int current_layer = 0;
 
 	L = S->FirstLayer;
 	while(current_layer != layer) {
 		current_layer++;
 		L = L->Next;
-
 	}
 	N = L->FirstNode;
 	while (N != NULL) {
