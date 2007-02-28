@@ -43,6 +43,7 @@
 
 
 /*We define our infinite value as a negative one*/
+#undef INFINITY
 #define INFINITY        (-32768L)
 
 /* Classical useful types ... */
