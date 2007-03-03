@@ -1057,40 +1057,42 @@ ISTSharingTree *ist_downward_closure(ST)
 	return V.STR;
 }
 
-
 size_t ist_nb_tuples(ST)
-     ISTSharingTree *ST;
+   ISTSharingTree *ST;
 {
-  boolean stop;
-  ISTLayer *layer;
-  ISTNode *node;
-  ISTSon *s;
-  int size_interval;
-  
-  layer = ST->LastLayer;
-  stop = false;
-  while (!stop) {
-    if (layer == NULL) {
-      node = ST->Root;
-      stop = true;
-    } else
-      node = layer->FirstNode;
-    while (node != NULL) {
-      if (ist_equal_interval(node->Info,&IST_end_of_list))
-	node->AuxI = 1;
-      else {
-	node->AuxI = 0;
-	s = node->FirstSon;
-	size_interval = ist_add_value(ist_sub_value(node->Info->Right,node->Info->Left),1);
-	while (s != NULL) {
-	  node->AuxI += s->Son->AuxI * size_interval;
-	  s = s->Next;
-	}
-      }
-      node = node->Next;
-    }
-    if (layer != NULL)
-      layer = layer->Previous;
-  }
-  return ST->Root->AuxI;
+   ISTLayer *layer;
+   ISTNode *node;
+   ISTSon *s;
+   int size_interval;
+
+   if (ist_is_empty(ST))
+       return 0;
+   else {
+       layer = ST->LastLayer;
+       while (layer != NULL) {
+           node = layer->FirstNode;
+            while (node != NULL) {
+                if (ist_equal_interval(node->Info,&IST_end_of_list))
+                   node->AuxI = 1;
+               else {
+                   node->AuxI = 0;
+                   s = node->FirstSon;
+                   size_interval = ist_add_value(ist_sub_value(node->Info->Right,node->Info->Left),1);
+                   while (s != NULL) {
+                       node->AuxI += s->Son->AuxI * size_interval;
+                       s = s->Next;
+                   }
+               }
+               node = node->Next;
+           }
+           layer = layer->Previous;
+       }
+       ST->Root->AuxI = 0;
+       s = ST->Root->FirstSon;
+       while (s != NULL) {
+           ST->Root->AuxI += s->Son->AuxI;
+           s = s->Next;
+       }
+       return ST->Root->AuxI;
+   }
 }
