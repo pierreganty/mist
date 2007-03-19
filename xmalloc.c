@@ -30,8 +30,9 @@ xmalloc(size_t size) {
   if (size == 0)
     err_quit("xmalloc: zero size");
   ptr = malloc(size);
-  if (ptr == NULL)
+  if (ptr == NULL) {
     err_sys("xmalloc: not enough memory for %lu bytes", (u_long) size);
+  }
   return ptr;
 }
 
