@@ -283,7 +283,14 @@ boolean eec(system, abs, initial_marking, bad, lfp)
 	ISTSharingTree *abs_post_star, *inter, *downward_closed_initial_marking, *bpost, *tmp, *_tmp;
 	boolean finished;
 	size_t i;
+	
+	float comp_u,comp_s; 
+	long int tick_sec=0 ;
+	struct tms before, after;
+	
+	times(&before);	
 
+	
 	downward_closed_initial_marking = ist_downward_closure(initial_marking);
 	ist_normalize(downward_closed_initial_marking);
 	assert(ist_checkup(downward_closed_initial_marking)==true);
@@ -352,6 +359,14 @@ boolean eec(system, abs, initial_marking, bad, lfp)
 		}
 	}
 	ist_dispose(downward_closed_initial_marking);
+
+	times(&after);
+	tick_sec = sysconf (_SC_CLK_TCK) ;
+	comp_u = ((float)after.tms_utime - (float)before.tms_utime)/(float)tick_sec ;
+	comp_s = ((float)after.tms_stime - (float)before.tms_stime)/(float)tick_sec ;
+	printf("Total time of computation (user)   -> %6.3f sec.\n",comp_u);
+	printf("                          (system) -> %6.3f sec.\n",comp_s);	
+	
 	return retval;
 }
 
@@ -371,6 +386,35 @@ void ic4pn(system, initial_marking, bad)
 
 	abstraction_t * abs_tmp;
 
+	//////////////////////////////////////////////////////////////////
+	// creation of an abstraction that corresponds to the system    //
+	// => to obtain stat.                                           //
+	// ///////////////////////////////////////////////////////////////
+	abstraction_t *systemabs;
+	systemabs=(abstraction_t *)xmalloc(sizeof(abstraction_t));
+	systemabs->nbConcreteV=system->limits.nbr_variables;
+	systemabs->nbV=system->limits.nbr_variables;
+	systemabs->bound=(integer16 *)xmalloc(systemabs->nbV*sizeof(integer16));
+	systemabs->A=(integer16 **)xmalloc(systemabs->nbV*sizeof(integer16));
+	for(i=0;i<systemabs->nbV;++i)
+		systemabs->A[i]=(integer16 *)xmalloc(system->limits.nbr_variables*sizeof(integer16));
+	for(i=0;i<systemabs->nbV;++i) {
+		systemabs->bound[i]=1;
+		for(j=0;j<system->limits.nbr_variables;++j)
+			systemabs->A[i][j]=1;
+	}
+	printf("EEC for the concrete system\n");
+	eec_conclusive=eec(system,systemabs,initial_marking,bad,&lfp_eec);
+	if (eec_conclusive == true)
+		printf("Answer = true\n");
+	else
+		printf("Answer = false\n");
+	printf("IC4PN..\n");
+
+	////////////////////////////////////////////////////////////////////
+	//end of eec for the concrete system                              //
+	////////////////////////////////////////////////////////////////////
+	
 	// Memory allocation 
 	myabs=(abstraction_t *)xmalloc(sizeof(abstraction_t));
 	// We copy the number of places of the original system into the abstraction 
@@ -496,7 +540,7 @@ void ic4pn(system, initial_marking, bad)
 			//ist_dispose(tmp); 
 
 			puts("gamma_gfp");
-			//ist_write(gamma_gfp);
+			ist_write(gamma_gfp);
 			assert(ist_checkup(gamma_gfp)==true);
 			puts("¬ (gamma_gfp)");
 			ist_complement(gamma_gfp,system->limits.nbr_variables);
@@ -535,6 +579,18 @@ void ic4pn(system, initial_marking, bad)
 
 			puts("new_iterates");
 			ist_write(new_iterates);
+
+
+            //////////////////////////////////////////////////
+            ////////////////for pierre ///////////////////////
+            //////////////////////////////////////////////////
+            ISTSharingTree *tmp_pierre = ist_copy(new_iterates);
+            ist_complement(tmp_pierre,system->limits.nbr_variables);
+			puts("Output pour pierre");
+			ist_write(tmp_pierre);
+			//////////////////////////////////////////////////
+			//////////////////////////////////////////////////
+			//////////////////////////////////////////////////
 			
 			abs_tmp = new_abstraction(new_iterates,system->limits.nbr_variables);
 			puts("abs_tmp");

@@ -67,6 +67,8 @@ size_t ist_nb_nodes(ISTSharingTree *ST) ;
 size_t ist_nb_layers(ISTSharingTree *ST) ;
 size_t ist_nb_elements(ISTSharingTree *S) ;
 
+size_t ist_nb_tuples(ISTSharingTree *ST);
+
 /* I/O primitives */
 void ist_write(ISTSharingTree *S) ;
 void ist_fill_tree_from_file(FILE* file_spec, ISTSharingTree **S, size_t height, size_t width);

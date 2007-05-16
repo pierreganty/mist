@@ -759,7 +759,6 @@ size_t ist_nb_layers(ST)
 } 
 
 
-
 size_t ist_nb_elements(S)
 	ISTSharingTree *S;
 {
