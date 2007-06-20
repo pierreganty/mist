@@ -4,7 +4,7 @@ normal: $(subst .c,.o,$(wildcard *.c))
 .SUFFIXES = .c .o
 
 .c.o:
-	gcc -DTRANSFERT -DVERSION=2 -ggdb -c $< -o $@
+	gcc -O3 -DTRANSFERT -DVERSION=2 -c $< -o $@
 
 clean:
 	$(RM) *.o
