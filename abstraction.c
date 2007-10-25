@@ -16,7 +16,7 @@
    along with mist2; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-   Copyright 2006, Pierre Ganty
+   Copyright 2006, Pierre Ganty, 2007 Laurent Van Begin
  */
 
 #include"abstraction.h"
@@ -170,7 +170,7 @@ int ** partition_lines(int **matrix,int max_line, int max_row, int line1, int li
 
 int ** line_fusion(int **matrix,int max_line, int max_row, int line1, int line2) {
 	int ** result;
-	int i,j,l;
+	int i,j;//l;
 
 	//allocation of memory
 	result = (int **)xmalloc((max_line -1) * sizeof(int*));	
@@ -178,6 +178,7 @@ int ** line_fusion(int **matrix,int max_line, int max_row, int line1, int line2)
 		result[i] = (int *)xmalloc(max_row * sizeof(int));
 	}
 
+/*
 	//copy of all the lines that are not fusioned
 	for(i = 0, l=0; i < max_line;++i) {
 		if (i != line1 && i != line2) {
@@ -192,7 +193,33 @@ int ** line_fusion(int **matrix,int max_line, int max_row, int line1, int line2)
 		result[max_line -2][i] = matrix[line1][i] + matrix[line2][i];
 	}
 	return result;
+*/
+	// we assume that line1 < line2
+	// and copy all the line < line 1
+	for(i=0;i < line1;i++) {
+		for(j=0;j<max_row;j++) {
+			result[i][j] = matrix[i][j];
+		}
+	}
+	//we replace line1 by the fusion of line 1 and line 2
+	for(j=0;j<max_row;j++)
+		result[line1][j] = matrix[line1][j] + matrix[line2][j];
+	//we copy the lines between line 1 and line 2
+	for(i=line1+1;i<line2;i++) {
+		for(j=0;j< max_row;j++) {
+			result[i][j] = matrix[i][j];
+		}
+	}
+	//we copy the lines after line2
+	for(i=line2+1;i < max_line;i++) {
+		for(j=0;j<max_row;j++) {
+			result[i-1][j] = matrix[i][j];
+		}
+	}
+	return result;
 }
+
+
 
 //build a more general partition that defines an abstraction that allow the represent S exactly
 abstraction_t * new_abstraction(ISTSharingTree *S,int nb_var) {
@@ -225,7 +252,7 @@ abstraction_t * new_abstraction(ISTSharingTree *S,int nb_var) {
 		found = false;
 		//we check lines pairwise to find a pair to fusion
 		for(i = 0; (i < max_line) && (found == false);++i) 
-			for(j=0;(j<max_line) && (found == false);++j)
+			for(j=i+1;(j<max_line) && (found == false);++j)
 				if (i!=j) {
 
 					tmp = partition_lines(result,max_line,max_row,i,j);
@@ -236,8 +263,6 @@ abstraction_t * new_abstraction(ISTSharingTree *S,int nb_var) {
 					abs.A = tmp;
 					abs.nbV = nb_var - nb_var_ij +1;
 
-//					printf("approx\n");
-//					print_abstraction(&abs);
 					
 					alpha_S = ist_abstraction(S,&abs);
 					approx_S = ist_concretisation(alpha_S,&abs);
@@ -245,8 +270,6 @@ abstraction_t * new_abstraction(ISTSharingTree *S,int nb_var) {
 						xfree(abs.A[l]);
 					xfree(abs.A);
 
-//					printf("approx_S\n");
-//					ist_write(approx_S);
 
 					if (ist_exact_subsumption_test(approx_S,S) == true) {
 						//we can build a more general partition, the old one useless
@@ -259,13 +282,6 @@ abstraction_t * new_abstraction(ISTSharingTree *S,int nb_var) {
 						--max_line;
 						found = true;
 
-//						printf("new abstraction\n");
-//						for(a=0;a < max_line;++a) {
-//							for(b=0;b < max_row;++b) {
-//								printf("%d ",result[a][b]);
-//							}
-//							printf("\n");
-//						}
 								
 					} 
 					ist_dispose(alpha_S);
@@ -282,6 +298,334 @@ abstraction_t * new_abstraction(ISTSharingTree *S,int nb_var) {
 		result_abs->bound[i] = 1;
 	return result_abs;
 }
+
+
+int * new_element_in_partition(int **matrix,int max_line, int max_row, int line1, int line2) {
+	int i;
+	int * result;
+	
+	//allocation	
+	result = (int *)xmalloc(max_row * sizeof(int));
+
+	//create the fuision of line1 and line2
+	for(i=0; i < max_row;++i)
+		result[i] = matrix[line1][i] + matrix[line2][i];
+	return result;
+}
+
+int * FindInfinitePlaces(ISTSharingTree * S,int nb_var) {
+	int i;
+	ISTLayer * L;
+	int * result = (int *)malloc(nb_var *(sizeof(int)));
+
+	for(i=0,L = S->FirstLayer;i<nb_var;i++,L=L->Next) {
+		if (L->FirstNode->Info->Right == INFINITY)
+			result[i] = 1;
+		else
+			result[i] = 0;
+	}	
+	return result;
+}
+
+//build a more general partition that defines an abstraction that allow the represent S exactly
+abstraction_t * new_method_new_abstraction(ISTSharingTree *S,int nb_var) {
+	int **result;
+	abstraction_t * result_abs;
+	int **tmp;
+	int  max_line,max_row, i,j,l; 
+	boolean found;
+	abstraction_t abs;
+	int *Component;
+	int *infcomponent;
+
+	abs.nbConcreteV = nb_var;
+	
+	//allocation of memory + initialisation
+	result = (int **)xmalloc(nb_var * sizeof(int*));	
+	for(i=0;i < nb_var;++i) {
+		result[i] = (int *)xmalloc(nb_var * sizeof(int));
+		for(j = 0;j< nb_var;++j)
+			result[i][j] = 0;
+		result[i][i] = 1;
+	}
+	max_line = nb_var;
+	max_row = nb_var;
+
+	infcomponent = FindInfinitePlaces(S,nb_var);
+	for(i=nb_var-1;(i >= 0) && (infcomponent[i] == 0);i--);
+	if (i >= 0) {
+		j=i-1;
+		while(j>=0) {
+			if (infcomponent[j] == 1) {
+				tmp = line_fusion(result,max_line,max_row,j,i);
+				for(l = 0;l< max_line;++l)
+                                	xfree(result[l]);
+                                xfree(result);
+                                result = tmp;
+				--max_line;
+				i=j;
+			}
+			j--;
+		}
+	}
+	free(infcomponent);
+
+	found = true;
+	while (found == true) {
+		found = false;
+		//we check lines pairwise to find a pair to fusion
+		for(i = 0; (i < max_line) && (found == false);++i) 
+			for(j=i+1;(j<max_line) && (found == false);++j)
+				if (i!=j) {
+					Component = new_element_in_partition(result,max_line,max_row,i,j);
+					if (CanIRepresentExactlyTheSet(S,Component) == true) {
+						//we can build a more general partition, the old one useless
+						//computation of the new partition
+						tmp = line_fusion(result,max_line,max_row,i,j);
+						for(l = 0;l< max_line;++l)
+							xfree(result[l]);
+						xfree(result);
+						result = tmp;
+						--max_line;
+						found = true;
+
+					}
+				}
+	}
+	result_abs = (abstraction_t *)xmalloc(sizeof(abstraction_t));
+	result_abs->nbConcreteV = max_row;
+	result_abs->nbV = max_line;
+	result_abs->A = result;
+	result_abs->bound = (int *)xmalloc(result_abs->nbV * sizeof(int));
+	for(i=0;i < result_abs->nbV;++i)
+		result_abs->bound[i] = 1;
+
+	return result_abs;
+}
+
+
+
+//function that returns a path of the IST given as parameter
+ISTInterval **GiveMeAPath(ISTSharingTree *S) {
+
+	int nbvar = 0;
+	ISTInterval ** result;
+	ISTLayer * L;
+	ISTNode * N;
+	int i;
+
+        for(L = S->FirstLayer;L != S->LastLayer;nbvar++,L = L->Next);
+
+	result = (ISTInterval **)malloc(nbvar * sizeof(ISTInterval *));
+	for(i=0,N = S->FirstLayer->FirstNode;N->FirstSon != NULL;N = N->FirstSon->Son,i++){
+		result[i] = ist_build_interval(N->Info->Right,N->Info->Right);		
+	}
+	return result;
+}
+
+
+//compute the sum of value appearing in the layers given by Component
+//Component[i] = 0 == the layer is not considered
+//Component[i] > 0 == the layer is considered
+int ValueInComponent(ISTInterval **V,int *Component,int dim) {
+
+	int i;
+	int result = 0;
+
+	for(i=0;i < dim;i++) {
+		if (Component[i] > 0)
+			result =  ist_add_value(result,V[i]->Right);	
+	}
+	return result;
+}
+
+
+//used to compute all the path such that the sum of values appearing in layers given by Component is equal to val
+ISTNode *PathWithValueInComponent(ISTSharingTree * S, ISTNode * N,ISTLayer *L,int NuLayer,int * Component,int val,int sum) {
+
+	ISTNode *result;
+	ISTSon *s;
+	ISTNode *node;
+	TMemo1 * memo;
+
+
+	if (ist_equal_interval(N->Info,&IST_end_of_list)) {
+		if(val == sum)
+	        	result = ist_add_node(L, ist_create_node(&IST_end_of_list));
+		else
+			result = NULL;
+	}else {
+		L = L->Next;
+		if(L == NULL) {
+			L = ist_add_last_layer(S);
+		}
+		result = ist_create_node(ist_copy_interval(N->Info));
+
+
+		for(s = N->FirstSon;s != NULL;s = s->Next) {
+			if (Component[NuLayer] > 0) {
+				if (ist_less_or_equal_value(ist_add_value(N->Info->Right,sum),val)){
+					memo = ist_get_memoization1(s->Son,(ISTNode *) ist_add_value(N->Info->Right,sum));
+					if (memo != NULL)
+						node = memo->r;
+					else { 
+						node = PathWithValueInComponent(S,s->Son,L,NuLayer+1,Component,val,ist_add_value(N->Info->Right,sum));
+					}
+				} else 
+					node = NULL;
+			} else { 
+				memo = ist_get_memoization1(s->Son, (ISTNode *) sum);
+				if (memo != NULL)
+					node = memo->r;
+				else
+					node = PathWithValueInComponent(S,s->Son,L,NuLayer + 1,Component,val,sum);
+
+			}
+			if (node != NULL) {
+				ist_add_son(result,node);
+			}
+		}			
+	
+		L = L->Previous;
+		if (result->FirstSon == NULL) {
+			ist_dispose_node(result);
+			result = NULL;	
+		} else 
+			result = ist_add_node(L,result);		
+	}
+	ist_put_memoization1(N,(ISTNode *) sum,result);
+	return result;
+}
+
+
+
+//That function returns an IST such that the paths are those of S such that the sum of the values
+//in the layers given by Component is equal to val (we only consider right bound)
+//Assumption: the left bound is equal to 0 for all the nodes
+ISTSharingTree *ist_PathsWithValueInComponent(ISTSharingTree * S,int * Component,int val) {
+
+	ISTSon *son;
+	ISTSharingTree *result;
+	ISTLayer *L;
+	ISTNode *N;
+
+	ist_new_magic_number();
+    	ist_new_memo1_number();
+	ist_new(&result);
+	L = ist_add_last_layer(result);
+
+	for(son = S->Root->FirstSon; son != NULL;son = son->Next) {
+		N = PathWithValueInComponent(result,son->Son,L,0,Component,val,0);
+		if (N != NULL) 
+			ist_add_son(result->Root,N);
+	}
+	return result;
+}
+
+
+//that function compute a choose b
+int choose(int a,int b) {
+
+	int faca=1;
+	int facb = 1;
+	int facaminusb = 1;
+	int i;
+
+	for(i = 1; i <= a; i++) 
+		faca *= i;
+
+	for(i=1; i <= b; i++)
+		facb *=i;
+
+	for(i=1;i<= a-b;i++)
+		facaminusb *= i;
+
+	return faca /(facaminusb * facb);
+}
+
+
+//that function tests if for all the paths there is no node in a layer given by Component
+//that does not have INFINITY as right bound.
+//return true if it holds
+//return false otherwise
+boolean testINFINITY(ISTSharingTree * S,int *Component) {
+	ISTLayer * L;
+	int i;
+	boolean ok = true;
+	
+	i=0;
+	L=S->FirstLayer;
+	while((L->Next!=NULL) && ok){
+		if (Component[i] > 0) 
+			ok = (L->FirstNode->Info->Right == INFINITY);
+		i++;	
+		L = L->Next;
+	}
+	return ok;
+}
+
+//return true iff the partition of places that contains the set given by component and the simgletons
+//for all the other places is precise enough to represent the tuple of S.
+boolean CanIRepresentExactlyTheSet(ISTSharingTree * S,int *Component) {
+	
+	boolean ok = true;
+	ISTSharingTree * Scopy;
+	ISTSharingTree * T;
+	ISTSharingTree * Q;
+	ISTSharingTree * tmp;
+	ISTInterval **Path;
+	ISTLayer * L;
+	int dim;
+	int DimComp;
+	int val;
+	int i;
+	integer16 * complementComponent;
+	
+	Scopy = ist_copy(S);
+	//computation of the dimension
+	for(dim=0,L = Scopy->FirstLayer;L!= Scopy->LastLayer;L = L->Next,dim++);
+	//compute the size of the set of places given by Component
+	for(i=0,DimComp = 0; i< dim;i++) {
+		if (Component[i] > 0)
+			DimComp++;
+	}
+	
+	while ((ist_is_empty(Scopy) == false) && ok) {
+		Path = GiveMeAPath(Scopy);
+		val = ValueInComponent(Path,Component,dim);
+		//we take all the paths of Scopy where the places corresponding to Componenent contains val tokens
+		T = ist_PathsWithValueInComponent(Scopy,Component,val);
+		//tmp contains the other paths that must be still managed 
+		tmp = ist_minus(Scopy,T);
+                ist_dispose(Scopy);
+                Scopy = tmp;
+		//if the number of tokens is INFINITY, then all the places in Component must contains
+		//INFINITY tokens, otherwise the partition cannot represent the tuple of S
+		if (val == INFINITY) {
+			ok = (testINFINITY(T,Component) == true);
+		} else {
+			//otherwise we compute the number of possibilities to have val tokens in the places
+			//given by component and we compute the number of possible sub-markings obtained by
+			//removing the places of Component
+			//Then, the product of the two values gives the number of tuples we must have
+			complementComponent = (integer16 *)malloc((dim + 1) * sizeof(integer16));
+			for(i = 0; i<dim;i++) {
+				if (Component[i] > 0)
+					complementComponent[i] = 0;
+				else
+					complementComponent[i] = 1;
+			}
+			complementComponent[dim] = 1;
+			Q = ist_projection(T,complementComponent);
+			free(complementComponent);
+			ok = (ist_nb_elements(Q) * choose(val + DimComp-1,DimComp-1) == ist_nb_elements(T));
+			ist_dispose(Q);
+		}
+		ist_dispose(T);
+	}
+	return ok;	
+}
+
 
 /////////////////////////////////////////////////////////////////////////////////////////
 

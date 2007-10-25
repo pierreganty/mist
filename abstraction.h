@@ -16,7 +16,7 @@
    along with mist2; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-   Copyright 2003, 2004, Pierre Ganty
+   Copyright 2003, 2004, Pierre Ganty, 2007 Laurent Van Begin
  */
 
 #ifndef __ABSTRACTION_H
@@ -73,6 +73,9 @@ ISTSharingTree *adhoc_pretild_rule(ISTSharingTree *S, transition_t *t);
 ISTSharingTree *adhoc_pretild(ISTSharingTree *S, transition_system_t *t);
 
 /* operator for refinement */
-abstraction_t * new_abstraction(ISTSharingTree *S,int nb_var);
+//abstraction_t * new_abstraction(ISTSharingTree *S,int nb_var);
+abstraction_t * new_method_new_abstraction(ISTSharingTree *S,int nb_var);
 abstraction_t *glb(abstraction_t *abs1, abstraction_t *abs2);
+
+boolean CanIRepresentExactlyTheSet(ISTSharingTree * S,int *Component);
 #endif
