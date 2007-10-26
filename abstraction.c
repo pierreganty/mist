@@ -375,7 +375,7 @@ abstraction_t * new_method_new_abstraction(ISTSharingTree *S,int nb_var) {
 		found = false;
 		//we check lines pairwise to find a pair to fusion
 		for(i = 0; (i < max_line) && (found == false);++i) 
-			for(j=i+1;(j<max_line) && (found == false);++j)
+			for(j=i+1;(j<max_line) && (found == false);)
 				if (i!=j) {
 					Component = new_element_in_partition(result,max_line,max_row,i,j);
 					if (CanIRepresentExactlyTheSet(S,Component) == true) {
@@ -389,7 +389,9 @@ abstraction_t * new_method_new_abstraction(ISTSharingTree *S,int nb_var) {
 						--max_line;
 						found = true;
 
-					}
+					} else j++; //when line i and line j are fusionned, 
+						//  the result is put at line i. Hence, in that case we do not have
+						//  to increaese j
 				}
 	}
 	result_abs = (abstraction_t *)xmalloc(sizeof(abstraction_t));

@@ -426,7 +426,7 @@ void ic4pn(system, initial_marking, bad)
 	// Z = tmp and each path is a dc-closed 
 	
 	/* A_0 = refinement(Z_0) */
-	myabs=new_abstraction(Z,system->limits.nbr_variables);
+	myabs=new_method_new_abstraction(Z,system->limits.nbr_variables);
 
 	nb_iteration=0;
 	while(conclusive == false) {
@@ -555,7 +555,7 @@ void ic4pn(system, initial_marking, bad)
 				puts("new Z");
 				ist_write(Z);
 
-				abs_tmp = new_abstraction(Z,system->limits.nbr_variables);
+				abs_tmp = new_method_new_abstraction(Z,system->limits.nbr_variables);
 				puts("abs_tmp");
 				print_abstraction(abs_tmp);
 				newabs = glb(abs_tmp,myabs);
