@@ -73,9 +73,8 @@ ISTSharingTree *adhoc_pretild_rule(ISTSharingTree *S, transition_t *t);
 ISTSharingTree *adhoc_pretild(ISTSharingTree *S, transition_system_t *t);
 
 /* operator for refinement */
-//abstraction_t * new_abstraction(ISTSharingTree *S,int nb_var);
-abstraction_t * new_method_new_abstraction(ISTSharingTree *S,int nb_var);
+abstraction_t *naive_new_abstraction(ISTSharingTree *S,int nb_var);
+abstraction_t *new_abstraction(ISTSharingTree *S,int nb_var);
 abstraction_t *glb(abstraction_t *abs1, abstraction_t *abs2);
 
-boolean CanIRepresentExactlyTheSet(ISTSharingTree * S,int *Component);
 #endif

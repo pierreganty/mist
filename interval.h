@@ -102,6 +102,8 @@ void ist_add_interval_to_interval(ISTInterval *interv1,ISTInterval *interv2);
  * doesn't prevent to get negative bounds after a call to it
  */
 void ist_sub_interval_to_interval(ISTInterval *interv1,ISTInterval *interv2);
+void ist_sub_value_to_interval( ISTInterval *interv, integer32 value);
+
 /* Same remarks for this one */
 void ist_multiply_left_and_right_bound_by_value(ISTInterval *interv,integer32 value);
 #endif

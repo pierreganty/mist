@@ -20,6 +20,7 @@
  */
 
 #include "remove.h"
+#include "basis.h"
 #include <stdlib.h>
 
 void ist_remove_node_without_father_layer(Layer)
@@ -42,13 +43,15 @@ void ist_remove_node_without_father_layer(Layer)
 void ist_remove_node_without_father(S)
     ISTSharingTree *S;
 {
-    ISTLayer *Layer;
+	ISTLayer *Layer;
 
-    Layer = S->FirstLayer;
-    while (Layer != NULL) {
-	ist_remove_node_without_father_layer(Layer);
-	Layer = Layer->Next;
-    }
+	if (ist_is_empty(S)==false) {
+		Layer = S->FirstLayer;
+		while (Layer != NULL) {
+			ist_remove_node_without_father_layer(Layer);
+			Layer = Layer->Next;
+		}
+	}
 }
 
 
@@ -102,19 +105,21 @@ static void RemoveNodeWithoutSonLayer(Layer)
 void ist_remove_node_without_son(S)
     ISTSharingTree *S;
 {
-    ISTLayer *Layer;
+	ISTLayer *Layer;
 
-    Layer = S->LastLayer->Previous;
-    while (Layer != NULL) {
-	if (Layer->Previous != NULL)
-	    RemoveSonWithoutSonLayer(Layer->Previous);
-	else
-	    RemoveSonWithoutSonNode(S->Root);
-	RemoveNodeWithoutSonLayer(Layer);
-	Layer = Layer->Previous;
-    }
-    if (S->LastLayer->FirstNode != NULL) {
-	if (S->LastLayer->FirstNode->NbFathers == 0)
-	    ist_remove_node(S->LastLayer, S->LastLayer->FirstNode);
-    }
+	if (ist_is_empty(S)==false) {
+		Layer = S->LastLayer->Previous;
+		while (Layer != NULL) {
+			if (Layer->Previous != NULL)
+				RemoveSonWithoutSonLayer(Layer->Previous);
+			else
+				RemoveSonWithoutSonNode(S->Root);
+			RemoveNodeWithoutSonLayer(Layer);
+			Layer = Layer->Previous;
+		}
+		if (S->LastLayer->FirstNode != NULL) {
+			if (S->LastLayer->FirstNode->NbFathers == 0)
+				ist_remove_node(S->LastLayer, S->LastLayer->FirstNode);
+		}
+	}
 }

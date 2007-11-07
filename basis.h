@@ -72,7 +72,7 @@ size_t ist_nb_tuples(ISTSharingTree *ST);
 /* I/O primitives */
 void ist_write(ISTSharingTree *S) ;
 void ist_fill_tree_from_file(FILE* file_spec, ISTSharingTree **S, size_t height, size_t width);
-ISTInterval **ist_path2array(ISTSharingTree *S) ;
+ISTInterval **ist_firstpath2array(ISTSharingTree *S) ;
 size_t ist_nb_tuples(ISTSharingTree *ST);
 
 #endif 

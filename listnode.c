@@ -31,7 +31,6 @@ void ist_init_list_node(List)
 {
 	*List = (ISTHeadListNode *)xmalloc(sizeof(ISTHeadListNode));
 	(*List)->FirstElem = NULL;
-	(*List)->NextElem = NULL;
 }
 
 

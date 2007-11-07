@@ -858,23 +858,22 @@ void ist_write(S)
 
 /*
  * From the IST S, produce a vector of pointers pointing to the intervals
- * of the first element in S.
+ * of the first element in S. Redundant w/ GiveMeAPath
  */
-ISTInterval **ist_path2array(S)
+ISTInterval **ist_firstpath2array(S)
 	ISTSharingTree *S;
 {
-	ISTLayer *Layer;
+	ISTNode *node;
 	size_t i, length;
 	ISTInterval **Sol;
 
 	length = ist_nb_layers(S)-1;
 	Sol = (ISTInterval **)xmalloc(length*sizeof(ISTInterval *));
-	Layer = S->FirstLayer;
-	i = 0;
-	while (Layer != S->LastLayer) {
-		Sol[i] = Layer->FirstNode->Info;
-		Layer = Layer->Next;
-		i++;
+
+	node=S->Root;
+	for (i = 0; i < length; ++i) {
+		Sol[i]=node->FirstSon->Son->Info;
+		node=node->FirstSon->Son;
 	}
 	return Sol; 
 }
@@ -963,7 +962,7 @@ ISTHeadListNode * NoProject(ISTNode * node,ISTSharingTree * STR, ISTLayer * rlay
  * we make the assumption that we keep the last layer
  *
  */
-ISTSharingTree * ist_projection(ISTSharingTree * S, integer16 *mask) {
+ISTSharingTree *ist_projection(ISTSharingTree * S, integer16 *mask) {
 	ISTSharingTree * STR;
 	ISTLayer * rlayer;
 	ISTSon * s;

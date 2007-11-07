@@ -39,7 +39,7 @@ void
 invariantscode_produce(T_PTR_tree entry, transition_system_t *system, ISTSharingTree *init) 
 {
   /* We need the initial marking to compute m0 times p */
-  _initM = ist_path2array(init);
+  _initM = ist_firstpath2array(init);
   _system = system;
   invariant(entry);
 }

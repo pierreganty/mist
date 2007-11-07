@@ -576,6 +576,58 @@ ISTSharingTree *ist_pre_of_all_transfer(S, transition)
 	return Sol;
 }
 
+
+
+ISTSharingTree *ist_symbolic_pre_of_rule(Prec, transition)
+   ISTSharingTree *Prec;
+   transition_t *transition;
+{
+	ISTSharingTree *STInt;
+	ISTNode *Node;
+	ISTLayer *Layer;
+	ISTInterval *inter, *tau;
+	size_t l;
+
+	tau = ist_build_interval(0,INFINITY);
+	STInt=ist_copy(Prec);
+	if (ist_is_empty(STInt)== false ) {
+		Layer=STInt->FirstLayer;
+		l=0;
+		while (Layer->Next != NULL ) {
+			if (transition->cmd_for_place[l].delta  != 0){
+				Node=Layer->FirstNode;
+				while (Node!=NULL ) {
+					ist_sub_value_to_interval(Node->Info,transition->cmd_for_place[l].delta);
+					Node = Node->Next;
+
+				}
+			}
+			Node=Layer->FirstNode;
+			while(Node !=NULL) {
+				inter = ist_intersect_intervals(&transition->cmd_for_place[l].guard,Node->Info);
+				if (inter == NULL)
+					ist_remove_sons(Node);                       
+				else {
+					ist_dispose_info(Node->Info);
+					Node->Info = inter;
+				}
+				Node = Node->Next;
+			}
+			Layer=Layer->Next;
+			++l;
+		}
+
+		ist_remove_node_without_son(STInt);
+		ist_remove_node_without_father(STInt);
+	}
+	ist_dispose_info(tau);
+	if (!ist_is_empty(STInt)) 
+		ist_adjust_second_condition(STInt);
+	assert(ist_checkup(STInt)==true);
+	return STInt;
+}
+
+
 ISTSharingTree *ist_pre_of_rule_plus_transfer(Prec, transition)
 	ISTSharingTree *Prec;
 	transition_t *transition;
@@ -821,6 +873,175 @@ ISTSharingTree *ist_pre(prec, system)
 		++i;
 	}
 	return pre_until_ith_rule;
+}
+
+ISTSharingTree *ist_enumerative_pre_transition(ISTSharingTree *backward_p, transition_system_t *system, size_t transition)
+{
+	ISTSharingTree *res;
+	ISTSon **path;
+	ISTInterval **tuple;
+	ISTInterval *intersect;
+	size_t i, k, l;
+	boolean stop;
+
+	assert(ist_nb_layers(backward_p)-1==system->limits.nbr_variables);
+
+	ist_new(&res);
+	/* Allocation of memory */
+	path = (ISTSon **)xmalloc((system->limits.nbr_variables)*sizeof(ISTSon *));
+	tuple = (ISTInterval **)xmalloc((system->limits.nbr_variables)*sizeof(ISTInterval *));
+	for (i = 0; i < system->limits.nbr_variables; ++i)
+		tuple[i] = ist_new_info();
+	/* 
+	 * Now, we will enumerate all the elems of backward_p
+	 * for each compute the post for all the rules and add
+	 * them into res
+	 */
+
+	/* We initialize path[0] with the first elem */
+	path[0]= backward_p->Root->FirstSon;
+	i = 0;
+	while (path[0] != NULL){
+		if (path[i] == NULL){
+			--i;
+			path[i] = path[i]->Next;
+		} else {
+			++i;
+			if (i < system->limits.nbr_variables){
+				/* We take care of not going out of the vector */
+				path[i] = path[i-1]->Son->FirstSon;
+			}
+		}
+
+		if ( i == system->limits.nbr_variables){
+			/* We have a new tuple, we apply the post on it */
+			
+			for (k = 0; k < system->limits.nbr_variables; ++k){
+			   ist_assign_interval_to_interval(tuple[k],path[k]->Son->Info);
+			}
+			/* We will compute the reversed effect of 'transition'
+ 			 * (ommitting the transfer) */
+			for (k = 0; k < system->limits.nbr_variables; ++k)
+				ist_sub_value_to_interval(tuple[k],system->transition[transition].cmd_for_place[k].delta);
+			k = 0;
+			stop = false;
+			while (k < system->limits.nbr_variables&& !stop){
+			  intersect = ist_intersect_intervals(&system->transition[transition].cmd_for_place[k].guard, tuple[k]);
+			  if (intersect != NULL){
+			    ist_assign_interval_to_interval(tuple[k],intersect);
+			    ist_dispose_info(intersect);
+			  } else {
+			    stop = true;
+			  }
+			    ++k;
+			}
+			if (!stop){
+			  /* We add this tuple in the tree containing the post */
+			  ist_add(res,tuple,system->limits.nbr_variables);
+			  /* We reload PATH in tuple to apply a new rule on this tuple */
+			  for (l = 0;l < system->limits.nbr_variables; ++l){
+			    ist_assign_interval_to_interval(tuple[l],path[l]->Son->Info);
+			  }
+			}
+			/* We continue to browse all the tuple ... */
+			--i;
+			path[i] = path[i]->Next;
+		}
+	}
+
+	for (i = 0; i < system->limits.nbr_variables; ++i){
+		ist_dispose_info(tuple[i]);
+	}
+	xfree(tuple);
+	xfree(path);
+
+	return res;
+}
+/* No transfer */
+ISTSharingTree *ist_enumerative_pre(backward_p, system)
+	ISTSharingTree *backward_p;
+	transition_system_t *system;
+{
+	ISTSharingTree *res;
+	ISTSon **path;
+	ISTInterval **tuple;
+	ISTInterval *intersect;
+	size_t i, j, k, l;
+	boolean stop;
+
+	assert(ist_nb_layers(backward_p)-1==system->limits.nbr_variables);
+
+	ist_new(&res);
+	/* Allocation of memory */
+	path = (ISTSon **)xmalloc((system->limits.nbr_variables)*sizeof(ISTSon *));
+	tuple = (ISTInterval **)xmalloc((system->limits.nbr_variables)*sizeof(ISTInterval *));
+	for (i = 0; i < system->limits.nbr_variables; ++i)
+		tuple[i] = ist_new_info();
+	/* 
+	 * Now, we will browse all the elems of backward_p
+	 * for each compute the post for all the rules and add
+	 * them into res. The browsing is derecursified.
+	 */
+
+	/* We initialize path[0] with the first elem */
+	path[0]= backward_p->Root->FirstSon;
+	i = 0;
+	while (path[0] != NULL){
+		if (path[i] == NULL){
+			--i;
+			path[i] = path[i]->Next;
+		} else {
+			++i;
+			if (i < system->limits.nbr_variables){
+				/* We take care of not going out of the vector */
+				path[i] = path[i-1]->Son->FirstSon;
+			}
+		}
+
+		if (i == system->limits.nbr_variables){
+			/* We have a new tuple */
+			for (j = 0; j < system->limits.nbr_rules; ++j){
+				for (k = 0; k < system->limits.nbr_variables; ++k)
+					ist_assign_interval_to_interval(tuple[k],path[k]->Son->Info);
+				/*
+				 * We will compute the reversed effect of each transition (ommitting the transfer) 
+				 */
+				for (k = 0; k < system->limits.nbr_variables; ++k) 
+					ist_sub_value_to_interval(tuple[k],system->transition[j].cmd_for_place[k].delta);
+				k = 0;
+				stop = false;
+				while (k < system->limits.nbr_variables && !stop){
+					intersect = ist_intersect_intervals(&system->transition[j].cmd_for_place[k].guard, tuple[k]);
+					if (intersect != NULL){
+						ist_assign_interval_to_interval(tuple[k],intersect);
+						ist_dispose_info(intersect);
+					} else {
+						stop = true;
+					}
+					++k;
+				}
+				if (!stop){
+					/* We add this tuple in the tree containing the post */
+					ist_add(res,tuple,system->limits.nbr_variables);
+					/* We reload PATH in tuple to apply a new rule on this tuple */
+					for (l = 0;l < system->limits.nbr_variables; ++l){
+						ist_assign_interval_to_interval(tuple[l],path[l]->Son->Info);
+					}
+				}
+			}
+			/* We continue to browse all the tuple ... */
+			--i;
+			path[i] = path[i]->Next;
+		}
+	}
+
+	/* Clean desallocation */
+	for (i = 0; i < system->limits.nbr_variables; ++i)
+		ist_dispose_info(tuple[i]);
+	xfree(tuple);
+	xfree(path);
+
+	return res;
 }
 
 ISTSharingTree *ist_enumerative_post(forward_p, system)
@@ -1081,23 +1302,4 @@ ISTSharingTree *ist_symbolic_post(ISTSharingTree * S, transition_system_t *t) {
 		}
 	}
 	return result;
-}
-
-
-void ist_dec_layer(ISTSharingTree * S, int layer) {  
-	ISTLayer * L;
-	ISTNode * N;
-	int current_layer = 0;
-
-	L = S->FirstLayer;
-	while(current_layer != layer) {
-		current_layer++;
-		L = L->Next;
-	}
-	N = L->FirstNode;
-	while (N != NULL) {
-	        N->Info->Left--;
-	        N->Info->Right--;
-		N = N->Next;
-	}
 }

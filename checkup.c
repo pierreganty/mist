@@ -388,6 +388,10 @@ boolean ist_checkup(S)
 { 
 	boolean retval=true;
 	if(ist_is_empty(S)==false) {
+		if(S->Root->Info!=&IST_beg_of_list && S->LastLayer->FirstNode->Info!=&IST_end_of_list){
+			err_msg("Error: Root or Sink node mislabelled!\n"); 
+			retval=false;
+		}
 		if (first_cond_is_violated(S)) {
 			err_msg("Error: First Cond violated!\n"); 
 			retval=false;

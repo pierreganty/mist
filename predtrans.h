@@ -26,30 +26,28 @@
 #include "proc.h"
 #include "transsystem.h"
 
-
-/*
- * This modules implements the predecessor function of a sharing tree, w.r.t a transition system.
- */
-ISTSharingTree *ist_intersection_with_formula_transfer(ISTSharingTree *ST1, transfers_t *Trans, ISTInterval *Value);
-ISTSharingTree *ist_pre_of_all_transfer(ISTSharingTree *S, transition_t *transition);
+/* Symbolic Post of a transfer (used in ic4pn to abstract a set of markings) */
 ISTSharingTree *ist_post_of_transfer(ISTSharingTree *S, transfers_t *transfers);
-ISTSharingTree *ist_pre_of_rule_plus_transfer(ISTSharingTree *Prec, transition_t *transition);
-/* Enumerative Post operator for system w/ transfers */
-ISTSharingTree *ist_enumerative_post(ISTSharingTree *forward_p, transition_system_t *system);
-ISTSharingTree *ist_enumerative_post_transition(ISTSharingTree *forward_p, transition_system_t *system, size_t transition);
-/* Symbolic Post operator for system w/o transfers */
+/* Symbolic Post for systems w/o transfers */
 ISTSharingTree *ist_symbolic_post_of_rules(ISTSharingTree * S, transition_t *t);
 ISTSharingTree *ist_symbolic_post(ISTSharingTree * S, transition_system_t *t);
+/* Enumerative Post for systems w/ transfers */
+ISTSharingTree *ist_enumerative_post(ISTSharingTree *forward_p, transition_system_t *system);
+ISTSharingTree *ist_enumerative_post_transition(ISTSharingTree *forward_p, transition_system_t *system, size_t transition);
 
 /* Computation of the Pre ... with TransSharingTree (DEPRECATED)
 ISTSharingTree *ist_pre_of_rules(ISTSharingTree *prec); */
 
+/* The pre is actually min o pre o ucl(X) */
+ISTSharingTree *ist_intersection_with_formula_transfer(ISTSharingTree *ST1, transfers_t *Trans, ISTInterval *Value);
+ISTSharingTree *ist_pre_of_all_transfer(ISTSharingTree *S, transition_t *transition);
+ISTSharingTree *ist_pre_of_rule_plus_transfer(ISTSharingTree *Prec, transition_t *transition);
 /* Symbolic Pre operator for system w/ transfers */
 ISTSharingTree *ist_pre(ISTSharingTree *S, transition_system_t *system);
 ISTSharingTree *ist_pre_pruned_wth_inv_and_prev_iterates(ISTSharingTree *Prec, ISTSharingTree *ReachedElem, transition_system_t *system);
-
-/* Decrement all interval of a given layer */
-void ist_dec_layer(ISTSharingTree * S, int layer);
-
+ISTSharingTree *ist_symbolic_pre_of_rule(ISTSharingTree *Prec, transition_t *transition);
+/* No transfer */
+ISTSharingTree *ist_enumerative_pre(ISTSharingTree *backward_p, transition_system_t *system);
+ISTSharingTree *ist_enumerative_pre_transition(ISTSharingTree *backward_p, transition_system_t *system, size_t transition);
 
 #endif

@@ -37,7 +37,14 @@ void ist_insert_at_the_beginning_list_ist(THeadListIST *list,ISTSharingTree * S)
   list->FirstElem = new_elem;
 }
 
-//insert S at the beginning of the list
+size_t ist_count_elem_list_ist(THeadListIST *list) {
+	size_t size=0;
+	TListIST *tmp;
+	for(tmp=list->FirstElem; tmp!=NULL; tmp=tmp->Next,++size);
+	return size;
+}
+
+//insert S at the end of the list
 void ist_insert_at_the_end_list_ist(THeadListIST *list, ISTSharingTree * S) {
   TListIST * new_elem;
   TListIST * elem;
@@ -68,7 +75,7 @@ void ist_empty_list_ist_with_info(THeadListIST * list){
   } 
 }
 
-//empty the list of sharing trees}
+//empty the list of sharing trees
 void ist_empty_list_ist(THeadListIST * list) {
   TListIST * elem_list;
 
@@ -99,9 +106,9 @@ void ist_remove_list_ist(THeadListIST * list, ISTSharingTree * S){
   }
 }
 
-//return the first sharing tree of the list and initialize the data for the   of the list
-ISTSharingTree * ist_first_element_list_ist(THeadListIST * list) {
-  ISTSharingTree * first_elem;
+//return the first sharing tree of the list and initialize the data for the list
+ISTSharingTree *ist_first_element_list_ist(THeadListIST * list) {
+  ISTSharingTree *first_elem;
 
   list->NextElem = list->FirstElem;
   if (list->NextElem == NULL) {
@@ -114,8 +121,8 @@ ISTSharingTree * ist_first_element_list_ist(THeadListIST * list) {
 }
 
 //return the next sharing tree of the list
-ISTSharingTree *  ist_next_element_list_ist(THeadListIST * list) {
-  ISTSharingTree * next_elem;
+ISTSharingTree *ist_next_element_list_ist(THeadListIST * list) {
+  ISTSharingTree *next_elem;
 
   if (list->NextElem == NULL) {
     next_elem = NULL;
@@ -128,14 +135,9 @@ ISTSharingTree *  ist_next_element_list_ist(THeadListIST * list) {
 
 
 //return true if the list is empty and false elsewhere
-int ist_is_empty_list_ist(THeadListIST * list) {
-  int empty;
-
-  if (list->FirstElem == NULL) {
-    empty = 1;
-  } else {
-    empty = 0;
-  }
+boolean ist_is_empty_list_ist(THeadListIST * list) {
+  boolean empty;
+  empty = (list->FirstElem == NULL) ? true : false;
   return empty;
 }
 

@@ -32,7 +32,7 @@
 
 /* Declaration of structures */
 typedef struct ISTHeadListNode {
-    ISTSon *FirstElem, *NextElem;
+    ISTSon *FirstElem;
 } ISTHeadListNode;
 
 /* Declaration of functions */

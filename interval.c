@@ -327,6 +327,16 @@ inline void ist_add_value_to_interval(interv,value)
 	}
 }
 
+inline void ist_sub_value_to_interval(interv,value)
+	ISTInterval *interv;
+	integer32 value;
+{
+	if (interv != NULL){
+		interv->Left = interv->Left - value;
+		interv->Right = ist_sub_value(interv->Right,value);
+	}
+}
+
 inline void ist_add_interval_to_interval(interv1,interv2)
 	ISTInterval *interv1,*interv2;
 {

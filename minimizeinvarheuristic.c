@@ -343,6 +343,7 @@ static boolean ist_reduce_with_invar_heuristic(S, invariant)
 	}
 	ist_remove_node_without_father(S);
 	ist_remove_node_without_son(S);
+	/* take care of first or second condition that might be violated */
 	return Reduce;
 }
 

@@ -41,9 +41,10 @@ void ist_insert_at_the_end_list_ist( THeadListIST *list, ISTSharingTree * S);
 void ist_empty_list_ist_with_info(THeadListIST * List);
 void ist_empty_list_ist(THeadListIST * List);
 void ist_remove_list_ist(THeadListIST * ListSt, ISTSharingTree * S);
-ISTSharingTree * ist_first_element_list_ist(THeadListIST * List);
-ISTSharingTree *  ist_next_element_list_ist(THeadListIST * List);
-int ist_is_empty_list_ist(THeadListIST * List);
+ISTSharingTree *ist_first_element_list_ist(THeadListIST * List);
+ISTSharingTree *ist_next_element_list_ist(THeadListIST * List);
+boolean ist_is_empty_list_ist(THeadListIST * List);
 THeadListIST * ist_copy_list_ist(THeadListIST * List);
+size_t ist_count_elem_list_ist(THeadListIST *list);
 
 #endif

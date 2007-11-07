@@ -1,4 +1,4 @@
-// vim:sw=4:ts=4
+// vim:sw=4:ts=4:cindent
 /*
    This file is part of mist2.
 
@@ -53,6 +53,7 @@ void ist_print_error_trace(ISTSharingTree * initial_marking,THeadListIST * list_
 		while ((i < rules->limits.nbr_rules) && (Continue == true)) {
 			post = ist_enumerative_post_transition(S,rules,i);
 			intersect = ist_intersection(post,Siter);
+			ist_dispose(post);
 			if (!ist_is_empty(intersect)) { 
 				printf("[%d> ",i);
 				ist_dispose(S);
@@ -60,7 +61,6 @@ void ist_print_error_trace(ISTSharingTree * initial_marking,THeadListIST * list_
 				Continue = false;
 			} else { 
 				ist_dispose(intersect);
-				ist_dispose(post);
 				++i;
 			} 
 		} 
@@ -167,6 +167,7 @@ boolean backward_reachability(system, initial_marking, frontier)
 	}
 	if (reached == true)
 		ist_print_error_trace(initial_marking,&List,system);
+	ist_empty_list_ist_with_info(&List);
 	times(&after);
 	tick_sec = sysconf (_SC_CLK_TCK) ;
 	comp_u = ((float)after.tms_utime - (float)before.tms_utime)/(float)tick_sec ;
@@ -270,13 +271,36 @@ void bound_values(ISTSharingTree *S, integer16 *bound)
 }
 
 
+/* remove nodes with unbounded value */
+void RemoveUnboundedNodes(ISTSharingTree *S) 
+{
+	ISTLayer *Layer;
+	ISTNode *Node;
+	Layer=S->FirstLayer;
+	while(Layer!=S->LastLayer) {
+		Node = Layer->FirstNode;
+		while (Node != NULL){
+			if (ist_greater_or_equal_value(Node->Info->Right,INFINITY)==true)
+				ist_remove_sons(Node);
+			Node = Node->Next;
+		}
+		Layer=Layer->Next;
+	}
+	ist_remove_node_without_son(S);
+	ist_remove_node_without_father(S);
+	if (!ist_is_empty(S)) 
+		ist_adjust_second_condition(S);
+	assert(ist_checkup(S)==true);
+}
+
+
 /*
  * lfp is a out parameter which is 
  * 1) an inductive invariant of the system
  * 2) a dc-set
  * WORKS FOR PETRI NET ONLY
  */
-boolean eec(system, abs, initial_marking, bad, lfp)
+boolean eec_fp(system, abs, initial_marking, bad, lfp)
 	transition_system_t *system;
 	abstraction_t *abs; /* For the bounds on the places */
 	ISTSharingTree *initial_marking, *bad, **lfp;
@@ -372,6 +396,339 @@ boolean eec(system, abs, initial_marking, bad, lfp)
 	return retval;
 }
 
+/*
+ * List is a out parameter from which we 
+ * will extract the counterexample
+ * WORKS FOR PETRI NET ONLY
+ */
+boolean eec_cegar(system, abs, initial_marking, bad, List)
+	transition_system_t *system;
+	abstraction_t *abs; /* For the bounds on the places */
+	ISTSharingTree *initial_marking, *bad;
+	THeadListIST *List;
+{
+	boolean retval;
+	ISTSharingTree *abs_post_star, *inter, *downward_closed_initial_marking, *bpost, *tmp, *_tmp, *res;
+	ISTNode *Node;
+	ISTLayer *Layer;
+	boolean finished;
+	size_t i;
+
+	float comp_u,comp_s; 
+	long int tick_sec=0 ;
+	struct tms before, after;
+
+	times(&before);	
+
+	downward_closed_initial_marking=ist_downward_closure(initial_marking);
+	ist_normalize(downward_closed_initial_marking);
+	assert(ist_checkup(downward_closed_initial_marking)==true);
+
+	finished=false;
+	while (finished == false) {
+		printf("eec: ENLARGE begin\t");
+		fflush(NULL);
+		/* To OVERapproximate we use abstract_bound */
+		abs_post_star = ist_abstract_post_star(downward_closed_initial_marking,abstract_bound,abs->bound,system);
+		assert(ist_checkup(abs_post_star)==true);
+		puts("end");
+		inter = ist_intersection(abs_post_star,bad);
+		ist_dispose(abs_post_star);
+		finished=ist_is_empty(inter);
+		ist_dispose(inter);
+		if (finished==true) 
+			/* finished==true -> the system is safe */
+			retval = true;
+		else {
+			/* Pay attention here, initial_marking might contain infinitely
+			 * many markings; so in the expand phase we work with a finite
+			 * subset of it. */
+			printf("eec: EXPAND begin\t");
+			fflush(NULL);
+			/* 1) bound the right bound of initial marking if necessary */
+			tmp=ist_copy(initial_marking);
+			Layer=tmp->FirstLayer;
+			i=0;
+			while(Layer!=tmp->LastLayer) {
+				Node = Layer->FirstNode;
+				while (Node != NULL){
+					if (ist_greater_value(Node->Info->Right,abs->bound[i])==true)
+						Node->Info->Right=max(Node->Info->Left,abs->bound[i]);
+					Node = Node->Next;
+				}
+				Layer=Layer->Next;
+				i++;
+			}
+			assert(ist_checkup(tmp)==true);
+			puts("finite subset of the initial markings");	
+			ist_write(tmp);
+			/* 2) abstract_bound */
+			abstract_bound(tmp,abs->bound);
+			ist_normalize(tmp);
+			puts("abstraction of this finite subset");	
+			ist_write(tmp);
+			/* 3) remove nodes with unbounded value */
+			RemoveUnboundedNodes(tmp);
+			puts("what remains of the initial markings");	
+			ist_write(tmp);
+			ist_init_list_ist(List);
+			/* we can start the expand phase */
+			if (ist_is_empty(tmp)==false) {
+				/* expand works w/ dc-sets */
+				bpost = ist_downward_closure(tmp);
+				ist_dispose(tmp);
+				ist_normalize(bpost);
+				assert(ist_checkup(bpost)==true);
+				/* insert a copy of bpost in the list */
+				ist_insert_at_the_beginning_list_ist(List,ist_copy(bpost));
+				inter=ist_intersection(bpost,bad);
+				finished=!ist_is_empty(inter);
+				ist_dispose(inter);
+				while (finished==false) {
+					//res=post(bpost) while eliminating tuples over the bounds
+					ist_new(&res);
+					for(i=0;i< system->limits.nbr_rules;i++) {
+						tmp=ist_abstract_post_of_rules(bpost,abstract_bound,abs->bound,&system->transition[i]);
+						RemoveUnboundedNodes(tmp);
+						// to keep res minimized (i.e. without redundant tuples)
+						_tmp = ist_remove_subsumed_paths(tmp,res);
+						ist_dispose(tmp);
+						if (ist_is_empty(_tmp)==false) {
+							// to keep res minimized (i.e. without redundant tuples)
+							tmp = ist_remove_subsumed_paths(res,_tmp);
+							ist_dispose(res);
+							res = ist_union(tmp,_tmp);
+							ist_dispose(tmp);
+						}
+						ist_dispose(_tmp);
+					}
+					// end
+
+					_tmp =  ist_remove_subsumed_paths(res,bpost);
+					ist_dispose(res);
+					if (ist_is_empty(_tmp)==false) {		
+						/* insert a copy of _tmp in the list */
+						ist_insert_at_the_beginning_list_ist(List,ist_copy(_tmp));
+						inter=ist_intersection(_tmp,bad);
+						finished=!ist_is_empty(inter);
+						ist_dispose(inter);
+						tmp=ist_remove_subsumed_paths(bpost,_tmp);
+						ist_dispose(bpost);
+						bpost = ist_union(tmp,_tmp);
+						ist_dispose(tmp);
+						ist_dispose(_tmp);
+					} else {
+						// we reached a fixpoint, so exit of the loop
+						ist_dispose(_tmp);
+						break;
+					}
+				}
+				assert(ist_checkup(bpost)==true);
+				ist_dispose(bpost);
+			}
+			puts("end");
+			if (finished==true)
+				/* finished==true -> we hitted the bad states, the system is unsafe */
+				retval=false;
+			else {
+				/* One more iteration is needed because both bpost and
+				 * abs_post_star does not allow to conclude. 
+				 * Free the list of sharing tree (here info means st) */
+				ist_empty_list_ist_with_info(List);
+				printf("eec: BOUNDS\t");
+				for(i=0;i<abs->nbV;printf("%d ",++abs->bound[i++]));
+				printf("\n");
+			}
+		}
+	}
+	ist_dispose(downward_closed_initial_marking);
+
+	times(&after);
+	tick_sec = sysconf (_SC_CLK_TCK) ;
+	comp_u = ((float)after.tms_utime - (float)before.tms_utime)/(float)tick_sec ;
+	comp_s = ((float)after.tms_stime - (float)before.tms_stime)/(float)tick_sec ;
+	printf("Total time of computation (user)   -> %6.3f sec.\n",comp_u);
+	printf("                          (system) -> %6.3f sec.\n",comp_s);	
+
+	return retval;
+}
+
+void cegar(system, initial_marking, bad) 
+	transition_system_t *system;
+	ISTSharingTree *bad, *initial_marking;
+{
+	abstraction_t *myabs, *newabs, *abs_tmp;
+	transition_system_t *sysabs;
+	ISTSharingTree *tmp, *_tmp, *alpha_bad, *alpha_initial_marking, *predecessor, *inter, *seed, *cutter, *Z;
+	ISTLayer *layer;
+	ISTNode *node;
+	THeadListIST cex;
+	size_t i,j,nb_iteration, lg_cex;
+	int *countex;
+	boolean out, conclusive, eec_conclusive;
+
+	printf("CEGAR..\n");
+	tmp=ist_intersection(initial_marking,bad);
+	conclusive = (ist_is_empty(tmp)==true ? false : true);
+	ist_dispose(tmp);
+
+	// since new_abstraction works w/ dc-sets we compute \neg bad 
+	tmp=ist_copy(bad);
+	ist_complement(tmp,system->limits.nbr_variables);
+	// _tmp is a dc-set but we want each path to be dc-closed
+	_tmp=ist_downward_closure(tmp);
+	ist_normalize(_tmp);
+	ist_dispose(tmp);
+
+	/* the initial abstraction is given by refinement(_tmp) */
+	myabs=new_abstraction(_tmp,system->limits.nbr_variables);
+
+	nb_iteration=0;
+	while(conclusive == false) {
+		puts("begin of iteration");
+		// We build the abstract system 
+		sysabs=build_sys_using_abs(system,myabs);
+		puts("The current abstraction is :");
+		print_abstraction(myabs);
+		//puts("The current abstracted net is:");
+		//print_transition_system(sysabs);
+		//Set alpha_initial_marking, alpha_bad 
+		alpha_initial_marking = ist_abstraction(initial_marking,myabs);
+		alpha_bad = ist_abstraction(bad,myabs);
+		assert(ist_checkup(alpha_initial_marking)==true);
+
+		eec_conclusive=eec_cegar(sysabs, myabs, alpha_initial_marking, alpha_bad, &cex);
+
+		if (eec_conclusive==true) {
+			// says "safe" because it is indeed safe 
+			puts("EEC concludes safe with the abstraction");
+			print_abstraction(myabs);
+			conclusive = true;
+		} else {
+			/* compute the length of cex */
+			lg_cex=ist_count_elem_list_ist(&cex)-1;
+			printf("run to bad is %d transition(s) long.\n",lg_cex);
+			tmp=ist_first_element_list_ist(&cex);
+			//puts("content of the list");
+			while(tmp!=NULL) {
+				/* We keep maximal markings only. This should not break
+				 * the invariant that nodes, sons, etc are ordered. */
+				layer=tmp->FirstLayer;	
+				while(layer!=tmp->LastLayer) {
+					node=layer->FirstNode;
+					while(node!=NULL){
+						node->Info->Left=node->Info->Right;
+						node=node->Next;
+					}
+					layer=layer->Next;
+				}
+				assert(ist_checkup(tmp)==true);
+				//ist_write(tmp);
+				tmp=ist_next_element_list_ist(&cex);
+			}
+			/* _tmp is the seed of the counterexample */
+			tmp=ist_first_element_list_ist(&cex);
+			_tmp=ist_compute_subsumed_paths(tmp,alpha_bad);
+			/* we use a copy since _tmp is used in the while loop below */
+			seed=ist_copy(_tmp);
+			puts("seed of the abstract cex (backward analysis)");
+			ist_write(seed);
+
+			/* extract the cex */
+			countex=(int *)xmalloc(lg_cex*sizeof(int));
+
+			for(j=0;j<lg_cex;j++) {
+				i=0;
+				out=false;
+				/* Take the next elem in the list */
+				cutter=ist_next_element_list_ist(&cex);
+				assert(cutter!=NULL);
+				while((i < sysabs->limits.nbr_rules) && (out == false)) {
+					predecessor=ist_symbolic_pre_of_rule(_tmp,&sysabs->transition[i]);
+					inter=ist_intersection(cutter,predecessor);	
+					ist_dispose(predecessor);
+					if (!ist_is_empty(inter)) {
+						countex[j]=i;
+						ist_write(inter);
+						ist_dispose(_tmp);
+						_tmp=inter;
+						out=true;
+					} else {
+						ist_dispose(inter);
+						++i;
+					}
+
+				}
+			}
+			puts("The counter example for the abstract net");		
+			for(j=0;j<lg_cex;printf("<%d]",countex[j++]));
+			printf("\n");
+
+			/* release the list of dc-sets from which the cex is extracted */
+			ist_empty_list_ist_with_info(&cex);
+
+			/* seed to reproduce the counter example on the concrete net. */
+			/* concretise abstract seed and take intersection with bad */
+			tmp=ist_concretisation(seed,myabs);
+			ist_dispose(seed);
+			predecessor=ist_intersection(tmp,bad);
+			puts("seed of the concrete cex (backward analysis)");
+			assert(ist_checkup(predecessor)==true);
+			/* analysis of the counter example in the concrete */
+			j=0;
+			do {
+				ist_dispose(tmp);
+				tmp=predecessor;
+				predecessor=ist_symbolic_pre_of_rule(tmp, &system->transition[countex[j++]]);
+
+			} while(!ist_is_empty(predecessor) && j<lg_cex);
+			Z=NULL;
+			/* if we went through the whole counterexample then we found a real counterexample */
+			if(!ist_is_empty(predecessor)) {
+				_tmp=ist_intersection(initial_marking,predecessor);
+				conclusive=!ist_is_empty(_tmp);
+				ist_dispose(_tmp);
+				if (conclusive==true) {
+					puts("Find a real counterexample");
+					for(j=0;j<lg_cex;printf("<%d]",countex[j++]));
+					printf("\n");
+				} else
+					Z=ist_copy(predecessor);
+			} else 
+				Z=ist_copy(tmp);
+			/* release predecessor, tmp */
+			ist_dispose(predecessor);
+			ist_dispose(tmp);
+			// Z is the last non empty pre_computation
+			// We refine by representing exactly Z; Z are bad
+			// states in the sense of CEGAR (i.e. unreachable but lead to bad)
+			if(Z!=NULL) {
+				puts("Z is");
+				//ist_write(Z);
+				/* new_abstraction is tailored for dc-sets so we dc-close Z */
+				_tmp=ist_downward_closure(Z);
+				ist_normalize(_tmp);
+				Z=ist_minimal_form(_tmp);
+				assert(ist_checkup(Z)==true);
+				puts("building new absraction");
+				abs_tmp = new_abstraction(Z,system->limits.nbr_variables);
+				//abs_tmp = naive_new_abstraction(Z,system->limits.nbr_variables);
+				puts("abs_tmp");
+				print_abstraction(abs_tmp);
+				newabs = glb(abs_tmp,myabs);
+				// release abs_tmp 
+				dispose_abstraction(abs_tmp);
+				// release myabs
+				dispose_abstraction(myabs);
+				myabs = newabs;
+			}
+		}
+	}
+	// release sysabs 
+	dispose_transition_system(sysabs);
+	printf("end of iteration %d\n",++nb_iteration);
+}
+
 void ic4pn(system, initial_marking, bad) 
 	transition_system_t *system;
 	ISTSharingTree *bad, *initial_marking;
@@ -401,7 +758,7 @@ void ic4pn(system, initial_marking, bad)
 			systemabs->A[i][j]=1;
 	}
 	/* printf("EEC for the concrete system\n");
-	eec_conclusive=eec(system,systemabs,initial_marking,bad,&lfp_eec);
+	eec_conclusive=eec_fp(system,systemabs,initial_marking,bad,&lfp_eec);
 	if (eec_conclusive == true)
 		printf("Answer = true\n");
 	else
@@ -426,7 +783,7 @@ void ic4pn(system, initial_marking, bad)
 	// Z = tmp and each path is a dc-closed 
 	
 	/* A_0 = refinement(Z_0) */
-	myabs=new_method_new_abstraction(Z,system->limits.nbr_variables);
+	myabs=new_abstraction(Z,system->limits.nbr_variables);
 
 	nb_iteration=0;
 	while(conclusive == false) {
@@ -446,7 +803,7 @@ void ic4pn(system, initial_marking, bad)
 		alpha_initial_marking = ist_abstraction(initial_marking,myabs);
 		assert(ist_checkup(alpha_initial_marking)==true);
 
-		eec_conclusive=eec(sysabs,myabs,alpha_initial_marking, neg_aZ ,&lfp_eec);
+		eec_conclusive=eec_fp(sysabs,myabs,alpha_initial_marking, neg_aZ ,&lfp_eec);
 
 		// release neg_aZ
 		ist_dispose(neg_aZ);
@@ -554,8 +911,7 @@ void ic4pn(system, initial_marking, bad)
 
 				puts("new Z");
 				ist_write(Z);
-
-				abs_tmp = new_method_new_abstraction(Z,system->limits.nbr_variables);
+				abs_tmp=new_abstraction(Z,system->limits.nbr_variables);
 				puts("abs_tmp");
 				print_abstraction(abs_tmp);
 				newabs = glb(abs_tmp,myabs);
@@ -589,6 +945,11 @@ int main(int argc, char *argv[ ])
 
 	my_yyparse(&atree, argv[optind++]);
 
+	/* We initialize the memory management of the system (must do it before parsing) */
+	printf("Allocating memory for data structure.. ");
+	ist_init_system();
+	printf("DONE\n");
+
 #ifdef TBSYMB_DUMP  
 	printf("\n\n");
 	tbsymbol_dump(tbsymbol, &callback);
@@ -601,17 +962,11 @@ int main(int argc, char *argv[ ])
 
 		
 	build_problem_instance(atree, &system, &initial_marking, &unsafe_cone);
-	printf(".. DONE\n");
 	printf("System has %3d variables, %3d transitions and %2d actual invariants\n",system->limits.nbr_variables, system->limits.nbr_rules, system->limits.nbr_invariants);
 
-	/* We initialize the memory management of the system */
-	printf("Allocating memory for data structure.. ");
-	ist_init_system();
-	printf("DONE\n");
-
-
 	//backward_reachability(system,initial_marking,unsafe_cone);
-	ic4pn(system,initial_marking,unsafe_cone);
+	//ic4pn(system,initial_marking,unsafe_cone);
+	cegar(system,initial_marking,unsafe_cone);
 
 	ist_dispose(initial_marking);
 	ist_dispose(unsafe_cone);
