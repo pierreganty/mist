@@ -286,8 +286,8 @@ void RemoveUnboundedNodes(ISTSharingTree *S)
 		}
 		Layer=Layer->Next;
 	}
-	ist_remove_node_without_son(S);
 	ist_remove_node_without_father(S);
+	ist_remove_node_without_son(S);
 	if (!ist_is_empty(S)) 
 		ist_adjust_second_condition(S);
 	assert(ist_checkup(S)==true);

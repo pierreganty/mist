@@ -182,8 +182,8 @@ static boolean KeepMarkingsSatisfyingPostCondition(S, transition)
 		Layer = Layer->Next;
 		++NuLayer;
 	}
-	ist_remove_node_without_son(S);
 	ist_remove_node_without_father(S);
+	ist_remove_node_without_son(S);
 	ist_dispose_info(temp);
 	return modif;
 }
@@ -294,8 +294,8 @@ static void RemoveNodeWithoutValue(S, Target, Value)
 			ist_remove_sons(Node);
 		Node = Node->Next;
 	}
-	ist_remove_node_without_son(S);
 	ist_remove_node_without_father(S);
+	ist_remove_node_without_son(S);
 }
 
 static void AdjustSonNode(Node)
@@ -616,9 +616,8 @@ ISTSharingTree *ist_symbolic_pre_of_rule(Prec, transition)
 			Layer=Layer->Next;
 			++l;
 		}
-
-		ist_remove_node_without_son(STInt);
 		ist_remove_node_without_father(STInt);
+		ist_remove_node_without_son(STInt);
 	}
 	ist_dispose_info(tau);
 	if (!ist_is_empty(STInt)) 
@@ -676,8 +675,8 @@ ISTSharingTree *ist_pre_of_rule_plus_transfer(Prec, transition)
 				Layer=Layer->Next;
 				++l;
 			}
-			ist_remove_node_without_son(STInt);
 			ist_remove_node_without_father(STInt);
+			ist_remove_node_without_son(STInt);
 		}
 	}
 	/* The result is not supposed to be in normal form */

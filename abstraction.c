@@ -140,7 +140,8 @@ abstraction_t *glb(abstraction_t *abs1, abstraction_t *abs2)
 // precieuse methods																   //	
 /////////////////////////////////////////////////////////////////////////////////////////
 
-int ** partition_lines(int **matrix,int max_line, int max_row, int line1, int line2) {
+int ** partition_lines(int **matrix,int max_line, int max_row, int line1, int line2) 
+{
 	int nb_var_ij =0;
 	int i,j,l;
 	int ** result;
@@ -169,7 +170,8 @@ int ** partition_lines(int **matrix,int max_line, int max_row, int line1, int li
 	return result;
 }
 
-int ** line_fusion(int **matrix,int max_line, int max_row, int line1, int line2) {
+int ** line_fusion(int **matrix,int max_line, int max_row, int line1, int line2) 
+{
 	int ** result;
 	int i,j;//l;
 
@@ -223,7 +225,8 @@ int ** line_fusion(int **matrix,int max_line, int max_row, int line1, int line2)
 
 
 //build a more general partition that defines an abstraction that allow the represent S exactly (naive implementation see ATPN'07)
-abstraction_t *naive_new_abstraction(ISTSharingTree *S,int nb_var) {
+abstraction_t *naive_new_abstraction(ISTSharingTree *S,int nb_var) 
+{
 	int **result;
 	abstraction_t * result_abs;
 	int **tmp;
@@ -301,7 +304,8 @@ abstraction_t *naive_new_abstraction(ISTSharingTree *S,int nb_var) {
 }
 
 
-int *new_element_in_partition(int **matrix,int max_line, int max_row, int line1, int line2) {
+int *new_element_in_partition(int **matrix,int max_line, int max_row, int line1, int line2) 
+{
 	size_t i;
 	int *result;
 	
@@ -314,7 +318,8 @@ int *new_element_in_partition(int **matrix,int max_line, int max_row, int line1,
 	return result;
 }
 
-int *FindInfinitePlaces(ISTSharingTree *S,int nb_var) {
+int *FindInfinitePlaces(ISTSharingTree *S,int nb_var) 
+{
 	size_t i;
 	ISTLayer * L;
 	int *result=(int *)malloc(nb_var*(sizeof(int)));
@@ -330,7 +335,8 @@ int *FindInfinitePlaces(ISTSharingTree *S,int nb_var) {
 
 //build a more general partition that defines an abstraction that allow the represent S exactly
 //works for dc-sets only ?
-abstraction_t *new_abstraction(ISTSharingTree *S,int nb_var) {
+abstraction_t *new_abstraction(ISTSharingTree *S,int nb_var) 
+{
 	int **result;
 	abstraction_t * result_abs;
 	int **tmp;
@@ -376,8 +382,8 @@ abstraction_t *new_abstraction(ISTSharingTree *S,int nb_var) {
 	while (found == true) {
 		found = false;
 		//we check lines pairwise to find a pair to fusion
-		for(i = 0; (i < max_line) && (found == false);++i) 
-			for(j=i+1;(j<max_line) && (found == false);)
+		for(i = 0; (i < max_line);++i) 
+			for(j=i+1;(j<max_line);)
 				if (i!=j) {
 					Component=new_element_in_partition(result,max_line,max_row,i,j);
 					if (CanIRepresentExactlyTheSet(S,Component) == true) {
@@ -411,8 +417,8 @@ abstraction_t *new_abstraction(ISTSharingTree *S,int nb_var) {
 
 //Function that returns a path of the IST given as parameter
 //Redundant w/ ist_firstpath2array
-ISTInterval **GiveMeAPath(ISTSharingTree *S) {
-
+ISTInterval **GiveMeAPath(ISTSharingTree *S) 
+{
 	int nbvar = 0;
 	ISTInterval ** result;
 	ISTLayer * L;
@@ -432,7 +438,8 @@ ISTInterval **GiveMeAPath(ISTSharingTree *S) {
 //compute the sum of value appearing in the layers given by Component
 //Component[i] = 0 == the layer is not considered
 //Component[i] > 0 == the layer is considered
-int ValueInComponent(ISTInterval **V,int *Component,int dim) {
+int ValueInComponent(ISTInterval **V,int *Component,int dim) 
+{
 
 	int i;
 	int result = 0;
@@ -446,8 +453,8 @@ int ValueInComponent(ISTInterval **V,int *Component,int dim) {
 
 
 //used to compute all the path such that the sum of values appearing in layers given by Component is equal to val
-ISTNode *PathWithValueInComponent(ISTSharingTree * S, ISTNode * N,ISTLayer *L,int NuLayer,int * Component,int val,int sum) {
-
+ISTNode *PathWithValueInComponent(ISTSharingTree * S, ISTNode * N,ISTLayer *L,int NuLayer,int * Component,int val,int sum) 
+{
 	ISTNode *result;
 	ISTSon *s;
 	ISTNode *node;
@@ -507,7 +514,8 @@ ISTNode *PathWithValueInComponent(ISTSharingTree * S, ISTNode * N,ISTLayer *L,in
 //That function returns an IST such that the paths are those of S such that the sum of the values
 //in the layers given by Component is equal to val (we only consider right bound)
 //Assumption: the left bound is equal to 0 for all the nodes
-ISTSharingTree *ist_PathsWithValueInComponent(ISTSharingTree * S,int * Component,int val) {
+ISTSharingTree *ist_PathsWithValueInComponent(ISTSharingTree * S,int * Component,int val) 
+{
 
 	ISTSon *son;
 	ISTSharingTree *result;
@@ -550,7 +558,8 @@ int choose(int a,int b)
 //that does not have INFINITY as right bound.
 //return true if it holds
 //return false otherwise
-boolean testINFINITY(ISTSharingTree * S,int *Component) {
+boolean testINFINITY(ISTSharingTree * S,int *Component) 
+{
 	ISTLayer * L;
 	int i;
 	boolean ok = true;
@@ -568,7 +577,8 @@ boolean testINFINITY(ISTSharingTree * S,int *Component) {
 
 //return true iff the partition of places that contains the set given by component and the simgletons
 //for all the other places is precise enough to represent the tuple of S.
-static boolean CanIRepresentExactlyTheSet(ISTSharingTree *S, int *Component) {
+static boolean CanIRepresentExactlyTheSet(ISTSharingTree *S, int *Component) 
+{
 	
 	ISTSharingTree *Scopy, *T, *Q, *tmp;
 	ISTInterval **Path;
@@ -584,7 +594,6 @@ static boolean CanIRepresentExactlyTheSet(ISTSharingTree *S, int *Component) {
 		if (Component[i] > 0)
 			DimComp++;
 	}
-	
 	while ((ist_is_empty(Scopy) == false) && ok) {
 		Path = GiveMeAPath(Scopy);
 		val = ValueInComponent(Path,Component,dim);
@@ -618,6 +627,7 @@ static boolean CanIRepresentExactlyTheSet(ISTSharingTree *S, int *Component) {
 		}
 		ist_dispose(T);
 	}
+	ist_copy(Scopy);
 	return ok;	
 }
 
