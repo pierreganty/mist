@@ -16,7 +16,7 @@
    along with mist2; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-   Copyright 2003, 2004, Pierre Ganty
+   Copyright 2003, 2004, Pierre Ganty, 2007 Laurent Van Begin
  */
 
 
@@ -800,9 +800,9 @@ static void STWriteElem(path, l)
 	printf("-<");
 	for (i = 0; i < l-1; i++){
 		printf("[%2ld", path[i]->Left);
-		if(path[i]->Right==INFINITY)
-			printf(",  ]");
-		else
+//		if(path[i]->Right==INFINITY)
+//			printf(",  ]");
+//		else
 			printf(",%2ld]", path[i]->Right);
 	}  
 	printf(">-\n");
@@ -928,7 +928,7 @@ ISTNode *  YesProject(ISTNode * node,ISTSharingTree * STR, ISTLayer * rlayer, in
 	return rnode;	  
 }
 
-    
+/*    
 ISTHeadListNode * NoProject(ISTNode * node,ISTSharingTree * STR, ISTLayer * rlayer, int nlayer,integer16* mask) {
 
 	ISTSon *s;
@@ -955,6 +955,59 @@ ISTHeadListNode * NoProject(ISTNode * node,ISTSharingTree * STR, ISTLayer * rlay
 	}
 	return list;
 }
+*/
+
+ISTHeadListNode * NoProject(ISTNode * node,ISTSharingTree * STR, ISTLayer * rlayer, int nlayer,integer16* mask) {
+
+	ISTSon *s;
+	ISTNode *n;
+	ISTHeadListNode * list;
+	ISTHeadListNode * list_temp;
+	ISTLayer * layer = rlayer;
+	TMemo1 *memo;
+	int l;	
+
+	ist_init_list_node(&list);
+	ist_insert_list_node(list,node);
+	l=nlayer;
+
+	ist_new_magic_number();
+
+	while(mask[l+1] == 0) {
+
+//		printf("l=%d\n",l);
+
+		ist_init_list_node(&list_temp);
+		for(n = ist_remove_first_elem_list_node(list); n != NULL;n = ist_remove_first_elem_list_node(list)) {
+			for(s = n->FirstSon;s!=NULL;s=s->Next) {
+				if (s->Son->AuxI != ist_get_magic_number()) {
+					s->Son->AuxI = ist_get_magic_number();	
+					ist_insert_list_node(list_temp,s->Son);
+				}
+			}
+		}
+		xfree(list);
+		list = list_temp;
+		
+		l++;
+	}
+
+	ist_init_list_node(&list_temp);
+
+	for(n = ist_remove_first_elem_list_node(list); n != NULL;n = ist_remove_first_elem_list_node(list)) {
+		for(s = n->FirstSon;s!=NULL;s=s->Next) {
+			memo = ist_get_memoization1(s->Son, s->Son);
+			if (memo != NULL)
+				ist_insert_list_node(list_temp,memo->r);
+			else 
+				ist_insert_list_node(list_temp,YesProject(s->Son,STR,layer,l+1,mask));
+				
+		}
+	}
+
+	xfree(list);
+	return list_temp;
+}
 
 
 /*
@@ -968,7 +1021,7 @@ ISTSharingTree *ist_projection(ISTSharingTree * S, integer16 *mask) {
 	ISTSon * s;
 	ISTHeadListNode * list;
 	ISTHeadListNode * list_tmp;
-	
+
 	ist_new(&STR);
 	if (ist_is_empty(S) == false) {
 		ist_new_magic_number();
@@ -994,6 +1047,7 @@ ISTSharingTree *ist_projection(ISTSharingTree * S, integer16 *mask) {
 		
 		xfree(list_tmp);
 		ist_normalize(STR);
+
 	}
 	return STR;
 }

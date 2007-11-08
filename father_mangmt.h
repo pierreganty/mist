@@ -27,7 +27,7 @@
 
 /*
  * This modules is in charge to build and provide an interface to manage the father relation inside an IST.
- * (e.g. ist_minimize_tree_sim_based) 
+ * (e.g. ist_prune_tree_sim_based) 
  */
 void ist_remove_father( ISTNode *Father, ISTNode *Son);
 void ist_add_father( ISTNode *Father, ISTNode *Child);

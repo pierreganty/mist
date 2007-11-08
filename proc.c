@@ -950,7 +950,7 @@ ISTNode *ist_exists_node(layer, node)
 }
 
 
-ISTNode *ist_add_node(layer, node)
+inline ISTNode *ist_add_node(layer, node)
 	ISTLayer *layer;
 	ISTNode *node;
 {

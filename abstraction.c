@@ -536,6 +536,85 @@ ISTSharingTree *ist_PathsWithValueInComponent(ISTSharingTree * S,int * Component
 }
 
 
+//used to compute all the path such that the sum of values appearing in layers given by Component is equal to val
+int nb_PathWithValueInComponent(ISTNode * N,ISTLayer *LayerCache,int NuLayer,int * Component,int sum,int val) 
+{
+	int result;
+	ISTSon *s;
+	ISTNode *node;
+	TMemo1 * memo;
+
+
+	if (ist_equal_interval(N->Info,&IST_end_of_list)) {
+		if(val == sum)
+	        	result = 1;
+		else
+			result = 0;
+	}else {
+		result = 0;
+
+
+		for(s = N->FirstSon;s != NULL;s = s->Next) {
+			if (Component[NuLayer] > 0) {
+				if (ist_less_or_equal_value(ist_add_value(N->Info->Right,sum),val)){
+					memo = ist_get_memoization1(s->Son,(ISTNode *) ist_add_value(N->Info->Right,sum));
+					if (memo != NULL)
+						result += memo->r->Info->Right;
+					else { 
+						result += nb_PathWithValueInComponent(s->Son,LayerCache,NuLayer+1,Component,ist_add_value(N->Info->Right,sum),val);
+					}
+				} else 
+					result += 0;
+			} else { 
+				memo = ist_get_memoization1(s->Son, (ISTNode *) sum);
+				if (memo != NULL)
+					result += memo->r->Info->Right;
+				else
+					result += nb_PathWithValueInComponent(s->Son,LayerCache,NuLayer + 1,Component,sum,val);
+
+			}
+		}			
+	
+	}
+	node = ist_add_node(LayerCache,ist_create_node(ist_build_interval(0,result)));
+	ist_put_memoization1(N,(ISTNode *) sum,node);
+	return result;
+}
+
+
+
+//That function returns an IST such that the paths are those of S such that the sum of the values
+//in the layers given by Component is equal to val (we only consider right bound)
+//Assumption: the left bound is equal to 0 for all the nodes
+ int ist_nb_PathsWithValueInComponent(ISTSharingTree * S,int * Component,int val) 
+{
+
+	ISTSon *son;
+	int result =0;
+	ISTLayer LayerCache;
+	ISTNode * n, * m;
+
+	ist_new_magic_number();
+    	ist_new_memo1_number();
+
+	for(son = S->Root->FirstSon; son != NULL;son = son->Next) {
+		result += nb_PathWithValueInComponent(son->Son,&LayerCache,0,Component,0,val);
+		
+	}
+
+	n = LayerCache.FirstNode;
+	while (n != NULL) {
+		m = n->Next;
+		ist_dispose_node(n);
+		n = m;
+	}
+
+	return result;
+}
+
+
+/*
+
 //that function compute a choose b
 int choose(int a,int b) 
 {
@@ -551,6 +630,26 @@ int choose(int a,int b)
        facaminusb *= i;
 
    return v/facaminusb;
+}
+*/
+
+#define MAXN    100     /* largest n or m */
+
+long choose(n,m)
+int n,m;            /* computer n choose m */
+{
+    int i,j;        /* counters */
+    long bc[MAXN][MAXN];    /* table of binomial coefficient values */
+
+    for (i=0; i<=n; i++) bc[i][0] = 1;
+
+    for (j=0; j<=n; j++) bc[j][j] = 1;
+
+    for (i=1; i<=n; i++)
+        for (j=1; j<i; j++)
+            bc[i][j] = bc[i-1][j-1] + bc[i-1][j];
+
+    return(bc[n][m]);
 }
 
 #define	MAXN	100		/* largest n or m */
@@ -615,9 +714,12 @@ static boolean CanIRepresentExactlyTheSet(ISTSharingTree *S, int *Component)
 		if (Component[i] > 0)
 			DimComp++;
 	}
+
 	while ((ist_is_empty(Scopy) == false) && ok) {
 		Path = GiveMeAPath(Scopy);
 		val = ValueInComponent(Path,Component,dim);
+
+
 		//we take all the paths of Scopy where the places corresponding to Componenent contains val tokens
 		T = ist_PathsWithValueInComponent(Scopy,Component,val);
 		//tmp contains the other paths that must be still managed 
@@ -643,7 +745,7 @@ static boolean CanIRepresentExactlyTheSet(ISTSharingTree *S, int *Component)
 			complementComponent[dim] = 1;
 			Q = ist_projection(T,complementComponent);
 			free(complementComponent);
-			ok = (ist_nb_elements(Q) * binomial_coefficient(val + DimComp-1,DimComp-1) == ist_nb_elements(T));
+			ok = (ist_nb_elements(Q) * choose(val + DimComp-1,DimComp-1) == ist_nb_elements(T));
 			ist_dispose(Q);
 		}
 		ist_dispose(T);
