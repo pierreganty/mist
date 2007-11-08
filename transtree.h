@@ -30,7 +30,7 @@
 typedef struct TransSharingTree {
     struct TransLayer *FirstLayer, *LastLayer;
     struct TransNode *Root;
-	size_t NbElements;
+	integer32 NbElements;
     struct TransSharingTree *Next;
 } TransSharingTree;
 

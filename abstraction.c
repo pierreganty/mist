@@ -553,6 +553,27 @@ int choose(int a,int b)
    return v/facaminusb;
 }
 
+#define	MAXN	100		/* largest n or m */
+
+long binomial_coefficient(n,m)
+int n,m;			/* computer n choose m */
+{
+	int i,j;		/* counters */
+	long bc[MAXN][MAXN];	/* table of binomial coefficient values */
+
+	for (i=0; i<=n; i++) bc[i][0] = 1;
+
+	for (j=0; j<=n; j++) bc[j][j] = 1;
+
+	for (i=1; i<=n; i++)
+		for (j=1; j<i; j++)
+			bc[i][j] = bc[i-1][j-1] + bc[i-1][j];
+
+	return(bc[n][m]);
+}
+
+
+
 
 //that function tests if for all the paths there is no node in a layer given by Component
 //that does not have INFINITY as right bound.
@@ -622,7 +643,7 @@ static boolean CanIRepresentExactlyTheSet(ISTSharingTree *S, int *Component)
 			complementComponent[dim] = 1;
 			Q = ist_projection(T,complementComponent);
 			free(complementComponent);
-			ok = (ist_nb_elements(Q) * choose(val + DimComp-1,DimComp-1) == ist_nb_elements(T));
+			ok = (ist_nb_elements(Q) * binomial_coefficient(val + DimComp-1,DimComp-1) == ist_nb_elements(T));
 			ist_dispose(Q);
 		}
 		ist_dispose(T);

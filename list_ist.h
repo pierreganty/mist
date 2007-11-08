@@ -45,6 +45,6 @@ ISTSharingTree *ist_first_element_list_ist(THeadListIST * List);
 ISTSharingTree *ist_next_element_list_ist(THeadListIST * List);
 boolean ist_is_empty_list_ist(THeadListIST * List);
 THeadListIST * ist_copy_list_ist(THeadListIST * List);
-size_t ist_count_elem_list_ist(THeadListIST *list);
+int ist_count_elem_list_ist(THeadListIST *list);
 
 #endif

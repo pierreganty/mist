@@ -587,6 +587,7 @@ ISTSharingTree *ist_symbolic_pre_of_rule(Prec, transition)
 	ISTLayer *Layer;
 	ISTInterval *inter, *tau;
 	size_t l;
+	boolean stop;
 
 	tau = ist_build_interval(0,INFINITY);
 	STInt=ist_copy(Prec);
@@ -618,6 +619,18 @@ ISTSharingTree *ist_symbolic_pre_of_rule(Prec, transition)
 		}
 		ist_remove_node_without_father(STInt);
 		ist_remove_node_without_son(STInt);
+	}
+	/* Remove empty layers if any */
+	stop = false;
+	while (!stop) {
+		if (STInt->LastLayer == NULL)
+			stop = true;
+		else {
+			if (STInt->LastLayer->FirstNode != NULL)
+				stop = true;
+			else
+				ist_remove_last_layer(STInt);
+		}
 	}
 	ist_dispose_info(tau);
 	if (!ist_is_empty(STInt)) 

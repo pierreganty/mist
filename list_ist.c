@@ -37,8 +37,8 @@ void ist_insert_at_the_beginning_list_ist(THeadListIST *list,ISTSharingTree * S)
   list->FirstElem = new_elem;
 }
 
-size_t ist_count_elem_list_ist(THeadListIST *list) {
-	size_t size=0;
+int ist_count_elem_list_ist(THeadListIST *list) {
+	int size=0;
 	TListIST *tmp;
 	for(tmp=list->FirstElem; tmp!=NULL; tmp=tmp->Next,++size);
 	return size;

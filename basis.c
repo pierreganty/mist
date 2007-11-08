@@ -1,4 +1,4 @@
-// vim:sw=4:ts=4
+// vim:sw=4:ts=4:cindent
 /*
    This file is part of mist2.
 
@@ -702,10 +702,10 @@ ISTSharingTree *ist_minus(ST1, ST2)
 }
 
 
-size_t ist_nb_sons(ST)
+int ist_nb_sons(ST)
 	ISTSharingTree *ST;
 {
-	size_t  n;
+	int  n;
 	ISTLayer *layer;
 	ISTNode *node;
 
@@ -722,10 +722,10 @@ size_t ist_nb_sons(ST)
 	return n;
 }
 
-size_t ist_nb_nodes(ST)
+int ist_nb_nodes(ST)
 	ISTSharingTree *ST;
 {
-	size_t n;
+	int n;
 	ISTLayer *layer;
 	ISTNode *node;
 
@@ -743,10 +743,10 @@ size_t ist_nb_nodes(ST)
 }
 
 
-size_t ist_nb_layers(ST)
+int ist_nb_layers(ST)
 	ISTSharingTree *ST;
 {
-	size_t n;
+	int n;
 	ISTLayer *layer;
 
 	n = 0;
@@ -759,7 +759,7 @@ size_t ist_nb_layers(ST)
 } 
 
 
-size_t ist_nb_elements(S)
+long ist_nb_elements(S)
 	ISTSharingTree *S;
 {
 	ist_count_elements(S);
@@ -1055,7 +1055,7 @@ ISTSharingTree *ist_downward_closure(ST)
 	return V.STR;
 }
 
-size_t ist_nb_tuples(ST)
+long ist_nb_tuples(ST)
    ISTSharingTree *ST;
 {
    ISTLayer *layer;

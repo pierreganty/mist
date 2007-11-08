@@ -51,7 +51,7 @@
 typedef struct ISTSharingTree {
 	struct ISTLayer *FirstLayer, *LastLayer;
 	struct ISTNode *Root;
-	size_t NbElements;
+	integer32 NbElements;
 	struct ISTSharingTree *Next;		/* So far, never used in our algorithms */
 } ISTSharingTree;
 
@@ -146,7 +146,7 @@ ISTNode *ist_has_son_with_value(ISTNode *node, ISTInterval *value) ;
 boolean ist_same_sons(ISTNode *node1, ISTNode *node2) ;
 boolean ist_contains_sons(ISTNode *node, ISTNode *nodep) ;
 void ist_remove_sons(ISTNode *node) ;
-size_t ist_number_of_sons(ISTNode *node) ;
+int ist_number_of_sons(ISTNode *node) ;
 ISTNode *ist_create_node(ISTInterval* value) ;
 void ist_remove_node(ISTLayer *layer, ISTNode *node) ;
 ISTNode *ist_exists_node(ISTLayer *layer, ISTNode *node) ;

@@ -62,17 +62,16 @@ ISTSharingTree *ist_minus(ISTSharingTree *ST1, ISTSharingTree *ST2) ;
 ISTSharingTree *ist_projection(ISTSharingTree *S, integer16 *mask);
 ISTSharingTree *ist_downward_closure(ISTSharingTree *ST);
 
-size_t ist_nb_sons(ISTSharingTree *ST) ;
-size_t ist_nb_nodes(ISTSharingTree *ST) ;
-size_t ist_nb_layers(ISTSharingTree *ST) ;
-size_t ist_nb_elements(ISTSharingTree *S) ;
+int ist_nb_sons(ISTSharingTree *ST) ;
+int ist_nb_nodes(ISTSharingTree *ST) ;
+int ist_nb_layers(ISTSharingTree *ST) ;
+long ist_nb_elements(ISTSharingTree *S) ;
 
-size_t ist_nb_tuples(ISTSharingTree *ST);
 
 /* I/O primitives */
 void ist_write(ISTSharingTree *S) ;
 void ist_fill_tree_from_file(FILE* file_spec, ISTSharingTree **S, size_t height, size_t width);
 ISTInterval **ist_firstpath2array(ISTSharingTree *S) ;
-size_t ist_nb_tuples(ISTSharingTree *ST);
+long ist_nb_tuples(ISTSharingTree *ST);
 
 #endif 

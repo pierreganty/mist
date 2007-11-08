@@ -433,11 +433,11 @@ boolean ist_checkup(S)
 	return retval;
 }
 
-static size_t ist_count_number_of_arcs_layer(Layer)
+static int ist_count_number_of_arcs_layer(Layer)
     ISTLayer *Layer;
 {
 	ISTNode *Node;
-	size_t Sol;
+	int Sol;
 
 	Node = Layer->FirstNode;
 	Sol = 0;
@@ -449,10 +449,10 @@ static size_t ist_count_number_of_arcs_layer(Layer)
 }
 
 
-static size_t ist_count_number_of_arcs(S)
+static int ist_count_number_of_arcs(S)
     ISTSharingTree *S;
 {
-	size_t Sol;
+	int Sol;
 	ISTLayer *Layer;
 
 	Sol = ist_number_of_sons(S->Root);
@@ -469,9 +469,9 @@ static size_t ist_count_number_of_arcs(S)
 void ist_stat(S)
     ISTSharingTree *S;
 {
-    size_t NbArcs;
+    int NbArcs;
 
     NbArcs = ist_count_number_of_arcs(S);
-    printf("Elems: %7d Nodes: %5d Arcs: %5d Layers: %2d\n",
+    printf("Elems: %7ld Nodes: %5d Arcs: %5d Layers: %2d\n",
 	    ist_nb_elements(S), ist_nb_nodes(S), NbArcs, ist_nb_layers(S));
 }

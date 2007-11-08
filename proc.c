@@ -842,10 +842,10 @@ void ist_remove_sons(node)
 }
 
 
-size_t ist_number_of_sons(node)
+int ist_number_of_sons(node)
 	ISTNode *node;
 {
-	size_t n;
+	int n;
 	ISTSon *s;
 
 	n = 0;

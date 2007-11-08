@@ -276,6 +276,7 @@ void RemoveUnboundedNodes(ISTSharingTree *S)
 {
 	ISTLayer *Layer;
 	ISTNode *Node;
+	boolean stop;
 	Layer=S->FirstLayer;
 	while(Layer!=S->LastLayer) {
 		Node = Layer->FirstNode;
@@ -288,9 +289,21 @@ void RemoveUnboundedNodes(ISTSharingTree *S)
 	}
 	ist_remove_node_without_father(S);
 	ist_remove_node_without_son(S);
+	/* Remove empty layers if any */
+	stop = false;
+	while (!stop) {
+		if (S->LastLayer == NULL)
+			stop = true;
+		else {
+			if (S->LastLayer->FirstNode != NULL)
+				stop = true;
+			else
+				ist_remove_last_layer(S);
+		}
+	}
 	if (!ist_is_empty(S)) 
 		ist_adjust_second_condition(S);
-	assert(ist_checkup(S)==true);
+	//assert(ist_checkup(S)==true);
 }
 
 
@@ -474,6 +487,7 @@ boolean eec_cegar(system, abs, initial_marking, bad, List)
 			ist_init_list_ist(List);
 			/* we can start the expand phase */
 			if (ist_is_empty(tmp)==false) {
+				finished=!backward_reachability(system,initial_marking,bad);
 				/* expand works w/ dc-sets */
 				bpost = ist_downward_closure(tmp);
 				ist_dispose(tmp);
