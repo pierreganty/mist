@@ -25,6 +25,7 @@
 
 #include "proc.h"
 #include "transsystem.h"
+#include "complement.h"
 
 /* Symbolic Post of a transfer (used in ic4pn to abstract a set of markings) */
 ISTSharingTree *ist_post_of_transfer(ISTSharingTree *S, transfers_t *transfers);
@@ -49,5 +50,10 @@ ISTSharingTree *ist_symbolic_pre_of_rule(ISTSharingTree *Prec, transition_t *tra
 /* No transfer */
 ISTSharingTree *ist_enumerative_pre(ISTSharingTree *backward_p, transition_system_t *system);
 ISTSharingTree *ist_enumerative_pre_transition(ISTSharingTree *backward_p, transition_system_t *system, size_t transition);
+
+
+
+ISTSharingTree * ist_symbolic_pre_tild(ISTSharingTree *Prec,transition_system_t *sys);
+
 
 #endif

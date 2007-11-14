@@ -383,6 +383,7 @@ static boolean mismatch_in_counting_fathers(S)
     return stop;
 }  
 
+
 boolean ist_checkup(S) 
     ISTSharingTree *S; 
 { 
@@ -432,6 +433,8 @@ boolean ist_checkup(S)
 	ist_stat(S);
 	return retval;
 }
+
+
 
 static int ist_count_number_of_arcs_layer(Layer)
     ISTLayer *Layer;

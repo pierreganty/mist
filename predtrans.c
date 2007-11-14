@@ -590,11 +590,17 @@ ISTSharingTree *ist_symbolic_pre_of_rule(Prec, transition)
 	boolean stop;
 
 	tau = ist_build_interval(0,INFINITY);
+
+	printf("STInt=ist_copy(Prec);\n");
+
 	STInt=ist_copy(Prec);
-	if (ist_is_empty(STInt)== false ) {
+
+	printf("fini la copie!\n");
+
+	if (ist_is_empty(STInt)== false) {
 		Layer=STInt->FirstLayer;
 		l=0;
-		while (Layer->Next != NULL ) {
+		while (Layer->Next != NULL) {
 			if (transition->cmd_for_place[l].delta  != 0){
 				Node=Layer->FirstNode;
 				while (Node!=NULL ) {
@@ -635,7 +641,6 @@ ISTSharingTree *ist_symbolic_pre_of_rule(Prec, transition)
 	ist_dispose_info(tau);
 	if (!ist_is_empty(STInt)) 
 		ist_adjust_second_condition(STInt);
-	assert(ist_checkup(STInt)==true);
 	return STInt;
 }
 

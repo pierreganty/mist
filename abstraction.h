@@ -77,4 +77,9 @@ abstraction_t *naive_new_abstraction(ISTSharingTree *S,int nb_var);
 abstraction_t *new_abstraction(ISTSharingTree *S,int nb_var);
 abstraction_t *glb(abstraction_t *abs1, abstraction_t *abs2);
 
+
+ISTSharingTree * ist_symbolic_abstract_pre_tild(ISTSharingTree * Prec,transition_system_t * sys);
+ISTSharingTree * ist_symbolic_pre_tild(ISTSharingTree * Prec,transition_system_t * sys);
+
+
 #endif

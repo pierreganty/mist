@@ -83,14 +83,16 @@ inline void ist_dispose_son(son)
 	ISTSon *son;
 {
 
-	/* A sanity check which is VERY TIME CONSUMING !!!
-	ISTSon *ptr;
+//	 A sanity check which is VERY TIME CONSUMING !!!
+/*	ISTSon *ptr;
 	ptr = st_SonsMemory;
 	while (ptr != NULL) {
 		if (ptr == son)
 			err_msg("Error: son already disposed\n");
 		ptr = ptr->Next;
-	} */
+	} 
+*/
+
 	son->Next = st_SonsMemory;
 	st_SonsMemory = son;
 }
@@ -98,6 +100,16 @@ inline void ist_dispose_son(son)
 inline void ist_dispose_node(node)
 	ISTNode *node;
 {
+//	 A sanity check which is VERY TIME CONSUMING !!!
+/*	ISTNode *ptr;
+	ptr = st_NodesMemory;
+	while (ptr != NULL) {
+		if (ptr == node)
+			err_msg("Error: node already disposed\n");
+		ptr = ptr->Next;
+	}
+*/
+
 	if (ist_not_equal_interval(node->Info,&IST_beg_of_list) && ist_not_equal_interval(node->Info,&IST_end_of_list) && node->Info != NULL)
 		ist_dispose_info(node->Info);
 	node->Next = st_NodesMemory;
@@ -108,6 +120,17 @@ inline void ist_dispose_node(node)
 inline void ist_dispose_layer(layer)
 	ISTLayer *layer;
 {
+//	 A sanity check which is VERY TIME CONSUMING !!!
+/*	ISTLayer *ptr;
+	ptr = st_LayersMemory;
+	while (ptr != NULL) {
+		if (ptr == layer)
+			err_msg("Error: layer already disposed\n");
+		ptr = ptr->Next;
+	}
+*/
+
+
 	layer->Next = st_LayersMemory;
 	st_LayersMemory = layer;
 }
@@ -116,6 +139,16 @@ inline void ist_dispose_layer(layer)
 inline void ist_dispose_tree(shar3)
 	ISTSharingTree *shar3;
 {
+//	 A sanity check which is VERY TIME CONSUMING !!!
+/*	ISTSharingTree *ptr;
+	ptr = st_TreesMemory;
+	while (ptr != NULL) {
+		if (ptr == shar3)
+			err_msg("Error: ist already disposed\n");
+		ptr = ptr->Next;
+	}
+*/
+
 	shar3->Next = st_TreesMemory;
 	st_TreesMemory = shar3;
 }

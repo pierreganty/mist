@@ -347,6 +347,9 @@ abstraction_t *new_abstraction(ISTSharingTree *S,int nb_var)
 	int *infcomponent;
 
 	abs.nbConcreteV = nb_var;
+
+
+	printf("Construction of a new abstraction\n");
 	
 	//allocation of memory + initialisation
 	result = (int **)xmalloc(nb_var * sizeof(int*));	
@@ -409,6 +412,8 @@ abstraction_t *new_abstraction(ISTSharingTree *S,int nb_var)
 	result_abs->bound = (int *)xmalloc(result_abs->nbV * sizeof(int));
 	for(i=0;i < result_abs->nbV;++i)
 		result_abs->bound[i] = 1;
+
+	printf("end construction of a new abstraction\n");
 
 	return result_abs;
 }
@@ -1259,3 +1264,129 @@ ISTSharingTree *adhoc_pretild(ISTSharingTree *S, transition_system_t *t)
 	}
 	return result;
 }
+
+ISTSharingTree * ist_symbolic_pre_tild_of_rule(Prec, transition)
+   ISTSharingTree *Prec;
+   transition_t *transition;
+{
+	ISTSharingTree *NegGuard;
+	ISTSharingTree *tmp;
+	ISTSharingTree * pre;
+	ISTSharingTree * result;
+	ISTInterval **path;
+	int i;
+	int nbvar = (ist_nb_layers(Prec)-1);
+
+	path = 	(ISTInterval **)malloc(sizeof(ISTInterval*) * nbvar);
+	for(i=0;i< nbvar;i++) 
+		path[i] = &(transition->cmd_for_place[i].guard);
+	ist_new(&NegGuard);
+	ist_add(NegGuard,path,nbvar);
+	free(path);
+
+	ist_complement(NegGuard,nbvar);
+	tmp = ist_downward_closure(NegGuard);
+	ist_dispose(NegGuard);
+	NegGuard = tmp;
+	pre = ist_symbolic_pre_of_rule(Prec,transition);
+	tmp = ist_downward_closure(pre);
+	ist_dispose(pre);
+	pre = ist_union(tmp,NegGuard);
+	ist_dispose(tmp);
+	ist_dispose(NegGuard);
+	result = ist_minimal_form(pre);
+	ist_dispose(pre);
+	return result;	
+}
+
+
+
+ISTSharingTree * ist_enumerative_pre_tild_of_rule(Prec, sys,trans)
+   ISTSharingTree *Prec;
+   transition_system_t *sys;
+   int trans;
+{
+	ISTSharingTree *NegGuard;
+	ISTSharingTree *tmp;
+	ISTSharingTree * pre;
+	ISTSharingTree * result;
+	ISTInterval **path;
+	int i;
+	int nbvar = (ist_nb_layers(Prec)-1);
+
+
+	path = 	(ISTInterval **)malloc(sizeof(ISTInterval*) * nbvar);
+
+	for(i=0;i< nbvar;i++) 
+		path[i] = &(sys->transition[trans].cmd_for_place[i].guard);
+	ist_new(&NegGuard);
+	ist_add(NegGuard,path,nbvar);
+	free(path);
+	ist_complement(NegGuard,nbvar);
+	pre = ist_enumerative_pre_transition(Prec,sys,trans);
+	tmp = ist_downward_closure(pre);
+	ist_dispose(pre);
+	pre = ist_union(tmp,NegGuard);
+	ist_dispose(tmp);
+	ist_dispose(NegGuard);
+	result = ist_minimal_form(pre);
+	ist_dispose(pre);
+	return result;	
+}
+
+ISTSharingTree * ist_symbolic_pre_tild(Prec, sys)
+   ISTSharingTree * Prec;
+   transition_system_t * sys;
+{
+	ISTSharingTree * result;
+	ISTSharingTree * tmp1;
+	ISTSharingTree * tmp2;
+	int i;
+
+	ist_new(&result);
+	ist_complement(result,ist_nb_layers(Prec)-1);
+
+	for(i=0;i< sys->limits.nbr_rules;i++) {
+		tmp1 = ist_symbolic_pre_tild_of_rule(Prec,&sys->transition[i]);
+		tmp2 = ist_intersection(tmp1,result);
+		ist_dispose(tmp1);
+		ist_dispose(result);
+		result = ist_minimal_form(tmp2);
+		ist_dispose(tmp2);
+	}	
+	return result;
+}
+
+ISTSharingTree * ist_symbolic_abstract_pre_tild(Prec, sys)
+   ISTSharingTree * Prec;
+   transition_system_t * sys;
+{
+	ISTSharingTree * result;
+	ISTSharingTree * cpre;
+	ISTSharingTree * tmp;
+	int i;
+	int j;
+	boolean top;
+
+	ist_new(&result);
+	ist_complement(result,ist_nb_layers(Prec)-1);
+
+	for(j=0;j< sys->limits.nbr_rules;j++) {
+		for (i=0, top = false; (i < sys->limits.nbr_variables) && (top == false);i++) {
+			if ((sys->transition[j].cmd_for_place[i].guard.Left > 0) && 
+			(sys->transition[j].cmd_for_place[i].places_abstracted > 1))
+				top = true;
+		}
+		if (top == false) {
+			cpre = ist_symbolic_pre_tild_of_rule(Prec,&sys->transition[j]);
+			tmp = ist_intersection(cpre,result);
+			ist_dispose(cpre);
+			ist_dispose(result);
+			result = ist_minimal_form(tmp);
+			ist_dispose(tmp);
+
+		}
+	}
+	return result;
+}
+

@@ -889,6 +889,12 @@ void ic4pn(system, initial_marking, bad)
 				// release iterates
 				ist_dispose(iterates);
 
+				//debug pour voire...
+				printf("Suspens...est-ce que c'est rapide?\n");
+				ISTSharingTree * b = ist_symbolic_pre_tild(gamma_gfp,system);
+				ist_checkup(b);
+
+
 				// We compute a concrete iterates 
 				puts("gamma_gfp");
 				ist_write(gamma_gfp);
@@ -909,6 +915,19 @@ void ic4pn(system, initial_marking, bad)
 				_tmp=ist_minimal_form(tmp);
 				ist_dispose(tmp);
 				assert(ist_checkup(_tmp)==true);
+
+				//debug
+				ISTSharingTree * a = ist_symbolic_pre_tild(gamma_gfp,system);
+				ist_checkup(a);
+
+				a = ist_downward_closure(a);
+				ist_normalize(a); 
+				a = ist_minimal_form(a);
+				printf("assert...\n");
+				assert(ist_exact_subsumption_test(a,_tmp) 
+				&& ist_exact_subsumption_test(_tmp,a));
+				ist_checkup(a);
+				ist_checkup(_tmp);
 
 				// Now intersects w/ gamma_gfp
 				tmp=ist_intersection(gamma_gfp,_tmp);
@@ -979,8 +998,8 @@ int main(int argc, char *argv[ ])
 	printf("System has %3d variables, %3d transitions and %2d actual invariants\n",system->limits.nbr_variables, system->limits.nbr_rules, system->limits.nbr_invariants);
 
 	//backward_reachability(system,initial_marking,unsafe_cone);
-	//ic4pn(system,initial_marking,unsafe_cone);
-	cegar(system,initial_marking,unsafe_cone);
+	ic4pn(system,initial_marking,unsafe_cone);
+	//cegar(system,initial_marking,unsafe_cone);
 
 	ist_dispose(initial_marking);
 	ist_dispose(unsafe_cone);
