@@ -1,4 +1,4 @@
-// vim:sw=4:ts=4
+// vim:sw=4:ts=4:cindent
 /*
    This file is part of mist2.
 
@@ -242,7 +242,7 @@ static void ComputeOverApproximationOnLayerForValue(Layer, Value)
 				Node->AuxP = NewNode;
 			}
 			ist_assign_interval_to_interval(CurrentInterval,Save);
-		} 
+		}
 		while (CurrentInterval->Left < Value->Left){
 			ist_add_value_to_interval(CurrentInterval,1);
 			NewNode = ist_create_node(CurrentInterval);
@@ -482,23 +482,20 @@ ISTSharingTree *ist_intersection_with_formula_transfer(ST1, Trans, Value)
 	while (s1 != NULL && !stop) {
 		if (Trans->origin[0] == 1 || Trans->target == 0){
 			ist_add_interval_to_interval(V.intersect,s1->Son->Info);
-			if (V.intersect->Left > Value->Left || (V.intersect->Left == Value->Left
-					   	&& ist_greater_value(V.intersect->Right,Value->Right))) {
+			if (V.intersect->Left > Value->Left || (V.intersect->Left == Value->Left\
+						&& ist_greater_value(V.intersect->Right,Value->Right)))
 				stop = true;
-			} else {
+			else {
 				rchild = IntersectionWithFormulaTransfert(s1->Son,Trans, Value, ist_nb_layers(ST1)-1, 1L,&V);
-				if (rchild != NULL) {
+				if (rchild != NULL)
 					ist_add_son(V.STR->Root, rchild);
-				}
 			}
-			if (!stop){
+			if (!stop)
 				ist_sub_interval_to_interval(V.intersect,s1->Son->Info);
-			}
 		} else {
 			rchild = IntersectionWithFormulaTransfert(s1->Son,Trans, Value, ist_nb_layers(ST1)-1, 1L,&V);
-			if (rchild != NULL) {
+			if (rchild != NULL)
 				ist_add_son(V.STR->Root, rchild);
-			}
 		}
 		s1 = s1->Next;
 	}
@@ -516,14 +513,15 @@ ISTSharingTree *ist_pre_of_all_transfer(S, transition)
 	ISTInterval *CurrentValue;
 	ISTNode *Node;
 	ISTSharingTree *Sol, *STInt1, *STInt2, *STInt3;
-	size_t i,TargetLayer, CurrentTarget;
+	size_t i,j,TargetLayer, CurrentTarget;
 	boolean stop;
 	Sol = ist_copy(S);
-	
+
 	for (i=0; i < transition->nbr_transfers; ++i){
 		ist_new(&STInt3);
 		Layer = Sol->FirstLayer;
 		TargetLayer = transition->transfers[i].target;
+
 		for (CurrentTarget = 0; CurrentTarget < TargetLayer; ++CurrentTarget)
 			Layer = Layer->Next;
 
@@ -549,6 +547,18 @@ ISTSharingTree *ist_pre_of_all_transfer(S, transition)
 			 */
 			STInt2 = ist_intersection_with_formula_transfer(STInt1,&transition->transfers[i],CurrentValue);
 			ist_dispose(STInt1);
+			/* TODO: REMOVE THE NEXT 6 INSTRUCTIONS which makes sense for ic4pn */
+			/* we call ist_intersection_with_formula_transfer which
+			 * considers the source places only in order the dismiss cases where tokens did
+			 * not move from the target of tokens
+			 */
+			for(j=0;transition->transfers[i].origin[j]==0;++j);
+			transition->transfers[i].target=j;
+			STInt1 = ist_intersection_with_formula_transfer(STInt2,&transition->transfers[i],CurrentValue);
+			transition->transfers[i].target=TargetLayer; // restore the target layer as it was
+			ist_dispose(STInt2);
+			STInt2 = STInt1; 
+
 			STInt1 = ist_union(STInt3,STInt2);
 			ist_dispose(STInt3);
 			STInt3 = STInt1;
@@ -638,6 +648,8 @@ ISTSharingTree *ist_symbolic_pre_of_rule(Prec, transition)
 	return STInt;
 }
 
+
+/* The result is not supposed to be in normal form */
 ISTSharingTree *ist_pre_of_rule_plus_transfer(Prec, transition)
 	ISTSharingTree *Prec;
 	transition_t *transition;
@@ -652,7 +664,7 @@ ISTSharingTree *ist_pre_of_rule_plus_transfer(Prec, transition)
 	tau = ist_build_interval(0,INFINITY);
 	STInt=ist_copy(Prec);
 	if (transition->nbr_transfers > 0) 
-		modified = KeepMarkingsSatisfyingPostCondition(STInt,transition); 
+		modified=KeepMarkingsSatisfyingPostCondition(STInt,transition); 
 	if (ist_is_empty(STInt)== false){
 		if (transition->nbr_transfers > 0) {
 			if (modified == true )
@@ -844,7 +856,6 @@ ISTSharingTree *ist_pre_pruned_wth_inv_and_prev_iterates(prec, reached_elem, sys
 	}
 	return pre_until_ith_rule;
 }
-
 
 ISTSharingTree *ist_pre(prec, system)
 	ISTSharingTree *prec;
