@@ -45,10 +45,7 @@ void print_abstraction(abstraction_t *abs);
 void dispose_abstraction(abstraction_t *abs);
 abstraction_t *glb(abstraction_t *abs1, abstraction_t *abs2);
 
-/* Only works for Petri Nets w/o invariants */
 transition_system_t *build_sys_using_abs(transition_system_t *sys, abstraction_t *abs);
-abstraction_t *refine_abs(abstraction_t *cur_abs, ISTSharingTree *S,
-		ISTSharingTree *cpreS, ISTSharingTree *safe, transition_system_t *sys);
 
 ISTSharingTree *ist_abstraction(ISTSharingTree *S, abstraction_t *abs);
 ISTSharingTree *ist_concretisation(ISTSharingTree *S, abstraction_t * abs);
@@ -73,6 +70,10 @@ ISTSharingTree
 		(*approx)(ISTSharingTree *S, integer16* b), integer16 *bound,
 		transition_system_t *t);
 
+ISTSharingTree *ist_symbolic_abstract_pre_tild(ISTSharingTree * Prec,transition_system_t * sys);
+ISTSharingTree *ist_symbolic_pre_tild(ISTSharingTree * Prec,transition_system_t * sys);
+ISTSharingTree *pre_under_star(ISTSharingTree * S, int * transitions,transition_system_t * sys,ISTSharingTree *initial_marking);
+
 /* the pretild works for transfers */
 ISTSharingTree *adhoc_pretild_rule(ISTSharingTree *S, transition_t *t);
 ISTSharingTree *adhoc_pretild(ISTSharingTree *S, transition_system_t *t);
@@ -82,11 +83,7 @@ ISTSharingTree *adhoc_pre_rule(ISTSharingTree *S, transition_t *t);
 
 
 abstraction_t *glb(abstraction_t *abs1, abstraction_t *abs2);
-abstraction_t *new_abstraction_lub(ISTSharingTree *S,int nb_var,abstraction_t * old_abs);
+abstraction_t *new_abstraction_lub(ISTSharingTree *S, int nb_var, abstraction_t *old_abs);
 
-ISTSharingTree * ist_symbolic_abstract_pre_tild(ISTSharingTree * Prec,transition_system_t * sys);
-ISTSharingTree * ist_symbolic_pre_tild(ISTSharingTree * Prec,transition_system_t * sys);
-
-int * list_of_exact_transitions(transition_system_t * sys,abstraction_t * abs);
-ISTSharingTree * pre_under_star(ISTSharingTree * S, int * transitions,transition_system_t * sys,ISTSharingTree *initial_marking);
+int *list_of_exact_transitions(transition_system_t *sys,abstraction_t *abs);
 #endif

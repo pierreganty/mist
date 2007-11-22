@@ -303,7 +303,6 @@ void RemoveUnboundedNodes(ISTSharingTree *S)
 	}
 	if (!ist_is_empty(S)) 
 		ist_adjust_second_condition(S);
-	//assert(ist_checkup(S)==true);
 }
 
 

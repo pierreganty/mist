@@ -11,8 +11,6 @@ Supprimer le champ NbElements ?
 Fix a policy on emptines test, normalize and so on: each
 function must deal with empty ist and return a normalized ist.
 Redundant function GiveMeAPath ist_firstpath2array
-ist_pre_of_all_transfer !!!!!
-
 
 Créer une petite page web avec les données essentielles.
 	Ce que fait l'outil.
