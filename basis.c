@@ -886,8 +886,9 @@ ISTInterval **ist_firstpath2array(S)
 	return Sol; 
 }
 
-ISTHeadListNode * NoProject(ISTNode * node,ISTSharingTree * STR, ISTLayer * rlayer, int nlayer,integer16 *mask);
-ISTNode *  YesProject(ISTNode * node,ISTSharingTree * STR, ISTLayer * rlayer, int nlayer,integer16 *mask) {
+ISTHeadListNode *NoProject(ISTNode *node,ISTSharingTree *STR, ISTLayer *rlayer, int nlayer, integer16 *mask);
+ISTNode *YesProject(ISTNode *node,ISTSharingTree *STR, ISTLayer *rlayer, int nlayer, integer16 *mask) 
+{
 	ISTSon *s;
 	ISTNode *rchild;
 	ISTNode *rnode;
@@ -936,42 +937,12 @@ ISTNode *  YesProject(ISTNode * node,ISTSharingTree * STR, ISTLayer * rlayer, in
 	return rnode;	  
 }
 
-/*    
-ISTHeadListNode * NoProject(ISTNode * node,ISTSharingTree * STR, ISTLayer * rlayer, int nlayer,integer16* mask) {
-
-	ISTSon *s;
-	ISTNode *rchild;
-	ISTHeadListNode * list;
-	ISTHeadListNode * list_temp;
-	TMemo1 *memo;
-
-	ist_init_list_node(&list);
-	for(s = node->FirstSon; s != NULL; s = s->Next) {
-		if(mask[nlayer+1] > 0) {
-			memo = ist_get_memoization1(s->Son, s->Son);
-			if (memo != NULL)
-				ist_insert_list_node(list,memo->r);
-			else 
-				ist_insert_list_node(list,YesProject(s->Son,STR,rlayer,nlayer+1,mask));
-		} else {
-			list_temp = NoProject(s->Son,STR,rlayer,nlayer+1,mask);
-			for(rchild = ist_remove_first_elem_list_node(list_temp) ; rchild != NULL; 
-					rchild = ist_remove_first_elem_list_node(list_temp)) 
-				ist_insert_list_node(list,rchild);
-			xfree(list_temp);
-		}
-	}
-	return list;
-}
-*/
-
-ISTHeadListNode * NoProject(ISTNode * node,ISTSharingTree * STR, ISTLayer * rlayer, int nlayer,integer16* mask) {
-
+ISTHeadListNode *NoProject(ISTNode *node,ISTSharingTree *STR, ISTLayer *rlayer, int nlayer, integer16 *mask) 
+{
 	ISTSon *s;
 	ISTNode *n;
-	ISTHeadListNode * list;
-	ISTHeadListNode * list_temp;
-	ISTLayer * layer = rlayer;
+	ISTHeadListNode *list, *list_tmp;
+	ISTLayer *layer = rlayer;
 	TMemo1 *memo;
 	int l;	
 
@@ -985,36 +956,35 @@ ISTHeadListNode * NoProject(ISTNode * node,ISTSharingTree * STR, ISTLayer * rlay
 
 //		printf("l=%d\n",l);
 
-		ist_init_list_node(&list_temp);
+		ist_init_list_node(&list_tmp);
 		for(n = ist_remove_first_elem_list_node(list); n != NULL;n = ist_remove_first_elem_list_node(list)) {
 			for(s = n->FirstSon;s!=NULL;s=s->Next) {
 				if (s->Son->AuxI != ist_get_magic_number()) {
 					s->Son->AuxI = ist_get_magic_number();	
-					ist_insert_list_node(list_temp,s->Son);
+					ist_insert_list_node(list_tmp,s->Son);
 				}
 			}
 		}
 		xfree(list);
-		list = list_temp;
-		
+		list = list_tmp;
 		l++;
 	}
 
-	ist_init_list_node(&list_temp);
+	ist_init_list_node(&list_tmp);
 
 	for(n = ist_remove_first_elem_list_node(list); n != NULL;n = ist_remove_first_elem_list_node(list)) {
 		for(s = n->FirstSon;s!=NULL;s=s->Next) {
 			memo = ist_get_memoization1(s->Son, s->Son);
 			if (memo != NULL)
-				ist_insert_list_node(list_temp,memo->r);
+				ist_insert_list_node(list_tmp,memo->r);
 			else 
-				ist_insert_list_node(list_temp,YesProject(s->Son,STR,layer,l+1,mask));
+				ist_insert_list_node(list_tmp,YesProject(s->Son,STR,layer,l+1,mask));
 				
 		}
 	}
 
 	xfree(list);
-	return list_temp;
+	return list_tmp;
 }
 
 

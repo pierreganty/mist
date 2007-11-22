@@ -622,6 +622,380 @@ static boolean CanIRepresentExactlyTheUCSet(ISTSharingTree *S, int *Component)
 	return ok;	
 }
 
+//that function tests if for all the paths there is no node in a layer given by Component
+//that does not have INFINITY as right bound.
+//return true if it holds
+//return false otherwise
+boolean testINFINITY(ISTSharingTree * S,int *Component) 
+{
+	ISTLayer * L;
+	int i;
+	boolean ok = true;
+	
+	i=0;
+	L=S->FirstLayer;
+	while((L->Next!=NULL) && ok){
+		if (Component[i] > 0) 
+			ok = (L->FirstNode->Info->Right == INFINITY);
+		i++;	
+		L = L->Next;
+	}
+	return ok;
+}
+
+//compute the sum of value appearing in the layers given by Component
+//Component[i] = 0 == the layer is not considered
+//Component[i] > 0 == the layer is considered
+int ValueInComponent(ISTInterval **V,int *Component,int dim) 
+{
+
+	int i;
+	int result = 0;
+
+	for(i=0;i < dim;i++) {
+		if (Component[i] > 0)
+			result =  ist_add_value(result,V[i]->Right);	
+	}
+	return result;
+}
+
+//used to compute all the path such that the sum of values appearing in layers given by Component is equal to val
+ISTNode *PathWithValueInComponent(ISTSharingTree * S, ISTNode * N,ISTLayer *L,int NuLayer,int * Component,int val,int sum) 
+{
+	ISTNode *result;
+	ISTSon *s;
+	ISTNode *node;
+	TMemo1 * memo;
+
+
+	if (ist_equal_interval(N->Info,&IST_end_of_list)) {
+		if(val == sum)
+	        	result = ist_add_node(L, ist_create_node(&IST_end_of_list));
+		else
+			result = NULL;
+	}else {
+		L = L->Next;
+		if(L == NULL) {
+			L = ist_add_last_layer(S);
+		}
+		result = ist_create_node(ist_copy_interval(N->Info));
+
+
+		for(s = N->FirstSon;s != NULL;s = s->Next) {
+			if (Component[NuLayer] > 0) {
+				if (ist_less_or_equal_value(ist_add_value(N->Info->Right,sum),val)){
+					memo = ist_get_memoization1(s->Son,(ISTNode *) ist_add_value(N->Info->Right,sum));
+					if (memo != NULL)
+						node = memo->r;
+					else { 
+						node = PathWithValueInComponent(S,s->Son,L,NuLayer+1,Component,val,ist_add_value(N->Info->Right,sum));
+					}
+				} else 
+					node = NULL;
+			} else { 
+				memo = ist_get_memoization1(s->Son, (ISTNode *) sum);
+				if (memo != NULL)
+					node = memo->r;
+				else
+					node = PathWithValueInComponent(S,s->Son,L,NuLayer + 1,Component,val,sum);
+
+			}
+			if (node != NULL) {
+				ist_add_son(result,node);
+			}
+		}			
+	
+		L = L->Previous;
+		if (result->FirstSon == NULL) {
+			ist_dispose_node(result);
+			result = NULL;	
+		} else 
+			result = ist_add_node(L,result);		
+	}
+	ist_put_memoization1(N,(ISTNode *) sum,result);
+	return result;
+}
+
+
+//That function returns an IST such that the paths are those of S such that the sum of the values
+//in the layers given by Component is equal to val (we only consider right bound)
+//Assumption: the left bound is equal to 0 for all the nodes
+ISTSharingTree *ist_PathsWithValueInComponent(ISTSharingTree * S,int * Component,int val) 
+{
+
+	ISTSon *son;
+	ISTSharingTree *result;
+	ISTLayer *L;
+	ISTNode *N;
+
+	ist_new_magic_number();
+    	ist_new_memo1_number();
+	ist_new(&result);
+	L = ist_add_last_layer(result);
+
+	for(son = S->Root->FirstSon; son != NULL;son = son->Next) {
+		N = PathWithValueInComponent(result,son->Son,L,0,Component,val,0);
+		if (N != NULL) 
+			ist_add_son(result->Root,N);
+	}
+	return result;
+}
+
+
+//return true iff the partition of places that contains the set given by component and the simgletons
+//for all the other places is precise enough to represent the tuple of S.
+static boolean CanIRepresentExactlyTheDcSet(ISTSharingTree *S, int *Component) 
+{
+	
+	ISTSharingTree *Scopy, *T, *Q, *tmp;
+	ISTInterval **Path;
+	size_t dim, DimComp, i;
+	int val;
+	integer16 *complementComponent;
+	boolean ok = true;
+	
+	Scopy=ist_copy(S);
+	dim=ist_nb_layers(Scopy)-1;
+	//compute the size of the set of places given by Component
+	for(i=0,DimComp = 0; i< dim;i++) {
+		if (Component[i] > 0)
+			DimComp++;
+	}
+
+	while ((ist_is_empty(Scopy) == false) && ok) {
+		Path = GiveMeAPath(Scopy);
+		val = ValueInComponent(Path,Component,dim);
+		//we take all the paths of Scopy where the places corresponding to Componenent contains val tokens
+		T = ist_PathsWithValueInComponent(Scopy,Component,val);
+		//tmp contains the other paths that must be still managed 
+		tmp=ist_minus(Scopy,T);
+		ist_dispose(Scopy);
+		Scopy=tmp;
+		//if the number of tokens is INFINITY, then all the places in Component must contains
+		//INFINITY tokens, otherwise the partition cannot represent the tuple of S
+		if (val == INFINITY) {
+			ok = (testINFINITY(T,Component) == true);
+		} else {
+			//otherwise we compute the number of possibilities to have val tokens in the places
+			//given by component and we compute the number of possible sub-markings obtained by
+			//removing the places of Component
+			//Then, the product of the two values gives the number of tuples we must have
+			complementComponent = (integer16 *)malloc((dim + 1) * sizeof(integer16));
+			for(i=0;i<dim;i++) {
+				if(Component[i] > 0)
+					complementComponent[i] = 0;
+				else
+					complementComponent[i] = 1;
+			}
+			complementComponent[dim] = 1;
+			Q = ist_projection(T,complementComponent);
+			free(complementComponent);
+			ok = (ist_nb_elements(Q) * choose(val + DimComp-1,DimComp-1) == ist_nb_elements(T));
+			ist_dispose(Q);
+		}
+		ist_dispose(T);
+	}
+	ist_copy(Scopy);
+	return ok;	
+}
+
+
+//build a more general partition that defines an abstraction that allow the represent S exactly
+//works for dc-sets only
+abstraction_t *new_abstraction_dc_set(ISTSharingTree *S,int nb_var) 
+{
+	int **result;
+	abstraction_t * result_abs;
+	int **tmp;
+	int  max_line,max_row, i,j,l; 
+	boolean found;
+	abstraction_t abs;
+	int *Component;
+	int *infcomponent;
+
+	abs.nbConcreteV = nb_var;
+	
+	//allocation of memory + initialisation
+	result = (int **)xmalloc(nb_var * sizeof(int*));	
+	for(i=0;i < nb_var;++i) {
+		result[i] = (int *)xmalloc(nb_var * sizeof(int));
+		for(j = 0;j< nb_var;++j)
+			result[i][j] = 0;
+		result[i][i] = 1;
+	}
+	max_line = nb_var;
+	max_row = nb_var;
+
+	infcomponent = FindInfinitePlaces(S,nb_var);
+	for(i=nb_var-1;(i >= 0) && (infcomponent[i] == 0);i--);
+	if (i >= 0) {
+		j=i-1;
+		while(j>=0) {
+			if (infcomponent[j] == 1) {
+				tmp = line_fusion(result,max_line,max_row,j,i);
+				for(l = 0;l< max_line;++l)
+                                	xfree(result[l]);
+                                xfree(result);
+                                result = tmp;
+				--max_line;
+				i=j;
+			}
+			j--;
+		}
+	}
+	free(infcomponent);
+
+	found = true;
+	while (found == true) {
+		found = false;
+		//we check lines pairwise to find a pair to fusion
+		for(i = 0; (i < max_line);++i) 
+			for(j=i+1;(j<max_line);)
+				if (i!=j) {
+					Component=new_element_in_partition(result,max_line,max_row,i,j);
+					if (CanIRepresentExactlyTheDcSet(S,Component) == true) {
+						//we can build a more general partition, the old one useless
+						//computation of the new partition
+						tmp = line_fusion(result,max_line,max_row,i,j);
+						for(l = 0;l< max_line;++l)
+							xfree(result[l]);
+						xfree(result);
+						result = tmp;
+						--max_line;
+						found = true;
+
+					} else j++; //when line i and line j are fusionned, 
+						//  the result is put at line i. Hence, in that case we do not have
+						//  to increaese j
+				}
+	}
+	result_abs = (abstraction_t *)xmalloc(sizeof(abstraction_t));
+	result_abs->nbConcreteV = max_row;
+	result_abs->nbV = max_line;
+	result_abs->A = result;
+	result_abs->bound = (int *)xmalloc(result_abs->nbV * sizeof(int));
+	for(i=0;i < result_abs->nbV;++i)
+		result_abs->bound[i] = 1;
+
+	return result_abs;
+}
+
+//return true iff the partition of places that contains the set given by component and the simgletons
+//for all the other places is precise enough to represent the tuple of S.
+static boolean CanIRepresentExactlyTheFiniteSet(ISTSharingTree *S, int *Component) 
+{
+	
+	ISTSharingTree *Scopy, *T, *Q, *tmp;
+	ISTInterval **Path;
+	size_t dim, DimComp, i;
+	int val;
+	integer16 *complementComponent;
+	boolean ok = true;
+	
+	Scopy=ist_copy(S);
+	dim=ist_nb_layers(Scopy)-1;
+	//compute the size of the set of places given by Component
+	for(i=0,DimComp = 0; i< dim;i++) {
+		if (Component[i] > 0)
+			DimComp++;
+	}
+
+	while ((ist_is_empty(Scopy) == false) && ok) {
+		Path = GiveMeAPath(Scopy);
+		val = ValueInComponent(Path,Component,dim);
+		//we take all the paths of Scopy where the places corresponding to Componenent contains val tokens
+		T = ist_PathsWithValueInComponent(Scopy,Component,val);
+		//tmp contains the other paths that must be still managed 
+		tmp=ist_minus(Scopy,T);
+		ist_dispose(Scopy);
+		Scopy=tmp;
+		//if the number of tokens is INFINITY, then all the places in Component must contains
+		//INFINITY tokens, otherwise the partition cannot represent the tuple of S
+		if (val == INFINITY) {
+			ok = (testINFINITY(T,Component) == true);
+		} else {
+			//otherwise we compute the number of possibilities to have val tokens in the places
+			//given by component and we compute the number of possible sub-markings obtained by
+			//removing the places of Component
+			//Then, the product of the two values gives the number of tuples we must have
+			complementComponent = (integer16 *)malloc((dim + 1) * sizeof(integer16));
+			for(i=0;i<dim;i++) {
+				if(Component[i] > 0)
+					complementComponent[i] = 0;
+				else
+					complementComponent[i] = 1;
+			}
+			complementComponent[dim] = 1;
+			Q = ist_projection(T,complementComponent);
+			free(complementComponent);
+			ok = (ist_nb_tuples(Q) * choose(val + DimComp-1,DimComp-1) == ist_nb_tuples(T));
+			ist_dispose(Q);
+		}
+		ist_dispose(T);
+	}
+	ist_copy(Scopy);
+	return ok;	
+}
+
+//build a more general partition that defines an abstraction that allow the represent S exactly
+//works for finite sets only
+abstraction_t *new_abstraction_finite_set(ISTSharingTree *S,int nb_var) 
+{
+	int **result;
+	abstraction_t * result_abs;
+	int **tmp;
+	int  max_line,max_row, i,j,l; 
+	boolean found;
+	abstraction_t abs;
+	int *Component;
+
+	abs.nbConcreteV = nb_var;
+	
+	//allocation of memory + initialisation
+	result = (int **)xmalloc(nb_var * sizeof(int*));	
+	for(i=0;i < nb_var;++i) {
+		result[i] = (int *)xmalloc(nb_var * sizeof(int));
+		for(j = 0;j< nb_var;++j)
+			result[i][j] = 0;
+		result[i][i] = 1;
+	}
+	max_line = nb_var;
+	max_row = nb_var;
+
+	found = true;
+	while (found == true) {
+		found = false;
+		//we check lines pairwise to find a pair to fusion
+		for(i = 0; (i < max_line);++i) 
+			for(j=i+1;(j<max_line);)
+				if (i!=j) {
+					Component=new_element_in_partition(result,max_line,max_row,i,j);
+					if (CanIRepresentExactlyTheFiniteSet(S,Component) == true) {
+						//we can build a more general partition, the old one useless
+						//computation of the new partition
+						tmp = line_fusion(result,max_line,max_row,i,j);
+						for(l = 0;l< max_line;++l)
+							xfree(result[l]);
+						xfree(result);
+						result = tmp;
+						--max_line;
+						found = true;
+
+					} else j++; //when line i and line j are fusionned, 
+						//  the result is put at line i. Hence, in that case we do not have
+						//  to increaese j
+				}
+	}
+	result_abs = (abstraction_t *)xmalloc(sizeof(abstraction_t));
+	result_abs->nbConcreteV = max_row;
+	result_abs->nbV = max_line;
+	result_abs->A = result;
+	result_abs->bound = (int *)xmalloc(result_abs->nbV * sizeof(int));
+	for(i=0;i < result_abs->nbV;++i)
+		result_abs->bound[i] = 1;
+
+	return result_abs;
+}
 
 
 //build a more general partition that defines an abstraction that allow the represent S exactly
@@ -753,105 +1127,9 @@ ISTInterval **GiveMeAPath(ISTSharingTree *S)
 }
 
 
-//compute the sum of value appearing in the layers given by Component
-//Component[i] = 0 == the layer is not considered
-//Component[i] > 0 == the layer is considered
-int ValueInComponent(ISTInterval **V,int *Component,int dim) 
-{
-
-	int i;
-	int result = 0;
-
-	for(i=0;i < dim;i++) {
-		if (Component[i] > 0)
-			result =  ist_add_value(result,V[i]->Right);	
-	}
-	return result;
-}
-
-
-//used to compute all the path such that the sum of values appearing in layers given by Component is equal to val
-ISTNode *PathWithValueInComponent(ISTSharingTree * S, ISTNode * N,ISTLayer *L,int NuLayer,int * Component,int val,int sum) 
-{
-	ISTNode *result;
-	ISTSon *s;
-	ISTNode *node;
-	TMemo1 * memo;
-
-
-	if (ist_equal_interval(N->Info,&IST_end_of_list)) {
-		if(val == sum)
-	        	result = ist_add_node(L, ist_create_node(&IST_end_of_list));
-		else
-			result = NULL;
-	}else {
-		L = L->Next;
-		if(L == NULL) {
-			L = ist_add_last_layer(S);
-		}
-		result = ist_create_node(ist_copy_interval(N->Info));
-
-
-		for(s = N->FirstSon;s != NULL;s = s->Next) {
-			if (Component[NuLayer] > 0) {
-				if (ist_less_or_equal_value(ist_add_value(N->Info->Right,sum),val)){
-					memo = ist_get_memoization1(s->Son,(ISTNode *) ist_add_value(N->Info->Right,sum));
-					if (memo != NULL)
-						node = memo->r;
-					else { 
-						node = PathWithValueInComponent(S,s->Son,L,NuLayer+1,Component,val,ist_add_value(N->Info->Right,sum));
-					}
-				} else 
-					node = NULL;
-			} else { 
-				memo = ist_get_memoization1(s->Son, (ISTNode *) sum);
-				if (memo != NULL)
-					node = memo->r;
-				else
-					node = PathWithValueInComponent(S,s->Son,L,NuLayer + 1,Component,val,sum);
-
-			}
-			if (node != NULL) {
-				ist_add_son(result,node);
-			}
-		}			
-	
-		L = L->Previous;
-		if (result->FirstSon == NULL) {
-			ist_dispose_node(result);
-			result = NULL;	
-		} else 
-			result = ist_add_node(L,result);		
-	}
-	ist_put_memoization1(N,(ISTNode *) sum,result);
-	return result;
-}
 
 
 
-//That function returns an IST such that the paths are those of S such that the sum of the values
-//in the layers given by Component is equal to val (we only consider right bound)
-//Assumption: the left bound is equal to 0 for all the nodes
-ISTSharingTree *ist_PathsWithValueInComponent(ISTSharingTree * S,int * Component,int val) 
-{
-
-	ISTSon *son;
-	ISTSharingTree *result;
-	ISTLayer *L;
-	ISTNode *N;
-
-	ist_new_magic_number();
-    	ist_new_memo1_number();
-	ist_new(&result);
-	L = ist_add_last_layer(result);
-
-	for(son = S->Root->FirstSon; son != NULL;son = son->Next) {
-		N = PathWithValueInComponent(result,son->Son,L,0,Component,val,0);
-		if (N != NULL) 
-			ist_add_son(result->Root,N);
-	}
-	return result;
-}
 
 
 //used to compute all the path such that the sum of values appearing in layers given by Component is equal to val
@@ -991,27 +1269,6 @@ int n,m;			/* computer n choose m */
 
 
 
-
-//that function tests if for all the paths there is no node in a layer given by Component
-//that does not have INFINITY as right bound.
-//return true if it holds
-//return false otherwise
-boolean testINFINITY(ISTSharingTree * S,int *Component) 
-{
-	ISTLayer * L;
-	int i;
-	boolean ok = true;
-	
-	i=0;
-	L=S->FirstLayer;
-	while((L->Next!=NULL) && ok){
-		if (Component[i] > 0) 
-			ok = (L->FirstNode->Info->Right == INFINITY);
-		i++;	
-		L = L->Next;
-	}
-	return ok;
-}
 
 //return true iff the partition of places that contains the set given by component and the simgletons
 //for all the other places is precise enough to represent the tuple of S.

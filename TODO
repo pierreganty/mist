@@ -1,16 +1,17 @@
 Ajouter PNML comme language d'input.
+
 Verifier que les transfers passent bien.
 Verifier si la place target doit aussi apparaitre comme source.
-
 Regardez ce qui se passe avec le cas X' = Y  + 1
 et peut etre essayer de le détecter.
 
-Cherchez les fonctions qui sont syntaxiquement orpheline
-et nettoyer le code.
+Cherchez les fonctions qui sont syntaxiquement orpheline et nettoyer le code.
 Remplacer la list_ist par une structure de liste générique.
 Supprimer le champ NbElements ?
-Fix a policy on emptines test, checkup and so on.
+Fix a policy on emptines test, normalize and so on: each
+function must deal with empty ist and return a normalized ist.
 Redundant function GiveMeAPath ist_firstpath2array
+ist_pre_of_all_transfer !!!!!
 
 
 Créer une petite page web avec les données essentielles.

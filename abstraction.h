@@ -53,6 +53,11 @@ abstraction_t *refine_abs(abstraction_t *cur_abs, ISTSharingTree *S,
 ISTSharingTree *ist_abstraction(ISTSharingTree *S, abstraction_t *abs);
 ISTSharingTree *ist_concretisation(ISTSharingTree *S, abstraction_t * abs);
 
+/* operator for refinement */
+abstraction_t *naive_new_abstraction(ISTSharingTree *S,int nb_var);
+abstraction_t *new_abstraction_dc_set(ISTSharingTree *S,int nb_var);
+abstraction_t *new_abstraction_finite_set(ISTSharingTree *S,int nb_var);
+
 /* abstract operators */
 /* the abstract post is only for petri nets. Moreover you have to pass
  * the approximation functio in parameter. */
@@ -75,10 +80,6 @@ ISTSharingTree *adhoc_pretild(ISTSharingTree *S, transition_system_t *t);
 ISTSharingTree *adhoc_pre(ISTSharingTree *S, transition_system_t *t);
 ISTSharingTree *adhoc_pre_rule(ISTSharingTree *S, transition_t *t); 
 
-/* operator for refinement */
-abstraction_t *naive_new_abstraction(ISTSharingTree *S,int nb_var);
-abstraction_t *new_abstraction_dc_set(ISTSharingTree *S,int nb_var);
-abstraction_t *new_abstraction_finite_set(ISTSharingTree *S,int nb_var);
 
 abstraction_t *glb(abstraction_t *abs1, abstraction_t *abs2);
 abstraction_t *new_abstraction_lub(ISTSharingTree *S,int nb_var,abstraction_t * old_abs);

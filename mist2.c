@@ -1137,7 +1137,7 @@ void ic4pn_bis(system, initial_marking, bad)
 	/* A_0 = refinement(Z_0) */
 	Z = ist_copy(bad);
 	ist_complement(Z,system->limits.nbr_variables);
-	myabs=new_abstraction(Z,system->limits.nbr_variables);
+	myabs=new_abstraction_dc_set(Z,system->limits.nbr_variables);
 
 	printf("first abstraction\n");
 	print_abstraction(myabs);
@@ -1249,7 +1249,7 @@ void ic4pn_tris(system, initial_marking, bad)
 	/* A_0 = refinement(Z_0) */
 	Z = ist_copy(bad);
 	ist_complement(Z,system->limits.nbr_variables);
-	myabs=new_abstraction(Z,system->limits.nbr_variables);
+	myabs=new_abstraction_dc_set(Z,system->limits.nbr_variables);
 
 	printf("first abstraction\n");
 	print_abstraction(myabs);
@@ -1383,7 +1383,7 @@ void ic4pn_quatre(system, initial_marking, bad)
 	/* A_0 = refinement(Z_0) */
 	Z = ist_copy(bad);
 	ist_complement(Z,system->limits.nbr_variables);
-	myabs=new_abstraction(Z,system->limits.nbr_variables);
+	myabs=new_abstraction_dc_set(Z,system->limits.nbr_variables);
 
 	printf("first abstraction\n");
 	print_abstraction(myabs);
@@ -1510,7 +1510,7 @@ void ic4pn_cinq(system, initial_marking, bad)
 	/* A_0 = refinement(Z_0) */
 	Z = ist_copy(bad);
 	ist_complement(Z,system->limits.nbr_variables);
-	myabs=new_abstraction(Z,system->limits.nbr_variables);
+	myabs=new_abstraction_dc_set(Z,system->limits.nbr_variables);
 
 	printf("first abstraction\n");
 	print_abstraction(myabs);
@@ -1630,13 +1630,13 @@ int main(int argc, char *argv[ ])
 	build_problem_instance(atree, &system, &initial_marking, &bad);
 	printf("System has %3d variables, %3d transitions and %2d actual invariants\n",system->limits.nbr_variables, system->limits.nbr_rules, system->limits.nbr_invariants);
 
-	//backward_reachability(system,initial_marking,unsafe_cone);
-	//ic4pn(system,initial_marking,unsafe_cone);
-	//cegar(system,initial_marking,unsafe_cone);
-	//ic4pn_bis(system,initial_marking,unsafe_cone);
-	//ic4pn_tris(system,initial_marking,unsafe_cone);
-	//ic4pn_quatre(system,initial_marking,unsafe_cone);
-	ic4pn_cinq(system,initial_marking,unsafe_cone);
+	//backward_reachability(system,initial_marking,bad);
+	//ic4pn(system,initial_marking,bad);
+	//cegar(system,initial_marking,bad);
+	//ic4pn_bis(system,initial_marking,bad);
+	//ic4pn_tris(system,initial_marking,bad);
+	//ic4pn_quatre(system,initial_marking,bad);
+	ic4pn_cinq(system,initial_marking,bad);
 
 	ist_dispose(initial_marking);
 	ist_dispose(bad);
