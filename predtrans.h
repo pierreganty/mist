@@ -51,9 +51,6 @@ ISTSharingTree *ist_symbolic_pre_of_rule(ISTSharingTree *Prec, transition_t *tra
 ISTSharingTree *ist_enumerative_pre(ISTSharingTree *backward_p, transition_system_t *system);
 ISTSharingTree *ist_enumerative_pre_transition(ISTSharingTree *backward_p, transition_system_t *system, size_t transition);
 
-
-
-ISTSharingTree * ist_symbolic_pre_tild(ISTSharingTree *Prec,transition_system_t *sys);
-
-
+/* for concretisation */
+ISTSharingTree * ist_pre_of_all_transfer_for_concretisation(ISTSharingTree * S,transition_t * t);
 #endif

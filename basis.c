@@ -581,8 +581,16 @@ ISTSharingTree *ist_intersection(ST1, ST2)
 		}
 	}
 	V.STR->NbElements = V.STR->Root->AuxI;
-	if(ist_is_empty(V.STR)==false)
+	if(ist_is_empty(V.STR)==false) {
+//		printf("ist_intersection before normilzation");
+//		ist_stat(V.STR);
 		ist_normalize(V.STR);
+//		printf("ist_intersection after normilzation");
+//		ist_stat(V.STR);
+//		printf("initial ist\n");
+//		ist_stat(ST1);
+//		ist_stat(ST2);
+	}
 	return V.STR;
 }
 

@@ -854,7 +854,9 @@ void ic4pn(system, initial_marking, bad)
 
 				assert(ist_checkup(iterates)==true);
 				assert(ist_nb_layers(iterates)-1==myabs->nbV);
-				tmp = adhoc_pretild(iterates,sysabs);
+				//tmp = adhoc_pretild(iterates,sysabs);
+
+				tmp = ist_symbolic_abstract_pre_tild(iterates,sysabs);
 
 				new_iterates = ist_intersection(tmp,rfp);
 				assert(ist_checkup(new_iterates)==true);
@@ -890,13 +892,13 @@ void ic4pn(system, initial_marking, bad)
 				ist_dispose(iterates);
 
 				//debug pour voire...
-				printf("Suspens...est-ce que c'est rapide?\n");
+/*				printf("Suspens...est-ce que c'est rapide?\n");
 				ISTSharingTree * b = ist_symbolic_pre_tild(gamma_gfp,system);
 				ist_checkup(b);
-
+*/
 
 				// We compute a concrete iterates 
-				puts("gamma_gfp");
+/*				puts("gamma_gfp");
 				ist_write(gamma_gfp);
 				assert(ist_checkup(gamma_gfp)==true);
 				tmp=ist_copy(gamma_gfp);
@@ -915,9 +917,9 @@ void ic4pn(system, initial_marking, bad)
 				_tmp=ist_minimal_form(tmp);
 				ist_dispose(tmp);
 				assert(ist_checkup(_tmp)==true);
-
+*/
 				//debug
-				ISTSharingTree * a = ist_symbolic_pre_tild(gamma_gfp,system);
+/*				ISTSharingTree * a = ist_symbolic_pre_tild(gamma_gfp,system);
 				ist_checkup(a);
 
 				a = ist_downward_closure(a);
@@ -928,6 +930,8 @@ void ic4pn(system, initial_marking, bad)
 				&& ist_exact_subsumption_test(_tmp,a));
 				ist_checkup(a);
 				ist_checkup(_tmp);
+*/
+				_tmp = ist_symbolic_pre_tild(gamma_gfp,system);
 
 				// Now intersects w/ gamma_gfp
 				tmp=ist_intersection(gamma_gfp,_tmp);
@@ -954,6 +958,655 @@ void ic4pn(system, initial_marking, bad)
 				dispose_abstraction(myabs);
 				myabs = newabs;
 			} 			
+		}
+		// release sysabs 
+		dispose_transition_system(sysabs);
+		printf("end of iteration %d\n",++nb_iteration);
+	}
+}
+
+
+/* Assume initial_marking is a downward closed marking and the ist is minimal */
+boolean ist_abstract_post_star_bis(ISTSharingTree *initial_marking, void
+		(*approx)(ISTSharingTree *S, integer16* b), integer16 *bound,
+		transition_system_t *t, ISTSharingTree * bad) 
+{
+	ISTSharingTree *S, *tmp, *_tmp, *inter;
+	boolean result = false;
+
+	S = ist_copy(initial_marking);
+	if(approx)
+		approx(S,bound);
+	ist_normalize(S);
+	while (true) {
+		tmp = ist_abstract_post(S,approx,bound,t);
+		_tmp =  ist_remove_subsumed_paths(tmp,S);
+		ist_dispose(tmp);
+		if (ist_is_empty(_tmp)==false) {	
+			inter = ist_intersection(_tmp,bad);
+			if (ist_is_empty(inter) == false) {
+				result = true;
+				ist_dispose(inter);
+				break;
+			}	
+			ist_dispose(inter);
+			tmp = ist_remove_subsumed_paths(S,_tmp);
+			ist_dispose(S);
+			S = ist_union(tmp,_tmp);
+			ist_dispose(tmp);
+			ist_dispose(_tmp);
+		} else {
+			ist_dispose(_tmp);
+			break;
+		}
+	}
+	ist_dispose(S);
+	return result;	
+}
+
+boolean eec_fp_bis(system, abs, initial_marking, bad)
+	transition_system_t *system;
+	abstraction_t *abs; /* For the bounds on the places */
+	ISTSharingTree *initial_marking, *bad;
+{
+	boolean retval = false;
+	ISTSharingTree *inter, *downward_closed_initial_marking, *bpost, *tmp, *_tmp;
+	boolean finished;
+	size_t i;
+	
+	float comp_u,comp_s; 
+	long int tick_sec=0 ;
+	struct tms before, after;
+	
+	times(&before);	
+
+	
+	downward_closed_initial_marking = ist_downward_closure(initial_marking);
+	ist_normalize(downward_closed_initial_marking);
+	assert(ist_checkup(downward_closed_initial_marking)==true);
+
+	finished=false;
+	while (finished == false) {
+		printf("eec: ENLARGE begin\t");
+		fflush(NULL);
+		/* To OVERapproximate we use abstract_bound */
+		finished = ! ist_abstract_post_star_bis(downward_closed_initial_marking,abstract_bound,abs->bound,system,bad);
+		puts("end");
+		if (finished==true) 
+			/* finished==true -> the system is safe */
+			retval = true;
+		else {
+			printf("eec: EXPAND begin\t");
+			fflush(NULL);
+			/* use bpost = ist_abstract_post_star(downward_closed_initial_marking,bound_values,abs->bound,system)
+			 * if you want to compute the lfp. Instead we make something more
+			 * efficient by testing, at each iteration, for the emptiness of
+			 * intersection w/ bad. */
+
+			bpost = ist_copy(downward_closed_initial_marking);
+			bound_values(bpost,abs->bound);
+			ist_normalize(bpost);
+			inter=ist_intersection(bpost,bad);
+			finished= ist_is_empty(inter) == true ? false : true;
+			ist_dispose(inter);
+			while (finished==false) {
+				tmp = ist_abstract_post(bpost,bound_values,abs->bound,system);
+
+				printf("tmp\n");
+				ist_checkup(tmp);
+
+				_tmp =  ist_remove_subsumed_paths(tmp,bpost);
+
+				printf("_tmp\n");
+				ist_checkup(_tmp);
+
+				ist_dispose(tmp);
+				if (ist_is_empty(_tmp)==false) {		
+					inter=ist_intersection(_tmp,bad);
+					finished=ist_is_empty(inter) == true ? false : true;
+					ist_dispose(inter);
+					tmp = ist_remove_subsumed_paths(bpost,_tmp);
+					ist_dispose(bpost);
+					bpost = ist_union(tmp,_tmp);
+					ist_dispose(tmp);
+					ist_dispose(_tmp);
+				} else {
+					ist_dispose(_tmp);
+					break;
+				}
+			}
+			assert(ist_checkup(bpost)==true);
+			ist_dispose(bpost);
+			puts("end");
+			if (finished==true)
+				/* finished==true -> we hitted the bad states, the system is unsafe */
+				retval=false;
+			else {
+				/* One more iteration is needed because both bpost and
+				 * abs_post_star does not allow to conclude */
+				printf("eec: BOUNDS\t");
+				for(i=0;i<abs->nbV;printf("%d ",++abs->bound[i++]));
+				printf("\n");
+			}
+		}
+	}
+	ist_dispose(downward_closed_initial_marking);
+
+	times(&after);
+	tick_sec = sysconf (_SC_CLK_TCK) ;
+	comp_u = ((float)after.tms_utime - (float)before.tms_utime)/(float)tick_sec ;
+	comp_s = ((float)after.tms_stime - (float)before.tms_stime)/(float)tick_sec ;
+	printf("Total time of computation (user)   -> %6.3f sec.\n",comp_u);
+	printf("                          (system) -> %6.3f sec.\n",comp_s);	
+
+	if(retval == true)
+		printf("retval = true\n");
+	else
+		printf("retval = false\n");	
+	
+	return retval;
+}
+
+//we compute pre^*, and stop the least fixpoint as soon as possible
+void ic4pn_bis(system, initial_marking, bad) 
+	transition_system_t *system;
+	ISTSharingTree *bad, *initial_marking;
+{
+	abstraction_t *myabs, *newabs;
+	transition_system_t *sysabs;
+	ISTSharingTree *tmp,  *Z, *aZ, 
+				   *alpha_initial_marking, *bad_iterates, *inter;
+	size_t i,j,nb_iteration;
+	boolean conclusive, eec_conclusive;
+
+	//////////////////////////////////////////////////////////////////
+	// creation of an abstraction that corresponds to the system    //
+	// => to obtain stat.                                           //
+	// ///////////////////////////////////////////////////////////////
+	abstraction_t *systemabs;
+	systemabs=(abstraction_t *)xmalloc(sizeof(abstraction_t));
+	systemabs->nbConcreteV=system->limits.nbr_variables;
+	systemabs->nbV=system->limits.nbr_variables;
+	systemabs->bound=(integer16 *)xmalloc(systemabs->nbV*sizeof(integer16));
+	systemabs->A=(integer16 **)xmalloc(systemabs->nbV*sizeof(integer16));
+	for(i=0;i<systemabs->nbV;++i)
+		systemabs->A[i]=(integer16 *)xmalloc(system->limits.nbr_variables*sizeof(integer16));
+	for(i=0;i<systemabs->nbV;++i) {
+		systemabs->bound[i]=1;
+		for(j=0;j<system->limits.nbr_variables;++j)
+			systemabs->A[i][j]=1;
+	}
+	/* printf("EEC for the concrete system\n");
+	eec_conclusive=eec_fp(system,systemabs,initial_marking,bad,&lfp_eec);
+	if (eec_conclusive == true)
+		printf("Answer = true\n");
+	else
+		printf("Answer = false\n"); */
+	printf("IC4PN..\n");
+
+	bad_iterates = ist_copy(bad);
+
+	////////////////////////////////////////////////////////////////////
+	//end of eec for the concrete system                              //
+	////////////////////////////////////////////////////////////////////
+	
+	tmp=ist_intersection(initial_marking,bad);
+	conclusive = (ist_is_empty(tmp)==true ? false : true);
+	ist_dispose(tmp);
+
+	/* A_0 = refinement(Z_0) */
+	Z = ist_copy(bad);
+	ist_complement(Z,system->limits.nbr_variables);
+	myabs=new_abstraction(Z,system->limits.nbr_variables);
+
+	printf("first abstraction\n");
+	print_abstraction(myabs);
+
+	ist_dispose(Z);
+
+	nb_iteration=0;
+	while(conclusive == false) {
+		puts("begin of iteration");
+		// We build the abstract system 
+		sysabs=build_sys_using_abs(system,myabs);
+		puts("The current abstraction is :");
+		print_abstraction(myabs);
+		// Set aZ, neg_aZ, alpha_initial_marking 
+		aZ = ist_abstraction(bad_iterates,myabs);
+		assert(ist_checkup(aZ)==true);
+		alpha_initial_marking = ist_abstraction(initial_marking,myabs);
+		assert(ist_checkup(alpha_initial_marking)==true);
+
+		eec_conclusive=eec_fp_bis(sysabs,myabs,alpha_initial_marking, aZ);
+
+		ist_dispose(aZ);
+
+		if (eec_conclusive==true) {
+			// says "safe" because it is indeed safe 
+			puts("EEC concludes safe with the abstraction");
+			print_abstraction(myabs);
+			conclusive = true;
+		} else { 
+			printf("computation of a new iterates\n");
+			tmp = ist_pre(bad_iterates,system);
+			ISTSharingTree *tmp2 = ist_union(tmp,bad_iterates);
+			ist_dispose(tmp);
+			ist_dispose(bad_iterates);
+			bad_iterates = ist_minimal_form(tmp2);
+
+			printf("test for reachability\n");
+
+			inter = ist_intersection(initial_marking,bad_iterates);
+			if (ist_is_empty(inter) == false) {
+				conclusive = true;
+				printf("Reachable!\n");
+			} else {
+
+
+				newabs = new_abstraction_lub(bad_iterates,system->limits.nbr_variables,myabs);
+				dispose_abstraction(myabs);
+				myabs = newabs;
+
+				printf("myabs\n");
+				print_abstraction(myabs);
+	
+			}
+			ist_dispose(inter);
+		}
+		// release sysabs 
+		dispose_transition_system(sysabs);
+		printf("end of iteration %d\n",++nb_iteration);
+	}
+}
+
+//pre^*, we compute the least fixpoint and use its complement in the pre^* computation
+void ic4pn_tris(system, initial_marking, bad) 
+	transition_system_t *system;
+	ISTSharingTree *bad, *initial_marking;
+{
+	abstraction_t *myabs, *newabs;
+	transition_system_t *sysabs;
+	ISTSharingTree *tmp,  *Z, *aZ, 
+				   *alpha_initial_marking, *bad_iterates, *inter, *lfp, *neg_lfp;
+	size_t i,j,nb_iteration;
+	boolean conclusive, eec_conclusive;
+
+	//////////////////////////////////////////////////////////////////
+	// creation of an abstraction that corresponds to the system    //
+	// => to obtain stat.                                           //
+	// ///////////////////////////////////////////////////////////////
+	abstraction_t *systemabs;
+	systemabs=(abstraction_t *)xmalloc(sizeof(abstraction_t));
+	systemabs->nbConcreteV=system->limits.nbr_variables;
+	systemabs->nbV=system->limits.nbr_variables;
+	systemabs->bound=(integer16 *)xmalloc(systemabs->nbV*sizeof(integer16));
+	systemabs->A=(integer16 **)xmalloc(systemabs->nbV*sizeof(integer16));
+	for(i=0;i<systemabs->nbV;++i)
+		systemabs->A[i]=(integer16 *)xmalloc(system->limits.nbr_variables*sizeof(integer16));
+	for(i=0;i<systemabs->nbV;++i) {
+		systemabs->bound[i]=1;
+		for(j=0;j<system->limits.nbr_variables;++j)
+			systemabs->A[i][j]=1;
+	}
+	/* printf("EEC for the concrete system\n");
+	eec_conclusive=eec_fp(system,systemabs,initial_marking,bad,&lfp_eec);
+	if (eec_conclusive == true)
+		printf("Answer = true\n");
+	else
+		printf("Answer = false\n"); */
+	printf("IC4PN..\n");
+
+	bad_iterates = ist_copy(bad);
+
+	////////////////////////////////////////////////////////////////////
+	//end of eec for the concrete system                              //
+	////////////////////////////////////////////////////////////////////
+	
+	tmp=ist_intersection(initial_marking,bad);
+	conclusive = (ist_is_empty(tmp)==true ? false : true);
+	ist_dispose(tmp);
+
+	/* A_0 = refinement(Z_0) */
+	Z = ist_copy(bad);
+	ist_complement(Z,system->limits.nbr_variables);
+	myabs=new_abstraction(Z,system->limits.nbr_variables);
+
+	printf("first abstraction\n");
+	print_abstraction(myabs);
+
+	ist_dispose(Z);
+
+	nb_iteration=0;
+	while(conclusive == false) {
+		puts("begin of iteration");
+		// We build the abstract system 
+		sysabs=build_sys_using_abs(system,myabs);
+		puts("The current abstraction is :");
+		print_abstraction(myabs);
+		// Set aZ, neg_aZ, alpha_initial_marking 
+		aZ = ist_abstraction(bad_iterates,myabs);
+		assert(ist_checkup(aZ)==true);
+		alpha_initial_marking = ist_abstraction(initial_marking,myabs);
+		assert(ist_checkup(alpha_initial_marking)==true);
+
+		eec_conclusive=eec_fp(sysabs,myabs,alpha_initial_marking, aZ,&lfp);
+
+		ist_dispose(aZ);
+
+		if (eec_conclusive==true) {
+			// says "safe" because it is indeed safe 
+			puts("EEC concludes safe with the abstraction");
+			print_abstraction(myabs);
+			conclusive = true;
+		} else { 
+			printf("computation of a new iterates\n");
+			printf("%d %d\n",ist_nb_layers(lfp)-1,myabs->nbV);
+
+			ist_complement(lfp,myabs->nbV);
+			neg_lfp = ist_concretisation(lfp,myabs);
+			ist_dispose(lfp);
+			tmp = ist_union(neg_lfp,bad_iterates);
+			ist_dispose(neg_lfp);
+			ist_dispose(bad_iterates);
+			bad_iterates = ist_minimal_form(tmp);
+			tmp = ist_pre(bad_iterates,system);
+			ISTSharingTree *tmp2 = ist_union(tmp,bad_iterates);
+			ist_dispose(tmp);
+			ist_dispose(bad_iterates);
+			bad_iterates = ist_minimal_form(tmp2);
+
+			printf("test for reachability\n");
+
+			inter = ist_intersection(initial_marking,bad_iterates);
+			if (ist_is_empty(inter) == false) {
+				conclusive = true;
+				printf("Reachable!\n");
+			} else {
+
+
+//				abs_tmp=new_abstraction(Z,system->limits.nbr_variables);
+
+//				printf("abstraction new  method\n");
+//				print_abstraction(new_abstraction_lub(Z,system->limits.nbr_variables,myabs));
+				newabs = new_abstraction_lub(bad_iterates,system->limits.nbr_variables,myabs);
+
+//				puts("abs_tmp");
+//				print_abstraction(abs_tmp);
+//				newabs = glb(abs_tmp,myabs);
+				// release abs_tmp 
+//				dispose_abstraction(abs_tmp);
+				// release myabs
+				dispose_abstraction(myabs);
+				myabs = newabs;
+
+				printf("myabs\n");
+				print_abstraction(myabs);
+	
+			}
+			ist_dispose(inter);
+		}
+		// release sysabs 
+		dispose_transition_system(sysabs);
+		printf("end of iteration %d\n",++nb_iteration);
+	}
+}
+
+
+//pre^*, we stop least fixpoint as soon as possible, and we compute an abstract greatest fixpoint
+void ic4pn_quatre(system, initial_marking, bad) 
+	transition_system_t *system;
+	ISTSharingTree *bad, *initial_marking;
+{
+	abstraction_t *myabs, *newabs;
+	transition_system_t *sysabs;
+	ISTSharingTree *tmp,  *Z, *aZ, 
+				   *alpha_initial_marking, *bad_iterates_concrete, *inter, * frontier;
+	size_t i,j,nb_iteration;
+	boolean conclusive, eec_conclusive;
+	int * trans;
+
+	//////////////////////////////////////////////////////////////////
+	// creation of an abstraction that corresponds to the system    //
+	// => to obtain stat.                                           //
+	// ///////////////////////////////////////////////////////////////
+	abstraction_t *systemabs;
+	systemabs=(abstraction_t *)xmalloc(sizeof(abstraction_t));
+	systemabs->nbConcreteV=system->limits.nbr_variables;
+	systemabs->nbV=system->limits.nbr_variables;
+	systemabs->bound=(integer16 *)xmalloc(systemabs->nbV*sizeof(integer16));
+	systemabs->A=(integer16 **)xmalloc(systemabs->nbV*sizeof(integer16));
+	for(i=0;i<systemabs->nbV;++i)
+		systemabs->A[i]=(integer16 *)xmalloc(system->limits.nbr_variables*sizeof(integer16));
+	for(i=0;i<systemabs->nbV;++i) {
+		systemabs->bound[i]=1;
+		for(j=0;j<system->limits.nbr_variables;++j)
+			systemabs->A[i][j]=1;
+	}
+	/* printf("EEC for the concrete system\n");
+	eec_conclusive=eec_fp(system,systemabs,initial_marking,bad,&lfp_eec);
+	if (eec_conclusive == true)
+		printf("Answer = true\n");
+	else
+		printf("Answer = false\n"); */
+	printf("IC4PN..\n");
+
+	bad_iterates_concrete = ist_copy(bad);
+
+	////////////////////////////////////////////////////////////////////
+	//end of eec for the concrete system                              //
+	////////////////////////////////////////////////////////////////////
+	
+	tmp=ist_intersection(initial_marking,bad);
+	conclusive = (ist_is_empty(tmp)==true ? false : true);
+	ist_dispose(tmp);
+
+	/* A_0 = refinement(Z_0) */
+	Z = ist_copy(bad);
+	ist_complement(Z,system->limits.nbr_variables);
+	myabs=new_abstraction(Z,system->limits.nbr_variables);
+
+	printf("first abstraction\n");
+	print_abstraction(myabs);
+
+	ist_dispose(Z);
+
+	nb_iteration=0;
+	while(conclusive == false) {
+		puts("begin of iteration");
+		// We build the abstract system 
+		sysabs=build_sys_using_abs(system,myabs);
+		puts("The current abstraction is :");
+		print_abstraction(myabs);
+		// Set aZ, neg_aZ, alpha_initial_marking 
+		aZ = ist_abstraction(bad_iterates_concrete,myabs);
+		ist_dispose(bad_iterates_concrete);
+		assert(ist_checkup(aZ)==true);
+		alpha_initial_marking = ist_abstraction(initial_marking,myabs);
+		assert(ist_checkup(alpha_initial_marking)==true);
+
+		eec_conclusive=eec_fp_bis(sysabs,myabs,alpha_initial_marking, aZ);
+
+		if (eec_conclusive==true) {
+			// says "safe" because it is indeed safe 
+			puts("EEC concludes safe with the abstraction");
+			print_abstraction(myabs);
+			conclusive = true;
+			ist_dispose(aZ);
+		} else { 
+			printf("computation of a new iterates\n");
+			trans = list_of_exact_transitions(sysabs,myabs);
+			tmp = pre_under_star(aZ,trans,sysabs,alpha_initial_marking);	
+			ist_dispose(aZ);
+			ist_dispose(alpha_initial_marking);
+
+			if (tmp == NULL) {
+				printf("In the abstract\n");
+				conclusive = true;
+				printf("Reachable\n");
+			} else {
+				frontier = ist_concretisation(tmp,myabs);
+				ist_dispose(tmp);
+
+	
+				tmp = ist_pre(frontier,system);
+
+				ISTSharingTree *tmp2 = ist_union(tmp,frontier);
+				ist_dispose(tmp);
+				ist_dispose(frontier);
+				bad_iterates_concrete = ist_minimal_form(tmp2);
+
+				printf("test for reachability\n");
+
+				inter = ist_intersection(initial_marking,bad_iterates_concrete);
+				if (ist_is_empty(inter) == false) {
+					conclusive = true;
+					printf("Reachable!\n");
+				} else {
+					newabs = new_abstraction_lub(bad_iterates_concrete,system->limits.nbr_variables,myabs);
+					dispose_abstraction(myabs);
+					myabs = newabs;
+
+					printf("myabs\n");
+					print_abstraction(myabs);
+	
+				}
+				ist_dispose(inter);
+			}
+		}
+		// release sysabs 
+		dispose_transition_system(sysabs);
+		printf("end of iteration %d\n",++nb_iteration);
+	}
+}
+
+//pre^*, we use the complement of the least fixpoint in pre^*, and we compute an abstract greatest fixpoint
+void ic4pn_cinq(system, initial_marking, bad) 
+	transition_system_t *system;
+	ISTSharingTree *bad, *initial_marking;
+{
+	abstraction_t *myabs, *newabs;
+	transition_system_t *sysabs;
+	ISTSharingTree *tmp,  *Z, *aZ, 
+				   *alpha_initial_marking, *bad_iterates_concrete, *inter, * frontier, *lfp;
+	size_t i,j,nb_iteration;
+	boolean conclusive, eec_conclusive;
+	int * trans;
+
+	//////////////////////////////////////////////////////////////////
+	// creation of an abstraction that corresponds to the system    //
+	// => to obtain stat.                                           //
+	// ///////////////////////////////////////////////////////////////
+	abstraction_t *systemabs;
+	systemabs=(abstraction_t *)xmalloc(sizeof(abstraction_t));
+	systemabs->nbConcreteV=system->limits.nbr_variables;
+	systemabs->nbV=system->limits.nbr_variables;
+	systemabs->bound=(integer16 *)xmalloc(systemabs->nbV*sizeof(integer16));
+	systemabs->A=(integer16 **)xmalloc(systemabs->nbV*sizeof(integer16));
+	for(i=0;i<systemabs->nbV;++i)
+		systemabs->A[i]=(integer16 *)xmalloc(system->limits.nbr_variables*sizeof(integer16));
+	for(i=0;i<systemabs->nbV;++i) {
+		systemabs->bound[i]=1;
+		for(j=0;j<system->limits.nbr_variables;++j)
+			systemabs->A[i][j]=1;
+	}
+	/* printf("EEC for the concrete system\n");
+	eec_conclusive=eec_fp(system,systemabs,initial_marking,bad,&lfp_eec);
+	if (eec_conclusive == true)
+		printf("Answer = true\n");
+	else
+		printf("Answer = false\n"); */
+	printf("IC4PN..\n");
+
+	bad_iterates_concrete = ist_copy(bad);
+
+	////////////////////////////////////////////////////////////////////
+	//end of eec for the concrete system                              //
+	////////////////////////////////////////////////////////////////////
+	
+	tmp=ist_intersection(initial_marking,bad);
+	conclusive = (ist_is_empty(tmp)==true ? false : true);
+	ist_dispose(tmp);
+
+	/* A_0 = refinement(Z_0) */
+	Z = ist_copy(bad);
+	ist_complement(Z,system->limits.nbr_variables);
+	myabs=new_abstraction(Z,system->limits.nbr_variables);
+
+	printf("first abstraction\n");
+	print_abstraction(myabs);
+
+	ist_dispose(Z);
+
+	nb_iteration=0;
+	while(conclusive == false) {
+		puts("begin of iteration");
+		// We build the abstract system 
+		sysabs=build_sys_using_abs(system,myabs);
+		puts("The current abstraction is :");
+		print_abstraction(myabs);
+		// Set aZ, neg_aZ, alpha_initial_marking 
+		aZ = ist_abstraction(bad_iterates_concrete,myabs);
+		ist_dispose(bad_iterates_concrete);
+		assert(ist_checkup(aZ)==true);
+		alpha_initial_marking = ist_abstraction(initial_marking,myabs);
+		assert(ist_checkup(alpha_initial_marking)==true);
+
+		eec_conclusive=eec_fp(sysabs,myabs,alpha_initial_marking, aZ,&lfp);
+
+		if (eec_conclusive==true) {
+			// says "safe" because it is indeed safe 
+			puts("EEC concludes safe with the abstraction");
+			print_abstraction(myabs);
+			conclusive = true;
+			ist_dispose(aZ);
+			ist_dispose(lfp);
+		} else { 
+			printf("computation of a new iterates\n");
+
+			ist_complement(lfp,myabs->nbV);
+			tmp = ist_union(lfp,aZ);
+			ist_dispose(aZ);
+			ist_dispose(lfp);
+			aZ = ist_minimal_form(tmp);
+
+			trans = list_of_exact_transitions(sysabs,myabs);
+			tmp = pre_under_star(aZ,trans,sysabs,alpha_initial_marking);	
+			ist_dispose(aZ);
+			ist_dispose(alpha_initial_marking);
+
+			if (tmp == NULL) {
+				printf("In the abstract\n");
+				conclusive = true;
+				printf("Reachable\n");
+			} else {
+				frontier = ist_concretisation(tmp,myabs);
+				ist_dispose(tmp);
+
+	
+				tmp = ist_pre(frontier,system);
+
+				ISTSharingTree *tmp2 = ist_union(tmp,frontier);
+				ist_dispose(tmp);
+				ist_dispose(frontier);
+				bad_iterates_concrete = ist_minimal_form(tmp2);
+
+				printf("test for reachability\n");
+
+				inter = ist_intersection(initial_marking,bad_iterates_concrete);
+				if (ist_is_empty(inter) == false) {
+					conclusive = true;
+					printf("Reachable!\n");
+				} else {
+					newabs = new_abstraction_lub(bad_iterates_concrete,system->limits.nbr_variables,myabs);
+					dispose_abstraction(myabs);
+					myabs = newabs;
+
+					printf("myabs\n");
+					print_abstraction(myabs);
+	
+				}
+				ist_dispose(inter);
+			}
 		}
 		// release sysabs 
 		dispose_transition_system(sysabs);
@@ -998,8 +1651,12 @@ int main(int argc, char *argv[ ])
 	printf("System has %3d variables, %3d transitions and %2d actual invariants\n",system->limits.nbr_variables, system->limits.nbr_rules, system->limits.nbr_invariants);
 
 	//backward_reachability(system,initial_marking,unsafe_cone);
-	ic4pn(system,initial_marking,unsafe_cone);
+	//ic4pn(system,initial_marking,unsafe_cone);
 	//cegar(system,initial_marking,unsafe_cone);
+	//ic4pn_bis(system,initial_marking,unsafe_cone);
+	//ic4pn_tris(system,initial_marking,unsafe_cone);
+	//ic4pn_quatre(system,initial_marking,unsafe_cone);
+	ic4pn_cinq(system,initial_marking,unsafe_cone);
 
 	ist_dispose(initial_marking);
 	ist_dispose(unsafe_cone);

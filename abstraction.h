@@ -76,10 +76,11 @@ ISTSharingTree *adhoc_pretild(ISTSharingTree *S, transition_system_t *t);
 abstraction_t *naive_new_abstraction(ISTSharingTree *S,int nb_var);
 abstraction_t *new_abstraction(ISTSharingTree *S,int nb_var);
 abstraction_t *glb(abstraction_t *abs1, abstraction_t *abs2);
-
+abstraction_t *new_abstraction_lub(ISTSharingTree *S,int nb_var,abstraction_t * old_abs);
 
 ISTSharingTree * ist_symbolic_abstract_pre_tild(ISTSharingTree * Prec,transition_system_t * sys);
 ISTSharingTree * ist_symbolic_pre_tild(ISTSharingTree * Prec,transition_system_t * sys);
 
-
+int * list_of_exact_transitions(transition_system_t * sys,abstraction_t * abs);
+ISTSharingTree * pre_under_star(ISTSharingTree * S, int * transitions,transition_system_t * sys,ISTSharingTree *initial_marking);
 #endif

@@ -590,13 +590,7 @@ ISTSharingTree *ist_symbolic_pre_of_rule(Prec, transition)
 	boolean stop;
 
 	tau = ist_build_interval(0,INFINITY);
-
-	printf("STInt=ist_copy(Prec);\n");
-
 	STInt=ist_copy(Prec);
-
-	printf("fini la copie!\n");
-
 	if (ist_is_empty(STInt)== false) {
 		Layer=STInt->FirstLayer;
 		l=0;
@@ -640,10 +634,9 @@ ISTSharingTree *ist_symbolic_pre_of_rule(Prec, transition)
 	}
 	ist_dispose_info(tau);
 	if (!ist_is_empty(STInt)) 
-		ist_adjust_second_condition(STInt);
+		ist_normalize(STInt);
 	return STInt;
 }
-
 
 ISTSharingTree *ist_pre_of_rule_plus_transfer(Prec, transition)
 	ISTSharingTree *Prec;
@@ -1320,3 +1313,83 @@ ISTSharingTree *ist_symbolic_post(ISTSharingTree * S, transition_system_t *t) {
 	}
 	return result;
 }
+
+ISTSharingTree * ist_pre_of_all_transfer_for_concretisation(ISTSharingTree * S,transition_t * transition)
+{
+    ISTLayer* Layer;
+    ISTInterval *CurrentValue;
+    ISTNode *Node;
+    ISTSharingTree *Sol, *STInt1, *STInt2, *STInt3;
+    size_t i,j,TargetLayer, CurrentTarget;
+    boolean stop;
+    Sol = ist_copy(S);
+
+    for (i=0; i < transition->nbr_transfers; ++i){
+        ist_new(&STInt3);
+        Layer = Sol->FirstLayer;
+        TargetLayer = transition->transfers[i].target;
+
+        for (CurrentTarget = 0; CurrentTarget < TargetLayer; ++CurrentTarget)
+            Layer = Layer->Next;
+
+        Node = Layer->FirstNode;
+        while(Node != NULL){
+            CurrentValue = Node->Info;
+            STInt1 = ist_copy(Sol);
+            /*
+             * We remove from the target layer, all the nodes that do not have
+             * their value equal to target (i.e. CurrentValue).
+             */
+            RemoveNodeWithoutValue(STInt1,TargetLayer,CurrentValue);
+            /*
+             * We build the overapproximation of values that do not satisfy the
+             * transfer's equation.  We do it for all the layers that are
+             * involved in the current transfer.
+             */
+         ComputeOverApproximationForValue(STInt1,CurrentValue,&transition->transfers[i]);
+            /*
+             * Starting from that overapproximation, we intersect with the
+             * formula to keep only the models of the transfer formula.  So we
+             * have generated all the possible decomposition of the sum.
+             */
+            STInt2 = ist_intersection_with_formula_transfer(STInt1,&transition->transfers[i],CurrentValue);
+            ist_dispose(STInt1);
+            /* TODO: REMOVE THE NEXT 6 INSTRUCTIONS which makes sense for ic4pn */
+            /* we call ist_intersection_with_formula_transfer which
+             * considers the source places only in order the dismiss cases where tokens did
+             * not move from the target of tokens
+             */
+            for(j=0;transition->transfers[i].origin[j]==0;++j);
+            transition->transfers[i].target=j;
+            STInt1 = ist_intersection_with_formula_transfer(STInt2,&transition->transfers[i],CurrentValue);
+            transition->transfers[i].target=TargetLayer; // restore the target layer as it was
+            ist_dispose(STInt2);
+            STInt2 = STInt1;
+
+            STInt1 = ist_union(STInt3,STInt2);
+            ist_dispose(STInt3);
+            STInt3 = STInt1;
+            ist_dispose(STInt2);
+            /*
+             * It's not relevant to do the same computation on
+             * the same value so we go to the next different value
+             */
+            stop = false;
+            Node = Node->Next;
+            while (!stop){
+                if (Node == NULL)
+                    stop = true;
+                else {
+                    if (ist_not_equal_interval(Node->Info,CurrentValue))
+                        stop = true;
+                    else
+                        Node = Node->Next;
+                }
+            }
+        }
+        ist_dispose(Sol);
+        Sol = STInt3;
+    }
+    return Sol;
+} 
+

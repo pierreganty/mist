@@ -333,6 +333,23 @@ int *FindInfinitePlaces(ISTSharingTree *S,int nb_var)
 	return result;
 }
 
+int *FindUnconstrainedPlaces(ISTSharingTree *S,int nb_var) 
+{
+	size_t i;
+	ISTLayer * L;
+	int *result=(int *)malloc(nb_var*(sizeof(int)));
+
+	for(i=0,L = S->FirstLayer;i<nb_var;i++,L=L->Next) {
+		if (L->LastNode->Info->Left == 0)
+			result[i] = 1;
+		else
+			result[i] = 0;
+	}	
+	return result;
+}
+
+
+
 //build a more general partition that defines an abstraction that allow the represent S exactly
 //works for dc-sets only ?
 abstraction_t *new_abstraction(ISTSharingTree *S,int nb_var) 
@@ -381,9 +398,14 @@ abstraction_t *new_abstraction(ISTSharingTree *S,int nb_var)
 	}
 	free(infcomponent);
 
-	found = true;
-	while (found == true) {
-		found = false;
+//////////////////////////////////////////////////////////////////////////////////////
+///////////// est bien necessaire ce while????? //////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////
+
+
+//	found = true;
+//	while (found == true) {
+//		found = false;
 		//we check lines pairwise to find a pair to fusion
 		for(i = 0; (i < max_line);++i) 
 			for(j=i+1;(j<max_line);)
@@ -404,7 +426,7 @@ abstraction_t *new_abstraction(ISTSharingTree *S,int nb_var)
 						//  the result is put at line i. Hence, in that case we do not have
 						//  to increaese j
 				}
-	}
+//	}
 	result_abs = (abstraction_t *)xmalloc(sizeof(abstraction_t));
 	result_abs->nbConcreteV = max_row;
 	result_abs->nbV = max_line;
@@ -418,6 +440,297 @@ abstraction_t *new_abstraction(ISTSharingTree *S,int nb_var)
 	return result_abs;
 }
 
+
+boolean can_be_merged(int elem1,int elem2,abstraction_t * old_abs,int ** new_abs) {
+	boolean result = false;
+	int val1,val2;
+	int old_elem1,old_elem2;
+	
+	//find a place p1 in the element 1 of the new partition
+	for(val1=0;(val1< old_abs->nbConcreteV) && (new_abs[elem1][val1] == 0);val1++);
+	//find a place in the element 2 of the new partition
+	for(val2=0;(val2<old_abs->nbConcreteV) && (new_abs[elem2][val2] == 0);val2++);
+	//find the element that contains p1 in the old partition
+	for(old_elem1=0;(old_elem1< old_abs->nbV) && (old_abs->A[old_elem1][val1] == 0);old_elem1++);
+	//find the element that contains p2 in the old partition
+	for(old_elem2=0;(old_elem2< old_abs->nbV) && (old_abs->A[old_elem2][val2] == 0);old_elem2++);
+
+	if (old_elem1 == old_elem2)
+		result = true;
+	else
+		result = false;
+	return result;
+}
+
+boolean mergeable(int i,abstraction_t * old_abs,int ** new_abs) {
+	boolean result = false;
+	int k,l;
+
+	//find a place of elem i	
+	for(k =0;(k< old_abs->nbConcreteV) && (new_abs[i][k] == 0);k++);
+	//find the elem in old_abs that contains that place
+	for(l=0;(l < old_abs->nbV) && (old_abs->A[l][k] == 0);l++);
+	//test if it is possible to add places in elem i
+	for(k=0;(k < old_abs->nbConcreteV) && (result == false);k++)
+		if ((old_abs->A[l][k] == 1) && (new_abs[i][k] == 0))
+			result = true;
+	return result;
+}
+
+
+int ValueInUCComponent(ISTInterval **V,int *Component,int dim) 
+{
+
+	int i;
+	int result = 0;
+
+	for(i=0;i < dim;i++) {
+		if (Component[i] > 0)
+			result =  ist_add_value(result,V[i]->Left);	
+	}
+	return result;
+}
+
+
+//used to compute all the path such that the sum of values appearing in layers given by Component is equal to val
+ISTNode *PathWithValueInUCComponent(ISTSharingTree * S, ISTNode * N,ISTLayer *L,int NuLayer,int * Component,int val,int sum) 
+{
+	ISTNode *result;
+	ISTSon *s;
+	ISTNode *node;
+	TMemo1 * memo;
+
+
+	if (ist_equal_interval(N->Info,&IST_end_of_list)) {
+		if(val == sum)
+	        	result = ist_add_node(L, ist_create_node(&IST_end_of_list));
+		else
+			result = NULL;
+	}else {
+		L = L->Next;
+		if(L == NULL) {
+			L = ist_add_last_layer(S);
+		}
+		result = ist_create_node(ist_copy_interval(N->Info));
+
+
+		for(s = N->FirstSon;s != NULL;s = s->Next) {
+			if (Component[NuLayer] > 0) {
+				if (ist_less_or_equal_value(ist_add_value(N->Info->Left,sum),val)){
+					memo = ist_get_memoization1(s->Son,(ISTNode *) ist_add_value(N->Info->Left,sum));
+					if (memo != NULL)
+						node = memo->r;
+					else { 
+						node = PathWithValueInUCComponent(S,s->Son,L,NuLayer+1,Component,val,ist_add_value(N->Info->Left,sum));
+					}
+				} else 
+					node = NULL;
+			} else { 
+				memo = ist_get_memoization1(s->Son, (ISTNode *) sum);
+				if (memo != NULL)
+					node = memo->r;
+				else
+					node = PathWithValueInUCComponent(S,s->Son,L,NuLayer + 1,Component,val,sum);
+
+			}
+			if (node != NULL) {
+				ist_add_son(result,node);
+			}
+		}			
+	
+		L = L->Previous;
+		if (result->FirstSon == NULL) {
+			ist_dispose_node(result);
+			result = NULL;	
+		} else 
+			result = ist_add_node(L,result);		
+	}
+	ist_put_memoization1(N,(ISTNode *) sum,result);
+	return result;
+}
+
+
+
+ISTSharingTree *ist_PathsWithValueInUCComponent(ISTSharingTree * S,int * Component,int val) 
+{
+
+	ISTSon *son;
+	ISTSharingTree *result;
+	ISTLayer *L;
+	ISTNode *N;
+
+	ist_new_magic_number();
+    	ist_new_memo1_number();
+	ist_new(&result);
+	L = ist_add_last_layer(result);
+
+	for(son = S->Root->FirstSon; son != NULL;son = son->Next) {
+		N = PathWithValueInUCComponent(result,son->Son,L,0,Component,val,0);
+		if (N != NULL) 
+			ist_add_son(result->Root,N);
+	}
+	return result;
+}
+
+ISTInterval **GiveMeAPath(ISTSharingTree *S);
+long choose(int n, int m);    
+
+static boolean CanIRepresentExactlyTheUCSet(ISTSharingTree *S, int *Component) 
+{
+	
+	ISTSharingTree *Scopy, *T, *Q, *tmp;
+	ISTInterval **Path;
+	size_t dim, DimComp, i;
+	int val;
+	integer16 *complementComponent;
+	boolean ok = true;
+	
+	Scopy=ist_copy(S);
+	dim=ist_nb_layers(Scopy)-1;
+	//compute the size of the set of places given by Component
+	for(i=0,DimComp = 0; i< dim;i++) {
+		if (Component[i] > 0)
+			DimComp++;
+	}
+
+	while ((ist_is_empty(Scopy) == false) && ok) {
+		Path = GiveMeAPath(Scopy);
+		val = ValueInUCComponent(Path,Component,dim);
+
+
+		//we take all the paths of Scopy where the places corresponding to Componenent contains val tokens
+		T = ist_PathsWithValueInUCComponent(Scopy,Component,val);
+		//tmp contains the other paths that must be still managed 
+		tmp=ist_minus(Scopy,T);
+		ist_dispose(Scopy);
+		Scopy=tmp;
+		complementComponent = (integer16 *)malloc((dim + 1) * sizeof(integer16));
+		for(i=0;i<dim;i++) {
+			if(Component[i] > 0)
+				complementComponent[i] = 0;
+			else
+				complementComponent[i] = 1;
+		}
+		complementComponent[dim] = 1;
+		Q = ist_projection(T,complementComponent);
+		free(complementComponent);
+		ok = (ist_nb_elements(Q) * choose(val + DimComp-1,DimComp-1) == ist_nb_elements(T));
+		ist_dispose(Q);
+		ist_dispose(T);
+	}
+	ist_copy(Scopy);
+	return ok;	
+}
+
+
+
+//build a more general partition that defines an abstraction that allow the represent S exactly
+//works for dc-sets only ?
+abstraction_t *new_abstraction_lub(ISTSharingTree *S,int nb_var,abstraction_t * old_abs) 
+{
+	int **result;
+	abstraction_t * result_abs;
+	int **tmp;
+	int  max_line,max_row, i,j,l; 
+	boolean found;
+	abstraction_t abs;
+	int *Component;
+	int *infcomponent;
+
+	abs.nbConcreteV = nb_var;
+
+	/* debug */
+	int nb_test = 0;
+
+
+	printf("Construction of a new abstraction with new method\n");
+	
+	//allocation of memory + initialisation
+	result = (int **)xmalloc(nb_var * sizeof(int*));	
+	for(i=0;i < nb_var;++i) {
+		result[i] = (int *)xmalloc(nb_var * sizeof(int));
+		for(j = 0;j< nb_var;++j)
+			result[i][j] = 0;
+		result[i][i] = 1;
+	}
+	max_line = nb_var;
+	max_row = nb_var;
+
+	infcomponent = FindUnconstrainedPlaces(S,nb_var);
+	for(i=nb_var-1;(i >= 0) && (infcomponent[i] == 0);i--);
+	if (i >= 0) {
+		j=i-1;
+		while(j>=0) {
+			if (infcomponent[j] == 1) {
+				tmp = line_fusion(result,max_line,max_row,j,i);
+				for(l = 0;l< max_line;++l)
+                                	xfree(result[l]);
+                                xfree(result);
+                                result = tmp;
+				--max_line;
+				i=j;
+			}
+			j--;
+		}
+	}
+	free(infcomponent);
+
+	found = true;
+//	while (found == true) {
+//		found = false;
+		//we check lines pairwise to find a pair to fusion
+		for(i = 0; (i < max_line);++i)
+
+			if (mergeable(i,old_abs,result) == true) {
+ 
+				for(j=i+1;(j<max_line);)
+					if (can_be_merged(i,j,old_abs,result) == true) {
+	
+						nb_test++;
+/*						int a1;
+						printf("line i\n");
+						for(a1=0;a1<old_abs->nbConcreteV;a1++)
+							printf("%d ",result[i][a1]);
+						printf("\n line j\n");
+						for(a1=0;a1<old_abs->nbConcreteV;a1++)
+							printf("%d ",result[j][a1]);
+						printf("\n");
+
+*/
+						Component=new_element_in_partition(result,max_line,max_row,i,j);
+						if (CanIRepresentExactlyTheUCSet(S,Component) == true) {
+							//we can build a more general partition, the old one useless
+							//computation of the new partition
+							tmp = line_fusion(result,max_line,max_row,i,j);
+							for(l = 0;l< max_line;++l)
+								xfree(result[l]);
+							xfree(result);
+							result = tmp;
+							--max_line;
+							found = true;
+
+						} else j++; //when line i and line j are fusionned, 
+							//  the result is put at line i. Hence, in that case we do not have
+							//  to increaese j
+					} else j++;
+			}
+//	}
+	
+	printf("we found the abstraction\n");
+
+	result_abs = (abstraction_t *)xmalloc(sizeof(abstraction_t));
+	result_abs->nbConcreteV = max_row;
+	result_abs->nbV = max_line;
+	result_abs->A = result;
+	result_abs->bound = (int *)xmalloc(result_abs->nbV * sizeof(int));
+	for(i=0;i < result_abs->nbV;++i)
+		result_abs->bound[i] = 1;
+
+	printf("end construction of a new abstraction\n");
+	printf("number of tests = %d\n",nb_test);
+
+	return result_abs;
+}
 
 
 //Function that returns a path of the IST given as parameter
@@ -839,6 +1152,10 @@ ISTSharingTree *ist_abstraction(S,abs)
 	return result;
 }
 
+
+
+//works for upward-closed sets and finite sets
+//to test on downward-closed sets
 ISTSharingTree *ist_concretisation(ISTSharingTree *S, abstraction_t *abs)
 {
 	size_t i, j;
@@ -852,6 +1169,9 @@ ISTSharingTree *ist_concretisation(ISTSharingTree *S, abstraction_t *abs)
 	integer16* mask;
 
 	if (ist_is_empty(S) == false) {
+
+		ist_write(S);
+
 		/* initialisation */
 		for(i = 0; i < abs->nbConcreteV;i++)
 			in_abs[i] = false;
@@ -859,6 +1179,7 @@ ISTSharingTree *ist_concretisation(ISTSharingTree *S, abstraction_t *abs)
 		/* adding of concrete variables */
 		temp = ist_copy(S);
 		ist_add_variables(temp,abs->nbConcreteV);
+
 		/*
 		 * construction of the transfers that defines the mapping from concrete
 		 * variables to abstract variables
@@ -879,11 +1200,15 @@ ISTSharingTree *ist_concretisation(ISTSharingTree *S, abstraction_t *abs)
 			}
 		}
 		/* Computation of the concrete values */
-		temp2 = ist_pre_of_all_transfer(temp,t);
+		temp2 = ist_pre_of_all_transfer_for_concretisation(temp,t);
 		ist_dispose(temp);
+
+		ist_write(temp2);
+
 		for(i=0; i < abs->nbV;i++) 
 			xfree(t->transfers[i].origin);
-		xfree(t);	
+		xfree(t);
+
 		/* projection to only keep the concrete variables */
 		mask = (integer16 *) xmalloc(
 				(abs->nbConcreteV + abs->nbV+1) * sizeof(integer16));
@@ -1196,7 +1521,7 @@ ISTSharingTree
 	ist_normalize(S);
 	while (true) {
 		tmp = ist_abstract_post(S,approx,bound,t);
-		_tmp =  ist_remove_subsumed_paths(tmp,S);
+		_tmp = ist_remove_subsumed_paths(tmp,S);
 		ist_dispose(tmp);
 		if (ist_is_empty(_tmp)==false) {		
 			tmp = ist_remove_subsumed_paths(S,_tmp);
@@ -1347,12 +1672,27 @@ ISTSharingTree * ist_symbolic_pre_tild(Prec, sys)
 	ist_complement(result,ist_nb_layers(Prec)-1);
 
 	for(i=0;i< sys->limits.nbr_rules;i++) {
+
+		printf("rule %d\n",i);
+
 		tmp1 = ist_symbolic_pre_tild_of_rule(Prec,&sys->transition[i]);
+
+		ist_checkup(tmp1);
+
 		tmp2 = ist_intersection(tmp1,result);
 		ist_dispose(tmp1);
 		ist_dispose(result);
+
+		printf("intersection\n");
+		ist_checkup(tmp2);
+
 		result = ist_minimal_form(tmp2);
 		ist_dispose(tmp2);
+
+		printf("intermediate pre tild\n");
+		ist_checkup(result);
+
+
 	}	
 	return result;
 }
@@ -1390,3 +1730,113 @@ ISTSharingTree * ist_symbolic_abstract_pre_tild(Prec, sys)
 	return result;
 }
 
+boolean exact_transition(transition_t * t,int * singleton,int nbvar) {
+	boolean result = true;
+	int i;
+	
+	for(i=0;(i< nbvar) && (result == true);i++) {
+		if ((t->cmd_for_place[i].delta > 0) && (singleton[i] == 0))
+			result = false;	
+		if (((t->cmd_for_place[i].guard.Left != 0) ||(t->cmd_for_place[i].guard.Right != INFINITY)) 
+			&& (singleton[i] == 0))	
+			result = false;
+	}
+	return result;
+}
+
+int * list_of_exact_transitions(transition_system_t * sysabs,abstraction_t * abs) {
+
+	int * singleton;
+	int i,j;
+	int * result;
+	int count;
+	
+	singleton = (int *)malloc(sizeof(int) * sysabs->limits.nbr_variables);
+	for(i=0;i < sysabs->limits.nbr_variables;i++) {
+		for(j=0,count = 0;(j < abs->nbConcreteV) && (count < 2);j++) {
+			if (abs->A[i][j]== 1)
+				count++;
+		}
+		if (count == 1)
+			singleton[i] = 1;
+		else
+			singleton[i] = 0;
+ 
+	}
+	result = (int *)malloc(sizeof(int) * sysabs->limits.nbr_rules);
+
+	for(i=0;i < sysabs->limits.nbr_rules;i++) {
+		if(exact_transition(&sysabs->transition[i],singleton,sysabs->limits.nbr_variables) == true)
+			result[i] = 1;
+		else
+			result[i] = 0;
+	}
+	free(singleton);
+	return result;
+}
+
+ISTSharingTree * pre_under(ISTSharingTree * S,int *transitions,transition_system_t * sys) {
+	ISTSharingTree * result, * tmp, *tmp2;
+	int i;
+
+	ist_new(&result);
+	for(i=0;i< sys->limits.nbr_rules;i++) {
+		if (transitions[i] == 1) {
+			tmp = ist_symbolic_pre_of_rule(S,&sys->transition[i]);
+			tmp2 = ist_union(result,tmp);
+			ist_dispose(tmp);
+			ist_dispose(result);
+			result = ist_minimal_form(tmp2);
+			ist_dispose(tmp2);
+		}
+	}
+	return result;
+}
+
+ISTSharingTree * pre_under_star(ISTSharingTree * S, int * transitions,transition_system_t * sys, ISTSharingTree *initial_marking) {
+
+	ISTSharingTree * tmp, * result, *frontier;
+	int iter = 0;
+
+	printf("exact transitions\n");
+	int i;
+	for(i = 0;i < sys->limits.nbr_rules;i++)
+		printf("%d ",transitions[i]);
+	printf("\n");
+
+
+	frontier = ist_copy(S);
+	result = ist_copy(S);
+	while(true) {
+		iter++;
+		printf("iteration %d\n",iter);
+		printf("computed\n");
+		ist_checkup(result);
+		printf("frontier\n");
+		ist_checkup(frontier);
+
+		tmp = pre_under(frontier,transitions,sys);
+		ist_dispose(frontier);
+		frontier = ist_remove_subsumed_paths(tmp,result);
+		ist_dispose(tmp);
+		if (ist_is_empty(frontier)==false) {
+			ISTSharingTree * inter = ist_intersection(initial_marking,frontier);
+			if(ist_is_empty(inter) == false) {
+				ist_dispose(inter);
+				ist_dispose(result);
+				result = NULL;
+				break;
+			}
+
+	
+			tmp = ist_remove_subsumed_paths(result,frontier);
+			ist_dispose(result);
+			result = ist_union(frontier,tmp);
+			ist_dispose(tmp);
+		} else {
+			ist_dispose(frontier);
+			break;
+		}
+	}
+	return result;
+}
