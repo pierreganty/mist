@@ -1840,3 +1840,52 @@ ISTSharingTree * pre_under_star(ISTSharingTree * S, int * transitions,transition
 	}
 	return result;
 }
+
+/*
+ *  * compute the adhoc pre for one transition t
+ *   */
+ISTSharingTree *adhoc_pre_rule(ISTSharingTree *S, transition_t *t) 
+{
+	ISTSharingTree *result = NULL;
+	ISTSharingTree *temp;
+	size_t i;
+	boolean bottom;
+
+	if (ist_is_empty(S) == false) {
+		for (i=0, bottom = false; (i < ist_nb_layers(S)-1) && (bottom == false);i++) {
+			if ((t->cmd_for_place[i].guard.Left > 0) &&\
+					(t->cmd_for_place[i].places_abstracted > 1))
+				bottom = true;
+		}
+		if (bottom == false) {
+			temp = ist_copy(S);
+			result = ist_pre_of_rule_plus_transfer(temp,t);
+			ist_dispose(temp);
+		} else {
+			ist_new(&result);
+		}
+	} else 
+		ist_new(&result);
+	return result;	
+}
+
+
+/*
+ *  * compute the adhoc pre for all transitions
+ *   */
+ISTSharingTree *adhoc_pre(ISTSharingTree *S, transition_system_t *t)
+{
+	ISTSharingTree *result, *temp1, *temp2;
+	size_t i;
+
+	ist_new(&result);
+	for(i = 0; i < t->limits.nbr_rules; i++) {
+		temp1 = adhoc_pre_rule(S,&t->transition[i]);
+		temp2 = ist_union(result,temp1);
+		ist_dispose(result);
+		ist_dispose(temp1);
+		result= temp2;
+	}
+	return result;
+}
+

@@ -58,10 +58,10 @@ ISTSharingTree *ist_concretisation(ISTSharingTree *S, abstraction_t * abs);
  * the approximation functio in parameter. */
 
 ISTSharingTree 
-*ist_abstract_post_of_rules(ISTSharingTree *S, void (*approx)(ISTSharingTree
+*ist_abstract_post_of_rules(ISTSharingTree *S, void (*approx)(ISTSharingTree\
 			*S, integer16 *b), integer16 *bound, transition_t *t);
 ISTSharingTree 
-*ist_abstract_post(ISTSharingTree * S, void (*approx)(ISTSharingTree
+*ist_abstract_post(ISTSharingTree * S, void (*approx)(ISTSharingTree\
 			*S, integer16 *b), integer16 *bound, transition_system_t *t);
 ISTSharingTree 
 *ist_abstract_post_star(ISTSharingTree *initial_marking, void
@@ -71,10 +71,15 @@ ISTSharingTree
 /* the pretild works for transfers */
 ISTSharingTree *adhoc_pretild_rule(ISTSharingTree *S, transition_t *t);
 ISTSharingTree *adhoc_pretild(ISTSharingTree *S, transition_system_t *t);
+/* the pre works for transfers */
+ISTSharingTree *adhoc_pre(ISTSharingTree *S, transition_system_t *t);
+ISTSharingTree *adhoc_pre_rule(ISTSharingTree *S, transition_t *t); 
 
 /* operator for refinement */
 abstraction_t *naive_new_abstraction(ISTSharingTree *S,int nb_var);
-abstraction_t *new_abstraction(ISTSharingTree *S,int nb_var);
+abstraction_t *new_abstraction_dc_set(ISTSharingTree *S,int nb_var);
+abstraction_t *new_abstraction_finite_set(ISTSharingTree *S,int nb_var);
+
 abstraction_t *glb(abstraction_t *abs1, abstraction_t *abs2);
 abstraction_t *new_abstraction_lub(ISTSharingTree *S,int nb_var,abstraction_t * old_abs);
 
