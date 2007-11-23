@@ -999,9 +999,17 @@ ISTSharingTree *ist_projection(ISTSharingTree * S, integer16 *mask) {
 	ISTSon * s;
 	ISTHeadListNode * list;
 	ISTHeadListNode * list_tmp;
+	boolean noprojection;
+	int i;
 
 	ist_new(&STR);
-	if (ist_is_empty(S) == false) {
+	i=0;
+	noprojection=true;
+	while (i<ist_nb_layers(S)-1 && noprojection==true) {
+		noprojection=(mask[i]==0) ? true : false;
+		i++;
+	}
+	if (ist_is_empty(S) == false && noprojection==false) {
 		ist_new_magic_number();
 		ist_new_memo1_number();
 		ist_init_list_node(&list_tmp);
@@ -1022,9 +1030,9 @@ ISTSharingTree *ist_projection(ISTSharingTree * S, integer16 *mask) {
 		while (ist_is_empty_list_node(list_tmp) == false) {
 			ist_add_son(STR->Root,ist_remove_first_elem_list_node(list_tmp));
 		}
-		
 		xfree(list_tmp);
-		ist_normalize(STR);
+		if(!ist_is_empty(STR))
+			ist_normalize(STR);
 
 	}
 	return STR;

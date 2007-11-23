@@ -78,8 +78,9 @@ ISTSharingTree *pre_under_star(ISTSharingTree * S, int * transitions,transition_
 ISTSharingTree *adhoc_pretild_rule(ISTSharingTree *S, transition_t *t);
 ISTSharingTree *adhoc_pretild(ISTSharingTree *S, transition_system_t *t);
 /* the pre works for transfers */
-ISTSharingTree *adhoc_pre(ISTSharingTree *S, transition_system_t *t);
 ISTSharingTree *adhoc_pre_rule(ISTSharingTree *S, transition_t *t); 
+ISTSharingTree *adhoc_pre(ISTSharingTree *S, transition_system_t *t);
+ISTSharingTree *adhoc_pre_star_unless_hit_m0(ISTSharingTree *S, transition_system_t *t, ISTSharingTree *initial_marking);
 
 
 abstraction_t *glb(abstraction_t *abs1, abstraction_t *abs2);

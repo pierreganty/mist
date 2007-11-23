@@ -23,8 +23,8 @@
 #include"xmalloc.h"
 #include"checkup.h"
 #include<assert.h>
-transition_system_t *
-build_sys_using_abs(sys,abs)
+
+transition_system_t * build_sys_using_abs(sys,abs)
 	transition_system_t *sys;
 	abstraction_t *abs;
 {
@@ -133,7 +133,7 @@ abstraction_t *glb(abstraction_t *abs1, abstraction_t *abs2)
 	return retval;
 }
 
-int **partition_lines(int **matrix,int max_line, int max_row, int line1, int line2) 
+static int **partition_lines(int **matrix,int max_line, int max_row, int line1, int line2) 
 {
 	int nb_var_ij =0;
 	int i,j,l;
@@ -163,7 +163,7 @@ int **partition_lines(int **matrix,int max_line, int max_row, int line1, int lin
 	return result;
 }
 
-int **line_fusion(int **matrix,int max_line, int max_row, int line1, int line2) 
+static int **line_fusion(int **matrix,int max_line, int max_row, int line1, int line2) 
 {
 	int ** result;
 	int i,j;//l;
@@ -173,29 +173,11 @@ int **line_fusion(int **matrix,int max_line, int max_row, int line1, int line2)
 	for(i=0;i < max_line -1;++i) {
 		result[i] = (int *)xmalloc(max_row * sizeof(int));
 	}
-
-/*
-	//copy of all the lines that are not fusioned
-	for(i = 0, l=0; i < max_line;++i) {
-		if (i != line1 && i != line2) {
-			for(j=0;j< max_row;++j) {
-				result[l][j] = matrix[i][j];
-			}
-			++l;
-		}
-	}
-	//fusion of line1 and line2
-	for(i = 0; i < max_row;++i){
-		result[max_line -2][i] = matrix[line1][i] + matrix[line2][i];
-	}
-	return result;
-*/
 	// we assume that line1 < line2
 	// and copy all the line < line 1
 	for(i=0;i < line1;i++) {
-		for(j=0;j<max_row;j++) {
+		for(j=0;j<max_row;j++)
 			result[i][j] = matrix[i][j];
-		}
 	}
 	//we replace line1 by the fusion of line 1 and line 2
 	for(j=0;j<max_row;j++)
@@ -295,7 +277,7 @@ abstraction_t *naive_new_abstraction(ISTSharingTree *S,int nb_var)
 }
 
 
-int *new_element_in_partition(int **matrix,int max_line, int max_row, int line1, int line2) 
+static int *new_element_in_partition(int **matrix,int max_line, int max_row, int line1, int line2) 
 {
 	size_t i;
 	int *result;
@@ -309,39 +291,28 @@ int *new_element_in_partition(int **matrix,int max_line, int max_row, int line1,
 	return result;
 }
 
-int *FindInfinitePlaces(ISTSharingTree *S,int nb_var) 
+static int *FindInfinitePlaces(ISTSharingTree *S,int nb_var) 
 {
 	size_t i;
 	ISTLayer * L;
 	int *result=(int *)malloc(nb_var*(sizeof(int)));
-
-	for(i=0,L = S->FirstLayer;i<nb_var;i++,L=L->Next) {
-		if (L->FirstNode->Info->Right == INFINITY)
-			result[i] = 1;
-		else
-			result[i] = 0;
-	}	
+	for(i=0,L = S->FirstLayer;i<nb_var;i++,L=L->Next)
+		result[i]=(L->FirstNode->Info->Right == INFINITY) ? 1 : 0;
 	return result;
 }
 
-int *FindUnconstrainedPlaces(ISTSharingTree *S,int nb_var) 
+static int *FindUnconstrainedPlaces(ISTSharingTree *S,int nb_var) 
 {
 	size_t i;
 	ISTLayer * L;
 	int *result=(int *)malloc(nb_var*(sizeof(int)));
-
-	for(i=0,L = S->FirstLayer;i<nb_var;i++,L=L->Next) {
-		if (L->LastNode->Info->Left == 0)
-			result[i] = 1;
-		else
-			result[i] = 0;
-	}	
+	for(i=0,L = S->FirstLayer;i<nb_var;i++,L=L->Next)
+		result[i]=(L->LastNode->Info->Left == 0) ? 1 : 0;
 	return result;
 }
 
 
-boolean can_be_merged(int elem1,int elem2,abstraction_t * old_abs,int ** new_abs) {
-	boolean result = false;
+static boolean can_be_merged(int elem1, int elem2, abstraction_t *old_abs, int **new_abs) {
 	int val1,val2;
 	int old_elem1,old_elem2;
 	
@@ -354,15 +325,12 @@ boolean can_be_merged(int elem1,int elem2,abstraction_t * old_abs,int ** new_abs
 	//find the element that contains p2 in the old partition
 	for(old_elem2=0;(old_elem2< old_abs->nbV) && (old_abs->A[old_elem2][val2] == 0);old_elem2++);
 
-	if (old_elem1 == old_elem2)
-		result = true;
-	else
-		result = false;
-	return result;
+	return (old_elem1 == old_elem2);
 }
 
-boolean mergeable(int i,abstraction_t * old_abs,int ** new_abs) {
-	boolean result = false;
+static boolean mergeable(int i,abstraction_t *old_abs,int **new_abs) 
+{
+	boolean result;
 	int k,l;
 
 	//find a place of elem i	
@@ -370,7 +338,7 @@ boolean mergeable(int i,abstraction_t * old_abs,int ** new_abs) {
 	//find the elem in old_abs that contains that place
 	for(l=0;(l < old_abs->nbV) && (old_abs->A[l][k] == 0);l++);
 	//test if it is possible to add places in elem i
-	for(k=0;(k < old_abs->nbConcreteV) && (result == false);k++)
+	for(k=0,result=false;(k < old_abs->nbConcreteV) && (result == false);k++)
 		if ((old_abs->A[l][k] == 1) && (new_abs[i][k] == 0))
 			result = true;
 	return result;
@@ -388,11 +356,9 @@ ISTInterval **GiveMeAPath(ISTSharingTree *S)
 	int i;
 
 	for(L = S->FirstLayer;L != S->LastLayer;nbvar++,L = L->Next);
-
 	result = (ISTInterval **)malloc(nbvar * sizeof(ISTInterval *));
-	for(i=0,N = S->FirstLayer->FirstNode;N->FirstSon != NULL;N = N->FirstSon->Son,i++){
+	for(i=0,N = S->FirstLayer->FirstNode;N->FirstSon != NULL;N = N->FirstSon->Son,i++)
 		result[i] = ist_copy_interval(N->Info);		
-	}
 	return result;
 }
 
@@ -780,7 +746,7 @@ abstraction_t *new_abstraction_finite_set(ISTSharingTree *S,int nb_var)
 
 //build a more general partition that defines an abstraction that allow the represent S exactly
 //precond: S is a uc-set!
-abstraction_t *new_abstraction_lub(ISTSharingTree *S,int nb_var,abstraction_t * old_abs) 
+abstraction_t *new_abstraction_lub(ISTSharingTree *S, int nb_var, abstraction_t *old_abs) 
 {
 	ISTSharingTree *tmp;
 	ISTLayer *layer;
@@ -798,8 +764,7 @@ abstraction_t *new_abstraction_lub(ISTSharingTree *S,int nb_var,abstraction_t * 
 	for(i=0;i < nb_var;++i) {
 		result[i] = (int *)xmalloc(nb_var * sizeof(int));
 		for(j = 0;j< nb_var;++j)
-			result[i][j] = 0;
-		result[i][i] = 1;
+			result[i][j] = (i==j) ? 1 : 0;
 	}
 	max_line = nb_var;
 	max_row = nb_var;
@@ -825,9 +790,7 @@ abstraction_t *new_abstraction_lub(ISTSharingTree *S,int nb_var,abstraction_t * 
 
 	found = true;
 	for(i = 0; (i < max_line);++i)
-
 		if (mergeable(i,old_abs,result) == true) {
-
 			for(j=i+1;(j<max_line);)
 				if (can_be_merged(i,j,old_abs,result) == true) {
 					Component=new_element_in_partition(result,max_line,max_row,i,j);
@@ -842,6 +805,7 @@ abstraction_t *new_abstraction_lub(ISTSharingTree *S,int nb_var,abstraction_t * 
 						}
 						layer=layer->Next;
 					}
+					/* ist_normalize is not necessary */
 					ist_normalize(tmp);
 					if (CanIRepresentExactlyTheFiniteSet(tmp,Component) == true) {
 						//we can build a more general partition, the old one useless
@@ -1463,3 +1427,42 @@ ISTSharingTree *adhoc_pre(ISTSharingTree *S, transition_system_t *t)
 	return result;
 }
 
+ISTSharingTree *adhoc_pre_star_unless_hit_m0(ISTSharingTree *S, transition_system_t *sys, ISTSharingTree *initial_marking) 
+{
+	ISTSharingTree * tmp, * result, *frontier, *inter;
+	int iter;
+
+	iter=0;
+	frontier = ist_copy(S);
+	result = ist_copy(S);
+	while(true) {
+		iter++;
+		printf("iteration %d\n",iter);
+		printf("computed\n");
+		ist_checkup(result);
+		printf("frontier\n");
+		ist_checkup(frontier);
+
+		tmp = adhoc_pre(frontier,sys);
+		ist_dispose(frontier);
+		frontier = ist_remove_subsumed_paths(tmp,result);
+		ist_dispose(tmp);
+		if (ist_is_empty(frontier)==false) {
+			inter = ist_intersection(initial_marking,frontier);
+			if(ist_is_empty(inter) == false) {
+				ist_dispose(inter);
+				ist_dispose(result);
+				result = NULL;
+				break;
+			}
+			tmp = ist_remove_subsumed_paths(result,frontier);
+			ist_dispose(result);
+			result = ist_union(frontier,tmp);
+			ist_dispose(tmp);
+		} else {
+			ist_dispose(frontier);
+			break;
+		}
+	}
+	return result;
+}
