@@ -1124,7 +1124,7 @@ ISTSharingTree * Prune_a_uc_ist_with_a_dc_ist(ISTSharingTree * uc,ISTSharingTree
 	ISTSharingTree *result;
 
 	tmp = ist_compute__paths_UCS_included_into_DCS(uc,dc);
-	result = ist_minus(uc,tmp);
+	result = ist_intersection(uc,tmp);
 	ist_dispose(tmp);
 	return result;
 }

@@ -332,15 +332,42 @@ static boolean mergeable(int i,abstraction_t *old_abs,int **new_abs)
 {
 	boolean result;
 	int k,l;
+	
+	printf("mergeable\n");
+
+
+	printf("new_abs[i]\n");
+	for(k=0;k <old_abs->nbConcreteV;k++)
+		printf("%d ",new_abs[i][k]);
+	printf("\n");
 
 	//find a place of elem i	
 	for(k =0;(k< old_abs->nbConcreteV) && (new_abs[i][k] == 0);k++);
+
+	printf("k=%d\n",k);
+	int a,b;
+	for(a=0;a< old_abs->nbV;a++) {
+		for(b=0;b<old_abs->nbConcreteV;b++)
+			printf("%d ",old_abs->A[a][b]);
+		printf("\n");
+	}
+
+
 	//find the elem in old_abs that contains that place
 	for(l=0;(l < old_abs->nbV) && (old_abs->A[l][k] == 0);l++);
+
+	printf("old_abs->A[l]");
+	for(k=0;k <old_abs->nbConcreteV;k++)
+		printf("%d ",old_abs->A[l][k]);
+	printf("\n");
+
 	//test if it is possible to add places in elem i
 	for(k=0,result=false;(k < old_abs->nbConcreteV) && (result == false);k++)
-		if ((old_abs->A[l][k] == 1) && (new_abs[i][k] == 0))
+		if ((old_abs->A[l][k] == 1) && (new_abs[i][k] == 0)) 
 			result = true;
+
+	printf("end mergeable\n");
+
 	return result;
 }
 
