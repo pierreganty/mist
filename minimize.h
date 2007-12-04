@@ -52,5 +52,5 @@ boolean ist_exact_subsumption_test(ISTSharingTree *T,ISTSharingTree *S);
 ISTSharingTree * ist_merge_intervals(ISTSharingTree *ST);
 
 /* particular methods */
-ISTSharingTree * Prune_a_uc_ist_with_a_dc_ist(ISTSharingTree * uc,ISTSharingTree * dc);
+ISTSharingTree * Prune_a_uc_ist_with_a_dc_ist(ISTSharingTree * UCS,ISTSharingTree * DCS);
 #endif

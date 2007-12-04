@@ -1075,9 +1075,7 @@ static ISTNode *compute__paths_UCS_included_into_DCS(node1, node2, LINK)
 	return rnode;
 }
 
-
-ISTSharingTree *ist_compute__paths_UCS_included_into_DCS(UCS, DCS)
-	ISTSharingTree *UCS, *DCS;
+ISTSharingTree * Prune_a_uc_ist_with_a_dc_ist(ISTSharingTree * UCS,ISTSharingTree * DCS)
 {
 	struct LOC_ist_method  V;
 	ISTSon *s1, *s2;
@@ -1118,13 +1116,3 @@ ISTSharingTree *ist_compute__paths_UCS_included_into_DCS(UCS, DCS)
 	return V.STR;
 }
 
-
-ISTSharingTree * Prune_a_uc_ist_with_a_dc_ist(ISTSharingTree * uc,ISTSharingTree * dc) {
-	ISTSharingTree * tmp;
-	ISTSharingTree *result;
-
-	tmp = ist_compute__paths_UCS_included_into_DCS(uc,dc);
-	result = ist_intersection(uc,tmp);
-	ist_dispose(tmp);
-	return result;
-}
