@@ -1029,3 +1029,102 @@ ISTSharingTree * ist_merge_intervals(ISTSharingTree *ST) {
 
 	return Sol;
 }
+
+
+static ISTNode *compute__paths_UCS_included_into_DCS(node1, node2, LINK)
+	ISTNode *node1, *node2;
+	struct LOC_ist_method  *LINK;
+{
+	ISTSon *s1, *s2;
+	ISTNode *rnode, *rchild;
+
+	if (ist_equal_interval(node2->Info,&IST_end_of_list))
+		rnode = ist_add_node(LINK->rlayer, ist_create_node(&IST_end_of_list));
+	else {
+		rnode = ist_create_node(node1->Info);
+		LINK->rlayer = LINK->rlayer->Next;
+		if (LINK->rlayer == NULL)
+			LINK->rlayer = ist_add_last_layer(LINK->STR);
+		s1 = node1->FirstSon;
+		while (s1 != NULL) {
+			s2 = node2->FirstSon;
+			while (s2 != NULL) {
+				if (ist_less_or_equal_value(s1->Son->Info->Left,s2->Son->Info->Right)) {
+					LINK->memo = ist_get_memoization1(s1->Son, s2->Son);
+					if (LINK->memo != NULL)
+						rchild = LINK->memo->r;
+					else
+						rchild = compute__paths_UCS_included_into_DCS(s1->Son, s2->Son, LINK);
+					if (rchild != NULL)
+						ist_add_son(rnode, rchild);
+				}
+				s2 = s2->Next; 
+			}
+			s1 = s1->Next;
+		}
+		LINK->rlayer = LINK->rlayer->Previous;
+		if (rnode->FirstSon != NULL)
+			rnode = ist_add_node(LINK->rlayer, rnode);
+		else {
+			ist_dispose_node(rnode);
+			rnode = NULL;
+		}
+
+	}
+	ist_put_memoization1(node1, node2, rnode);
+	return rnode;
+}
+
+
+ISTSharingTree *ist_compute__paths_UCS_included_into_DCS(UCS, DCS)
+	ISTSharingTree *UCS, *DCS;
+{
+	struct LOC_ist_method  V;
+	ISTSon *s1, *s2;
+	ISTNode *rchild;
+	boolean stop;
+	ISTSharingTree *WITH;
+
+	ist_new(&V.STR);
+	ist_new_memo1_number();
+	V.rlayer = ist_add_last_layer(V.STR);
+	s1 = UCS->Root->FirstSon;
+	while (s1 != NULL) {
+		s2 = DCS->Root->FirstSon;
+		while (s2 != NULL) {
+			if (ist_less_or_equal_value(s1->Son->Info->Left,s2->Son->Info->Right)) {
+				rchild = compute__paths_UCS_included_into_DCS(s1->Son, s2->Son, &V);
+				if (rchild != NULL)
+					ist_add_son(V.STR->Root, rchild);
+			}
+			s2 = s2->Next;
+		}
+		s1 = s1->Next;
+	}
+	WITH = V.STR;
+	stop = false;
+	while (!stop) {
+		if (WITH->LastLayer == NULL) {
+			stop = true;
+			break;
+		}
+		if (WITH->LastLayer->FirstNode != NULL)
+			stop = true;
+		else
+			ist_remove_last_layer(V.STR);
+	}
+	if (ist_is_empty(V.STR) == false)
+		ist_normalize(V.STR);
+	return V.STR;
+}
+
+
+ISTSharingTree * Prune_a_uc_ist_with_a_dc_ist(ISTSharingTree * uc,ISTSharingTree * dc) {
+	ISTSharingTree * tmp;
+	ISTSharingTree *result;
+
+	tmp = ist_compute__paths_UCS_included_into_DCS(uc,dc);
+	result = ist_minus(uc,tmp);
+	ist_dispose(tmp);
+	return result;
+}
