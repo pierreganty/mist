@@ -1069,13 +1069,12 @@ static ISTNode *compute__paths_UCS_included_into_DCS(node1, node2, LINK)
 			ist_dispose_node(rnode);
 			rnode = NULL;
 		}
-
 	}
 	ist_put_memoization1(node1, node2, rnode);
 	return rnode;
 }
 
-ISTSharingTree * Prune_a_uc_ist_with_a_dc_ist(ISTSharingTree * UCS,ISTSharingTree * DCS)
+ISTSharingTree *ist_prune_a_uc_ist_with_a_dc_ist(ISTSharingTree *UCS, ISTSharingTree *DCS)
 {
 	struct LOC_ist_method  V;
 	ISTSon *s1, *s2;
@@ -1115,4 +1114,3 @@ ISTSharingTree * Prune_a_uc_ist_with_a_dc_ist(ISTSharingTree * UCS,ISTSharingTre
 		ist_normalize(V.STR);
 	return V.STR;
 }
-

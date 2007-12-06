@@ -1,4 +1,4 @@
-// vim:sw=4:ts=4:cindent
+// vim:sw=4 ts=4:cindent
 /*
    This file is part of mist2.
 
@@ -592,7 +592,7 @@ void cegar(system, initial_marking, bad)
 			countex=(int *)xmalloc(lg_cex*sizeof(int));
 
 			puts("seed of the abstract cex (backward analysis)");
-			ist_write(seed);
+			//ist_write(seed);
 			_tmp=seed;
 
 			for(j=0;j<lg_cex;j++) {
@@ -626,7 +626,7 @@ void cegar(system, initial_marking, bad)
 						}
 						ist_normalize(inter);
 						countex[j]=i;
-						ist_write(inter);
+						//ist_write(inter);
 						ist_dispose(_tmp);
 						_tmp=inter;
 						out=true;
@@ -748,7 +748,7 @@ void ic4pn(system, initial_marking, bad)
 			topabs->A[i][j]=1;
 	}
 	/* printf("EEC for the concrete system\n");
-	eec_conclusive=eec_fp(system,bottomabs,initial_marking,bad,&lfp_eec);
+	eec_conclusive=eec_fp(system, bottomabs, initial_marking, bad, &lfp);
 	if (eec_conclusive == true)
 		printf("Answer = true\n");
 	else
@@ -781,27 +781,15 @@ void ic4pn(system, initial_marking, bad)
 		alpha_initial_marking = ist_abstraction(initial_marking,myabs);
 		assert(ist_checkup(alpha_initial_marking)==true);
 
-		eec_conclusive=eec_fp(sysabs,myabs,alpha_initial_marking, a_neg_Z,&lfp);
+		eec_conclusive=eec_fp(sysabs, myabs, alpha_initial_marking, a_neg_Z, &lfp);
 
 		if (eec_conclusive==true) {
 			// says "safe" because it is indeed safe 
 			puts("EEC concludes safe with the abstraction");
 			print_abstraction(myabs);
 			conclusive = true;
-			ist_dispose(a_neg_Z);
-			ist_dispose(lfp);
-		} else { 
-			puts("computation of a new iterates");
-
-			ist_complement(lfp,myabs->nbV);
-			tmp = ist_union(lfp,a_neg_Z);
-			ist_dispose(a_neg_Z);
-			ist_dispose(lfp);
-			a_neg_Z = ist_minimal_form(tmp);
-
-			tmp = adhoc_pre_star_unless_hit_m0(a_neg_Z,sysabs,alpha_initial_marking);	
-			ist_dispose(a_neg_Z);
-			ist_dispose(alpha_initial_marking);
+		} else {
+			tmp = adhoc_pre_star_pruned_unless_hit_m0(a_neg_Z, lfp, sysabs, alpha_initial_marking);	
 
 			if (tmp == NULL) {
 				conclusive = true;
@@ -811,6 +799,7 @@ void ic4pn(system, initial_marking, bad)
 				ist_dispose(tmp);
 	
 				tmp = ist_pre(frontier,system);
+				/* Should we prune it ist_concretisation(lfp,myabs) ? */
 
 				_tmp = ist_union(tmp,frontier);
 				ist_dispose(tmp);
@@ -833,10 +822,16 @@ void ic4pn(system, initial_marking, bad)
 				ist_dispose(inter);
 			}
 		}
+		// release the parameters of eec
+		ist_dispose(alpha_initial_marking);
+		ist_dispose(a_neg_Z);
+		ist_dispose(lfp);
 		// release sysabs 
 		dispose_transition_system(sysabs);
 		printf("end of iteration %d\n",++nb_iteration);
 	}
+	// release abstraction
+	dispose_abstraction(myabs);
 }
 
 int main(int argc, char *argv[ ])

@@ -38,7 +38,7 @@
 #ifdef TRANSFERT
 
 
-ISTNode *PostOfTransfer(ISTNode *node,ISTSharingTree *STR, ISTLayer * rlayer, ISTInterval val,int no_layer,integer16 *origin,integer16 target)
+static ISTNode *PostOfTransfer(ISTNode *node,ISTSharingTree *STR, ISTLayer * rlayer, ISTInterval val,int no_layer,integer16 *origin,integer16 target)
 {
 	ISTSon *s;
 	ISTNode *rchild;

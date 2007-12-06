@@ -54,11 +54,13 @@ ISTSharingTree *ist_concretisation(ISTSharingTree *S, abstraction_t * abs);
 abstraction_t *naive_new_abstraction(ISTSharingTree *S,int nb_var);
 abstraction_t *new_abstraction_dc_set(ISTSharingTree *S,int nb_var);
 abstraction_t *new_abstraction_finite_set(ISTSharingTree *S,int nb_var);
+abstraction_t *new_abstraction_lub(ISTSharingTree *S, int nb_var, abstraction_t *old_abs);
+abstraction_t *glb(abstraction_t *abs1, abstraction_t *abs2);
 
-/* abstract operators */
+
+/* abstract in the sens {0,..,k} U {omega} abstraction */
 /* the abstract post is only for petri nets. Moreover you have to pass
  * the approximation functio in parameter. */
-
 ISTSharingTree 
 *ist_abstract_post_of_rules(ISTSharingTree *S, void (*approx)(ISTSharingTree\
 			*S, integer16 *b), integer16 *bound, transition_t *t);
@@ -70,21 +72,15 @@ ISTSharingTree
 		(*approx)(ISTSharingTree *S, integer16* b), integer16 *bound,
 		transition_system_t *t);
 
-ISTSharingTree *ist_symbolic_abstract_pre_tild(ISTSharingTree * Prec,transition_system_t * sys);
-ISTSharingTree *ist_symbolic_pre_tild(ISTSharingTree * Prec,transition_system_t * sys);
-ISTSharingTree *pre_under_star(ISTSharingTree * S, int * transitions,transition_system_t * sys,ISTSharingTree *initial_marking);
-
+/* adhoc in the sense that only a subset is actulally considered, see atpn
+ * paper for details */
 /* the pretild works for transfers */
 ISTSharingTree *adhoc_pretild_rule(ISTSharingTree *S, transition_t *t);
 ISTSharingTree *adhoc_pretild(ISTSharingTree *S, transition_system_t *t);
 /* the pre works for transfers */
 ISTSharingTree *adhoc_pre_rule(ISTSharingTree *S, transition_t *t); 
 ISTSharingTree *adhoc_pre(ISTSharingTree *S, transition_system_t *t);
-ISTSharingTree *adhoc_pre_star_unless_hit_m0(ISTSharingTree *S, transition_system_t *t, ISTSharingTree *initial_marking);
-
-
-abstraction_t *glb(abstraction_t *abs1, abstraction_t *abs2);
-abstraction_t *new_abstraction_lub(ISTSharingTree *S, int nb_var, abstraction_t *old_abs);
-
-int *list_of_exact_transitions(transition_system_t *sys,abstraction_t *abs);
+ISTSharingTree *adhoc_pre_star_pruned_unless_hit_m0(ISTSharingTree *S,\
+		ISTSharingTree *cutter, transition_system_t *sys, ISTSharingTree\
+		*initial_marking);
 #endif

@@ -3,20 +3,35 @@ Ajouter PNML comme language d'input.
 Verifier que les transfers passent bien.
 Verifier si la place target doit aussi apparaitre comme source.
 Regardez ce qui se passe avec le cas X' = Y  + 1
-et peut etre essayer de le d�tecter.
+et peut etre essayer de le détecter.
 
 Cherchez les fonctions qui sont syntaxiquement orpheline et nettoyer le code.
-Remplacer la list_ist par une structure de liste g�n�rique.
+Remplacer la list_ist par une structure de liste générique.
 Supprimer le champ NbElements ?
 Fix a policy on emptines test, normalize and so on: each
 function must deal with empty ist and return a normalized ist.
 Redundant function GiveMeAPath ist_firstpath2array
 
-Cr�er une petite page web avec les donn�es essentielles.
+
+Future Works pour ic4pn
+- Sujet de mémoire: Implémenter eec avec TransSharingTree, Implémenter
+la stratégie d'itération (saturation) de Ciardo
+
+Pour les TransSharingTree, utiliser soit:
+- un union {} pour le champ info des arbres 
+- un arbre avec 2 x plus de layers 
+- bg=guard et bd=delta (l'avantage de cette denière solution est que
+  ist_abstraction fonctionne PEUT-ÊTRE directement sur le IST qui décrit le
+réseau de Petri, cependant la sémantique en terme d'intervalles n'a plus aucun
+sens) peuvent être vide chercher une solution un peu plus propre. 
+(Seul ist_checkup vérifie qu'on ait bien à faire à des intervalles
+dont la borne gauche est positive)
+
+Créer une petite page web avec les données essentielles.
 	Ce que fait l'outil.
 	Contact.
 	Code.
 	Testsuite. (un gros tar.gz)
-	ChangeLog des mises � jour. (aussi bien pour la testsuite
+	ChangeLog des mises à jour. (aussi bien pour la testsuite
 	que pour le code source)
 	Liens utiles (ma page web, celle de Laurent).

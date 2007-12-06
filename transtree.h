@@ -118,8 +118,6 @@ void TransSTDispose(TransSharingTree *ST) ;
 TransNode *Trans_Add(TransNode *node, boolean inlayer, boolean mustchange, struct LOC_TransSTAdd *LINK) ;
 boolean TransSTAdd(TransSharingTree *ST_, Transition_t *Info_, integer16 LInfo_) ;
 
-
-
 void TransSTWriteElem(Transition_t **path,long l);
 void Trans_st_Write(TransNode *N,Transition_t **path,long i,long l);
 void TransSTWrite(TransSharingTree *S,long l);
