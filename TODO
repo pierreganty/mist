@@ -14,18 +14,7 @@ Redundant function GiveMeAPath ist_firstpath2array
 
 
 Future Works pour ic4pn
-- Sujet de mémoire: Implémenter eec avec TransSharingTree, Implémenter
-la stratégie d'itération (saturation) de Ciardo
-
-Pour les TransSharingTree, utiliser soit:
-- un union {} pour le champ info des arbres 
-- un arbre avec 2 x plus de layers 
-- bg=guard et bd=delta (l'avantage de cette denière solution est que
-  ist_abstraction fonctionne PEUT-ÊTRE directement sur le IST qui décrit le
-réseau de Petri, cependant la sémantique en terme d'intervalles n'a plus aucun
-sens) peuvent être vide chercher une solution un peu plus propre. 
-(Seul ist_checkup vérifie qu'on ait bien à faire à des intervalles
-dont la borne gauche est positive)
+- Sujet de mémoire: Implémenter la stratégie d'itération (saturation) de Ciardo
 
 Créer une petite page web avec les données essentielles.
 	Ce que fait l'outil.

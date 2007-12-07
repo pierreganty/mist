@@ -886,7 +886,6 @@ ISTSharingTree *ist_pre_of_rules(IST_trans_tree, prec)
 		}
 	}
 	V.STR->NbElements = V.STR->Root->AuxI;
-	ist_normalize(V.STR);
 	return V.STR;
 }
 
@@ -983,6 +982,8 @@ ISTSharingTree *ist_post_of_rules(IST_trans_tree, succ)
 			/* Restore delta */
 			s2->Son->Info->Right=delta;
 			if (V.intersect != NULL) {
+				/* We compute dcl o post !!!! */
+				V.intersect->Left=0;
 				rchild = PostOfRulesNode(s1->Son, s2->Son, &V);
 				if (rchild != NULL) 
 					ist_add_son(V.STR->Root, rchild);
@@ -1004,7 +1005,8 @@ ISTSharingTree *ist_post_of_rules(IST_trans_tree, succ)
 		}
 	}
 	V.STR->NbElements = V.STR->Root->AuxI;
-	ist_normalize(V.STR);
+	if (ist_is_empty(V.STR)==false)
+		ist_normalize(V.STR);
 	return V.STR;
 }
 

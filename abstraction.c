@@ -1049,6 +1049,7 @@ ISTSharingTree
 	ISTSharingTree *res, *tmp;
 
 	res=ist_post_of_rules(t->tree_of_transitions, S);
+	ist_stat(res);
 	if (ist_is_empty(res) == false) {
 		tmp = ist_downward_closure(res);
 		ist_dispose(res);
@@ -1058,7 +1059,6 @@ ISTSharingTree
 		res = ist_minimal_form(tmp);
 		ist_dispose(tmp);
 	} 
-	ist_stat(res);
 	return res;
 }
 
@@ -1200,7 +1200,8 @@ ISTSharingTree *adhoc_pre(ISTSharingTree *S, transition_system_t *t)
 ISTSharingTree *adhoc_pre_star_pruned_unless_hit_m0(ISTSharingTree *S, ISTSharingTree *cutter, transition_system_t *sys, ISTSharingTree *initial_marking) 
 {
 	ISTSharingTree *tmp, *result, *frontier, *inter;
-	int iter;
+	int iter, i, j;
+	boolean *maskpre;
 
 	iter=0;
 
@@ -1212,10 +1213,29 @@ ISTSharingTree *adhoc_pre_star_pruned_unless_hit_m0(ISTSharingTree *S, ISTSharin
 	frontier=tmp;	
 	result=ist_copy(frontier);
 
+
+	/* mask for pre (for the pre*_\hat{N}) */
+	maskpre=(boolean *)xmalloc(sys->limits.nbr_rules*sizeof(boolean));
+	for(i=0;i<sys->limits.nbr_rules;++i) {
+		maskpre[i]=true;
+		for (j=0; (j < sys->limits.nbr_variables) && (maskpre[i] == true);j++) {
+			if ((sys->transition[i].cmd_for_place[j].guard.Left > 0) && 
+					(sys->transition[i].cmd_for_place[j].places_abstracted > 1))
+				maskpre[i]=false;
+		}
+	}
+	from_tansitions_to_tree(sys, maskpre);
+	free(maskpre);
+	ist_stat(sys->tree_of_transitions);
+	ist_write(sys->tree_of_transitions);
+	if(ist_is_empty(sys->tree_of_transitions)==true)
+		return result;
+
 	while(true) {
 		iter++;
 		printf("iteration %d\n",iter);
-		tmp = adhoc_pre(frontier,sys);
+	//	tmp = adhoc_pre(frontier,sys);
+		tmp = ist_pre_of_rules(sys->tree_of_transitions,frontier);
 		ist_dispose(frontier);
 		frontier = ist_prune_a_uc_ist_with_a_dc_ist(tmp,cutter);
 		assert(ist_checkup(frontier)==true);

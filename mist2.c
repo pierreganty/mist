@@ -780,22 +780,8 @@ void ic4pn(system, initial_marking, bad)
 		for(i=0;i<sysabs->limits.nbr_rules;++i) 
 			maskpost[i]=true;
 		from_tansitions_to_tree(sysabs, maskpost);
+		ist_stat(sysabs->tree_of_transitions);
 		ist_write(sysabs->tree_of_transitions);
-
-
-		/* mask for pre (for the pre*_\hat{N}) 
-		maskpre=(boolean *)xrealloc(maskpre, sysabs->limits.nbr_rules*sizeof(boolean));
-		for(i=0;i<sysabs->limits.nbr_rules;++i) {
-			maskpre[i]=true;
-			for (j=0; (j < sysabs->limits.nbr_variables) && (maskpre[i] == true);j++) {
-				if ((sysabs->transition[i].cmd_for_place[j].guard.Left > 0) && 
-						(sysabs->transition[i].cmd_for_place[j].places_abstracted > 1))
-					maskpre[i]=false;
-			}
-		}
-		from_tansitions_to_tree(sysabs, maskpre);
-		ist_write(sysabs->tree_of_transitions); */
-		
 
 		puts("The current abstraction is :");
 		print_abstraction(myabs);
