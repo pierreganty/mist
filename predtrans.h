@@ -53,4 +53,7 @@ ISTSharingTree *ist_enumerative_pre_transition(ISTSharingTree *backward_p, trans
 
 /* for concretisation */
 ISTSharingTree * ist_pre_of_all_transfer_for_concretisation(ISTSharingTree * S,transition_t * t);
+
+ISTSharingTree *ist_post_of_rules(ISTSharingTree *IST_trans_tree, ISTSharingTree *succ);
+
 #endif

@@ -49,8 +49,7 @@ goals(T_PTR_tree entry) {
 	if (entry) {
 		info = (char*) tree_getinfo(entry);
 		if (strcmp(info,"or") == 0) {
-			tokensgoals = (ISTInterval**) xmalloc(nbr_var * tree_nbrsubtrees(entry) 
-					* sizeof(ISTInterval *));
+			tokensgoals = (ISTInterval**)xmalloc(nbr_var*tree_nbrsubtrees(entry)*sizeof(ISTInterval *));
 			for (i = 0 ; i < nbr_var * tree_nbrsubtrees(entry) ; i++)
 				tokensgoals[i] = ist_build_interval(0,INFINITY);
 
@@ -60,7 +59,7 @@ goals(T_PTR_tree entry) {
 		} else if (strcmp(info,"and") == 0) {
 			nbrgoalscmd = 0;
 
-			tokensgoals = (ISTInterval **) xmalloc(nbr_var * sizeof(ISTInterval));
+			tokensgoals = (ISTInterval **)xmalloc(nbr_var * sizeof(ISTInterval *));
 			for (i = 0 ; i < nbr_var; i++)
 				tokensgoals[i] = ist_build_interval(0,INFINITY);
 

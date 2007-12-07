@@ -18,7 +18,6 @@
 #include"predtrans.h"
 #include"proc.h"
 #include"remove.h"
-#include"transtree.h"
 #include"list_ist.h"
 
 #endif

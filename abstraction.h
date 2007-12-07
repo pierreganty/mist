@@ -83,4 +83,7 @@ ISTSharingTree *adhoc_pre(ISTSharingTree *S, transition_system_t *t);
 ISTSharingTree *adhoc_pre_star_pruned_unless_hit_m0(ISTSharingTree *S,\
 		ISTSharingTree *cutter, transition_system_t *sys, ISTSharingTree\
 		*initial_marking);
+ISTSharingTree
+*ist_abstract_post_transtree(ISTSharingTree *S, void (*approx)(ISTSharingTree
+			*S, integer16 *b), integer16 *bound, transition_system_t *t);
 #endif

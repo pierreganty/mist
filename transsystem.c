@@ -78,6 +78,28 @@ build_problem_instance(tree, system, init, unsafe)
 
 }
 
+/* precond: sys->tree_of_transitions has been disposed if necessary */
+void
+from_tansitions_to_tree(transition_system_t *sys, boolean *mask)
+{
+	ISTInterval **transition;
+	int i,j;
+
+	ist_new(&sys->tree_of_transitions);
+
+	transition = (ISTInterval **)xmalloc(sys->limits.nbr_variables*sizeof(ISTInterval *)); 
+	for (i=0; i<sys->limits.nbr_rules;++i) {
+			if (mask[i]==true) {
+				for (j=0; j<sys->limits.nbr_variables; ++j) {
+					transition[j]=ist_copy_interval(&sys->transition[i].cmd_for_place[j].guard);
+					transition[j]->Right=sys->transition[i].cmd_for_place[j].delta;
+				}
+				ist_add(sys->tree_of_transitions, transition, sys->limits.nbr_variables);
+			}	
+	}
+}
+
+
 void dispose_transition_system(transition_system_t *sys)
 {
 	size_t i,j;

@@ -23,7 +23,6 @@
 #include "basis.h"
 #include "minimizeinvarheuristic.h"
 #include "minimize.h"
-#include "transtree.h"
 #include "listnode.h"
 #include "remove.h"
 #include "normalize.h"
@@ -35,7 +34,6 @@
 #include <assert.h>
 
 
-#ifdef TRANSFERT
 
 
 static ISTNode *PostOfTransfer(ISTNode *node,ISTSharingTree *STR, ISTLayer * rlayer, ISTInterval val,int no_layer,integer16 *origin,integer16 target)
@@ -770,15 +768,15 @@ ISTSharingTree *ist_pre_of_rule_plus_transfer(Prec, transition)
 	/* The result is not supposed to be in normal form */
 	return STInt;
 }
-#else /* We deal with the transition tree (DEPRECATED) */
+
 static ISTNode *PreOfRulesNode(node, nodetrans, LINK)
 	ISTNode *node;
-   	TransNode *nodetrans;
+   	ISTNode *nodetrans;
    	struct LOC_ist_method  *LINK;
 {
-	ISTSon *s1;
-	TransSon *s2;
+	ISTSon *s1, *s2;
 	ISTNode *rnode, *rchild;
+	integer32 delta;
 
 	if (ist_equal_interval(node->Info,&IST_end_of_list))
 		rnode = ist_add_node(LINK->rlayer, ist_create_node(&IST_end_of_list));
@@ -792,9 +790,17 @@ static ISTNode *PreOfRulesNode(node, nodetrans, LINK)
 		while (s1 != NULL){
 			s2 = nodetrans->FirstSon;
 			while ( s2 != NULL) {
-				ist_add_value_to_interval(s1->Son->Info,-s2->Son->Info.Delta);
-				LINK->intersect = ist_intersect_intervals(s1->Son->Info,&s2->Son->Info.Guard);
-				ist_add_value_to_interval(s1->Son->Info,s2->Son->Info.Delta);
+				/* Set delta */
+				delta=s2->Son->Info->Right; 
+				/* Modify node */
+				ist_sub_value_to_interval(s1->Son->Info,delta);
+				/* Set guard */
+				s2->Son->Info->Right=INFINITY;
+				LINK->intersect = ist_intersect_intervals(s1->Son->Info,s2->Son->Info);
+				/* Restore node */
+				ist_add_value_to_interval(s1->Son->Info,delta);
+				/* Restore delta */
+				s2->Son->Info->Right=delta;
 
 				if (LINK->intersect != NULL) {
 					LINK->memo = ist_get_memoization1(s1->Son,(ISTNode *) s2->Son);
@@ -823,17 +829,20 @@ static ISTNode *PreOfRulesNode(node, nodetrans, LINK)
 }
 
 /*
- * OUT OF ORDER : To update, we have to pass the system->tree_of_transitions
+ * Where the first argument is interpreted as follows, each path
+ * gives a transition where for each place the left bound gives
+ * the guard value and the right bound gives the delta value
  */
-ISTSharingTree *ist_pre_of_rules(prec)
+ISTSharingTree *ist_pre_of_rules(IST_trans_tree, prec)
+	ISTSharingTree *IST_trans_tree;
 	ISTSharingTree *prec;
 {
 	struct LOC_ist_method  V;
 	ISTSharingTree *copy_prec;
-	ISTSon *s1;
-	TransSon *s2;
+	ISTSon *s1, *s2;
 	ISTNode *rchild;
 	boolean stop;
+	integer32 delta;
 
 	ist_new(&V.STR);
 	ist_new_memo1_number();
@@ -844,9 +853,17 @@ ISTSharingTree *ist_pre_of_rules(prec)
 		/* We should play with tree_of_transitions */
 		s2 = IST_trans_tree->Root->FirstSon;
 		while ( s2 != NULL) {
-			ist_add_value_to_interval(s1->Son->Info,-s2->Son->Info.Delta);
-			V.intersect = ist_intersect_intervals(s1->Son->Info,&s2->Son->Info.Guard);
-			ist_add_value_to_interval(s1->Son->Info,s2->Son->Info.Delta);
+			/* Set delta */
+			delta=s2->Son->Info->Right; 
+			/* Modify node */
+			ist_sub_value_to_interval(s1->Son->Info,delta);
+			/* Set guard */
+			s2->Son->Info->Right=INFINITY;
+			V.intersect = ist_intersect_intervals(s1->Son->Info,s2->Son->Info);
+			/* Restore node */
+			ist_add_value_to_interval(s1->Son->Info,delta);
+			/* Restore delta */
+			s2->Son->Info->Right=delta;
 			if (V.intersect != NULL) {
 				rchild = PreOfRulesNode(s1->Son, s2->Son, &V);
 				if (rchild != NULL) 
@@ -869,10 +886,127 @@ ISTSharingTree *ist_pre_of_rules(prec)
 		}
 	}
 	V.STR->NbElements = V.STR->Root->AuxI;
+	ist_normalize(V.STR);
 	return V.STR;
 }
-#endif
 
+
+static ISTNode *PostOfRulesNode(node, nodetrans, LINK)
+	ISTNode *node;
+   	ISTNode *nodetrans;
+   	struct LOC_ist_method  *LINK;
+{
+	ISTSon *s1, *s2;
+	ISTNode *rnode, *rchild;
+	integer32 delta;
+
+	if (ist_equal_interval(node->Info,&IST_end_of_list))
+		rnode = ist_add_node(LINK->rlayer, ist_create_node(&IST_end_of_list));
+	else {
+		rnode = ist_create_node(LINK->intersect);
+		ist_dispose_info(LINK->intersect);
+		LINK->rlayer = LINK->rlayer->Next;
+		if (LINK->rlayer == NULL)
+			LINK->rlayer = ist_add_last_layer(LINK->STR);
+		s1 = node->FirstSon;
+		while (s1 != NULL){
+			s2 = nodetrans->FirstSon;
+			while ( s2 != NULL) {
+				/* Set delta */
+				delta=s2->Son->Info->Right; 
+				/* Set guard */
+				s2->Son->Info->Right=INFINITY;
+				LINK->intersect = ist_intersect_intervals(s1->Son->Info,s2->Son->Info);
+				/* Restore node */
+				ist_add_value_to_interval(LINK->intersect,delta);
+				/* Restore delta */
+				s2->Son->Info->Right=delta;
+
+				if (LINK->intersect != NULL) {
+					LINK->memo = ist_get_memoization1(s1->Son,(ISTNode *) s2->Son);
+					if (LINK->memo != NULL){
+						rchild = LINK->memo->r;
+						ist_dispose_info(LINK->intersect);
+					} else
+						rchild = PostOfRulesNode(s1->Son, s2->Son, LINK);
+					if (rchild != NULL) 
+						ist_add_son(rnode, rchild);
+				}
+				s2 = s2->Next;
+			}
+			s1 = s1->Next;
+		}
+		LINK->rlayer = LINK->rlayer->Previous;
+		if (rnode->FirstSon != NULL)
+			rnode = ist_add_node(LINK->rlayer, rnode);
+		else {
+			ist_dispose_node(rnode);
+			rnode = NULL;
+		}
+	}
+	ist_put_memoization1(node,(ISTNode *)nodetrans, rnode);
+	return rnode;
+}
+
+/*
+ * Where the first argument is interpreted as follows, each path
+ * gives a transition where for each place the left bound gives
+ * the guard value and the right bound gives the delta value
+ */
+ISTSharingTree *ist_post_of_rules(IST_trans_tree, succ)
+	ISTSharingTree *IST_trans_tree;
+	ISTSharingTree *succ;
+{
+	struct LOC_ist_method  V;
+	ISTSharingTree *copy_succ;
+	ISTSon *s1, *s2;
+	ISTNode *rchild;
+	boolean stop;
+	integer32 delta;
+
+	ist_new(&V.STR);
+	ist_new_memo1_number();
+	copy_succ = ist_copy(succ);
+	V.rlayer = ist_add_last_layer(V.STR);
+	s1 = copy_succ->Root->FirstSon;
+	while (s1 != NULL ){
+		/* We should play with tree_of_transitions */
+		s2 = IST_trans_tree->Root->FirstSon;
+		while ( s2 != NULL) {
+			/* Set delta */
+			delta=s2->Son->Info->Right; 
+			/* Set guard */
+			s2->Son->Info->Right=INFINITY;
+			V.intersect = ist_intersect_intervals(s1->Son->Info,s2->Son->Info);
+			/* Restore node */
+			ist_add_value_to_interval(V.intersect,delta);
+			/* Restore delta */
+			s2->Son->Info->Right=delta;
+			if (V.intersect != NULL) {
+				rchild = PostOfRulesNode(s1->Son, s2->Son, &V);
+				if (rchild != NULL) 
+					ist_add_son(V.STR->Root, rchild);
+			}
+			s2 = s2->Next;
+		}
+		s1 = s1->Next;
+	}
+
+	stop = false;
+	while (!stop) {
+		if (V.STR->LastLayer == NULL) {
+			stop = true;
+		}else {
+			if (V.STR->LastLayer->FirstNode != NULL)
+				stop = true;
+			else
+				ist_remove_last_layer(V.STR);
+		}
+	}
+	V.STR->NbElements = V.STR->Root->AuxI;
+	ist_normalize(V.STR);
+	return V.STR;
+}
 
 ISTSharingTree *ist_pre_pruned_wth_inv_and_prev_iterates(prec, reached_elem, system)
 	ISTSharingTree *prec, *reached_elem;

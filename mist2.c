@@ -363,7 +363,8 @@ boolean eec_fp(system, abs, initial_marking, bad, lfp)
 			finished= ist_is_empty(inter) == true ? false : true;
 			ist_dispose(inter);
 			while (finished==false) {
-				tmp = ist_abstract_post(bpost,bound_values,abs->bound,system);
+				//tmp = ist_abstract_post(bpost,bound_values,abs->bound,system);
+				tmp = ist_abstract_post_transtree(bpost,bound_values,abs->bound,system);
 				_tmp =  ist_remove_subsumed_paths(tmp,bpost);
 				ist_dispose(tmp);
 				if (ist_is_empty(_tmp)==false) {		
@@ -732,7 +733,7 @@ void ic4pn(system, initial_marking, bad)
 	ISTSharingTree *tmp, *_tmp, *a_neg_Z, *alpha_initial_marking, *neg_Z,\
 		*inter, *frontier, *lfp;
 	size_t i,j,nb_iteration;
-	boolean conclusive, eec_conclusive;
+	boolean *maskpre, *maskpost, conclusive, eec_conclusive;
 
 	/* Set constant abstraction top (all places merged) */
 	abstraction_t *topabs;
@@ -740,13 +741,15 @@ void ic4pn(system, initial_marking, bad)
 	topabs->nbConcreteV=system->limits.nbr_variables;
 	topabs->nbV=1;
 	topabs->bound=(integer16 *)xmalloc(topabs->nbV*sizeof(integer16));
-	topabs->A=(integer16 **)xmalloc(topabs->nbV*sizeof(integer16));
+	topabs->A=(integer16 **)xmalloc(topabs->nbV*sizeof(integer16 *));
 	for(i=0;i<topabs->nbV;++i) {
 		topabs->A[i]=(integer16 *)xmalloc(system->limits.nbr_variables*sizeof(integer16));
 		topabs->bound[i]=1;
 		for(j=0;j<topabs->nbConcreteV;++j)
 			topabs->A[i][j]=1;
 	}
+	/* for xrealloc to behave correctly */
+	maskpost=maskpre=NULL;
 	/* printf("EEC for the concrete system\n");
 	eec_conclusive=eec_fp(system, bottomabs, initial_marking, bad, &lfp);
 	if (eec_conclusive == true)
@@ -772,6 +775,28 @@ void ic4pn(system, initial_marking, bad)
 		puts("begin of iteration");
 		// We build the abstract system 
 		sysabs=build_sys_using_abs(system,myabs);
+		/* mask for post (for EEC) */
+		maskpost=(boolean *)xrealloc(maskpost, sysabs->limits.nbr_rules*sizeof(boolean));
+		for(i=0;i<sysabs->limits.nbr_rules;++i) 
+			maskpost[i]=true;
+		from_tansitions_to_tree(sysabs, maskpost);
+		ist_write(sysabs->tree_of_transitions);
+
+
+		/* mask for pre (for the pre*_\hat{N}) 
+		maskpre=(boolean *)xrealloc(maskpre, sysabs->limits.nbr_rules*sizeof(boolean));
+		for(i=0;i<sysabs->limits.nbr_rules;++i) {
+			maskpre[i]=true;
+			for (j=0; (j < sysabs->limits.nbr_variables) && (maskpre[i] == true);j++) {
+				if ((sysabs->transition[i].cmd_for_place[j].guard.Left > 0) && 
+						(sysabs->transition[i].cmd_for_place[j].places_abstracted > 1))
+					maskpre[i]=false;
+			}
+		}
+		from_tansitions_to_tree(sysabs, maskpre);
+		ist_write(sysabs->tree_of_transitions); */
+		
+
 		puts("The current abstraction is :");
 		print_abstraction(myabs);
 		// Set a_neg_Z, alpha_initial_marking 

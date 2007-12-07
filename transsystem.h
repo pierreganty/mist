@@ -22,8 +22,8 @@
 #ifndef __TRANSSYSTEM_H
 #define __TRANSSYSTEM_H
 
+#include "proc.h"
 #include "interval.h"
-#include "transtree.h"
 #include "stddef.h"
 #include "stdio.h"
 #include "tree.h"
@@ -110,7 +110,7 @@ typedef struct limits_t {
 typedef struct transition_system_t {
 	limits_t limits;
 	transition_t *transition;
-	TransSharingTree *tree_of_transitions;
+	ISTSharingTree *tree_of_transitions;
 	invariant_t *invariants;
 } transition_system_t;
 
@@ -119,5 +119,6 @@ void build_problem_instance(T_PTR_tree tree, transition_system_t **system,
 	ISTSharingTree **init, ISTSharingTree **safe);
 void dispose_transition_system(transition_system_t *sys);
 void print_transition_system(transition_system_t *sys);
+void from_tansitions_to_tree(transition_system_t *sys, boolean *mask);
 
 #endif

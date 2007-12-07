@@ -51,7 +51,7 @@ init(T_PTR_tree entry) {
     if (strcmp(info,"and") == 0) {
       nbrinitcmd = 0;
 
-      tokensinit = (ISTInterval **) xmalloc(nbr_var * sizeof(ISTInterval));
+      tokensinit = (ISTInterval **)xmalloc(nbr_var*sizeof(ISTInterval *));
       for (i = 0 ; i < nbr_var; i++)
 		  tokensinit[i] = ist_build_interval(0,0);
 

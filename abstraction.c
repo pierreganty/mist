@@ -1038,6 +1038,27 @@ ISTSharingTree
 		}
 		ist_dispose(_tmp);
 	}
+	ist_stat(res);
+	return res;
+}
+
+ISTSharingTree
+*ist_abstract_post_transtree(ISTSharingTree *S, void (*approx)(ISTSharingTree
+			*S, integer16 *b), integer16 *bound, transition_system_t *t)
+{
+	ISTSharingTree *res, *tmp;
+
+	res=ist_post_of_rules(t->tree_of_transitions, S);
+	if (ist_is_empty(res) == false) {
+		tmp = ist_downward_closure(res);
+		ist_dispose(res);
+		if(approx)
+			approx(tmp,bound);
+		ist_normalize(tmp);
+		res = ist_minimal_form(tmp);
+		ist_dispose(tmp);
+	} 
+	ist_stat(res);
 	return res;
 }
 
@@ -1053,7 +1074,8 @@ ISTSharingTree *ist_abstract_post_star(ISTSharingTree *initial_marking, void
 		approx(S,bound);
 	ist_normalize(S);
 	while (true) {
-		tmp = ist_abstract_post(S,approx,bound,t);
+		//tmp = ist_abstract_post(S,approx,bound,t);
+		tmp = ist_abstract_post_transtree(S,approx,bound,t);
 		_tmp = ist_remove_subsumed_paths(tmp,S);
 		ist_dispose(tmp);
 		if (ist_is_empty(_tmp)==false) {		
