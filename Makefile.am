@@ -60,8 +60,6 @@ mist2_SOURCES = \
 	tbsymbolinfo.h \
 	transsystem.c \
 	transsystem.h \
-	transtree.c \
-	transtree.h  \
 	tree.c \
 	tree.h \
 	xmalloc.c \
