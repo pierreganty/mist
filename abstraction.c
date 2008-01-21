@@ -1048,6 +1048,9 @@ ISTSharingTree
 {
 	ISTSharingTree *res, *tmp;
 
+	printf("tree of transitions");
+	ist_checkup(t->tree_of_transitions);
+
 	res=ist_post_of_rules(t->tree_of_transitions, S);
 	ist_stat(res);
 	if (ist_is_empty(res) == false) {
@@ -1074,6 +1077,8 @@ ISTSharingTree *ist_abstract_post_star(ISTSharingTree *initial_marking, void
 		approx(S,bound);
 	ist_normalize(S);
 	while (true) {
+		printf("iteration dans abstract post star\n");
+
 		//tmp = ist_abstract_post(S,approx,bound,t);
 		tmp = ist_abstract_post_transtree(S,approx,bound,t);
 		_tmp = ist_remove_subsumed_paths(tmp,S);

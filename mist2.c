@@ -345,10 +345,12 @@ boolean eec_fp(system, abs, initial_marking, bad, lfp)
 		inter = ist_intersection(abs_post_star,bad);
 		finished=ist_is_empty(inter);
 		ist_dispose(inter);
-		if (finished==true) 
+		if (finished==true) { 
 			/* finished==true -> the system is safe */
+			ist_write(*lfp);
+			ist_write(bad);
 			retval = true;
-		else {
+		} else {
 			printf("eec: EXPAND begin\t");
 			fflush(NULL);
 			/* use bpost = ist_abstract_post_star(downward_closed_initial_marking,bound_values,abs->bound,system)
@@ -444,6 +446,8 @@ boolean eec_cegar(system, abs, initial_marking, bad, List)
 		assert(ist_checkup(abs_post_star)==true);
 		puts("end");
 		inter = ist_intersection(abs_post_star,bad);
+
+
 		ist_dispose(abs_post_star);
 		finished=ist_is_empty(inter);
 		ist_dispose(inter);
@@ -867,12 +871,12 @@ int main(int argc, char *argv[ ])
 	ist_init_system();
 	printf("DONE\n");
 
-#ifdef TBSYMB_DUMP  
+#ifdef TBSYMB_DUMP 
 	printf("\n\n");
 	tbsymbol_dump(tbsymbol, &callback);
 #endif    
 
-#ifdef TREE_DUMP  
+#ifdef TREE_DUMP 
 	printf("\n\n");
 	tree_dump(atree, callback_tree_before, callback_tree_after, callback_leaf);
 #endif
@@ -882,8 +886,57 @@ int main(int argc, char *argv[ ])
 	printf("System has %3d variables, %3d transitions and %2d actual invariants\n",system->limits.nbr_variables, system->limits.nbr_rules, system->limits.nbr_invariants);
 
 	//backward_reachability(system,initial_marking,bad);
-	ic4pn(system,initial_marking,bad);
+	//ic4pn(system,initial_marking,bad);
 	//cegar(system,initial_marking,bad);
+
+	boolean * maskpost;
+	transition_system_t * sysabs;
+	abstraction_t *systemabs;
+	ISTSharingTree * lfp_eec =NULL;
+        int i,j;
+	boolean eec_conclusive;
+	systemabs=(abstraction_t *)xmalloc(sizeof(abstraction_t));
+	systemabs->nbConcreteV=system->limits.nbr_variables;
+	systemabs->nbV=system->limits.nbr_variables;
+	systemabs->bound=(integer16 *)xmalloc(systemabs->nbV*sizeof(integer16));
+	systemabs->A=(integer16 **)xmalloc(systemabs->nbV*sizeof(integer16));
+	for(i=0;i<systemabs->nbV;++i) {
+		systemabs->A[i]=(integer16 *)xmalloc(system->limits.nbr_variables*sizeof(integer16));
+		systemabs->bound[i]=1;
+	}
+	for(i=0;i<systemabs->nbV;++i) 
+		for(j=0;j<system->limits.nbr_variables;++j) 
+			if (i==j)
+				systemabs->A[i][j]=1;
+			else
+				systemabs->A[i][j]=0;	
+
+	printf("EEC for the concrete system\n");
+	print_abstraction(systemabs);
+
+       	sysabs=build_sys_using_abs(system,systemabs);
+	/* mask for post (for EEC) */
+	maskpost=(boolean *)xmalloc(system->limits.nbr_rules*sizeof(boolean));
+	for(i=0;i<system->limits.nbr_rules;++i) 
+		maskpost[i]=true;
+	printf("transition system\n");
+	print_transition_system(sysabs);
+	from_tansitions_to_tree(sysabs, maskpost);
+	printf("transition system\n");
+	print_transition_system(sysabs);
+
+	printf("transition system\n");
+	print_transition_system(system);
+	from_tansitions_to_tree(system, maskpost);
+	printf("transition system\n");
+	print_transition_system(system);
+
+	eec_conclusive=eec_fp(system,systemabs,initial_marking,bad,&lfp_eec);
+	if (eec_conclusive == true)
+		printf("Answer = true\n");
+	else
+		printf("Answer = false\n");
+
 
 	ist_dispose(initial_marking);
 	ist_dispose(bad);
