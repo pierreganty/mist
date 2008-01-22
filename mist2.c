@@ -889,54 +889,44 @@ int main(int argc, char *argv[ ])
 	//ic4pn(system,initial_marking,bad);
 	//cegar(system,initial_marking,bad);
 
-	boolean * maskpost;
-	transition_system_t * sysabs;
-	abstraction_t *systemabs;
-	ISTSharingTree * lfp_eec =NULL;
+	boolean *maskpost;
+	transition_system_t *sysabs;
+	abstraction_t *bottomabs;
+	ISTSharingTree *lfp_eec=NULL;
         int i,j;
 	boolean eec_conclusive;
-	systemabs=(abstraction_t *)xmalloc(sizeof(abstraction_t));
-	systemabs->nbConcreteV=system->limits.nbr_variables;
-	systemabs->nbV=system->limits.nbr_variables;
-	systemabs->bound=(integer16 *)xmalloc(systemabs->nbV*sizeof(integer16));
-	systemabs->A=(integer16 **)xmalloc(systemabs->nbV*sizeof(integer16));
-	for(i=0;i<systemabs->nbV;++i) {
-		systemabs->A[i]=(integer16 *)xmalloc(system->limits.nbr_variables*sizeof(integer16));
-		systemabs->bound[i]=1;
-	}
-	for(i=0;i<systemabs->nbV;++i) 
+	bottomabs=(abstraction_t *)xmalloc(sizeof(abstraction_t));
+	bottomabs->nbConcreteV=system->limits.nbr_variables;
+	bottomabs->nbV=system->limits.nbr_variables;
+	bottomabs->bound=(integer16 *)xmalloc(bottomabs->nbV*sizeof(integer16));
+	bottomabs->A=(integer16 **)xmalloc(bottomabs->nbV*sizeof(integer16 *));
+	for(i=0;i<bottomabs->nbV;++i) {
+		bottomabs->A[i]=(integer16 *)xmalloc(system->limits.nbr_variables*sizeof(integer16));
+		bottomabs->bound[i]=1;
 		for(j=0;j<system->limits.nbr_variables;++j) 
 			if (i==j)
-				systemabs->A[i][j]=1;
+				bottomabs->A[i][j]=1;
 			else
-				systemabs->A[i][j]=0;	
+				bottomabs->A[i][j]=0;	
+	}
 
 	printf("EEC for the concrete system\n");
-	print_abstraction(systemabs);
+	print_abstraction(bottomabs);
 
-       	sysabs=build_sys_using_abs(system,systemabs);
 	/* mask for post (for EEC) */
 	maskpost=(boolean *)xmalloc(system->limits.nbr_rules*sizeof(boolean));
 	for(i=0;i<system->limits.nbr_rules;++i) 
 		maskpost[i]=true;
 	printf("transition system\n");
-	print_transition_system(sysabs);
-	from_tansitions_to_tree(sysabs, maskpost);
-	printf("transition system\n");
-	print_transition_system(sysabs);
-
-	printf("transition system\n");
-	print_transition_system(system);
 	from_tansitions_to_tree(system, maskpost);
-	printf("transition system\n");
-	print_transition_system(system);
+	ist_stat(system->tree_of_transitions);
+	ist_write(system->tree_of_transitions);
 
-	eec_conclusive=eec_fp(system,systemabs,initial_marking,bad,&lfp_eec);
+	eec_conclusive=eec_fp(system,bottomabs,initial_marking,bad,&lfp_eec);
 	if (eec_conclusive == true)
 		printf("Answer = true\n");
 	else
 		printf("Answer = false\n");
-
 
 	ist_dispose(initial_marking);
 	ist_dispose(bad);
