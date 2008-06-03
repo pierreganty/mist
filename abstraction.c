@@ -1049,7 +1049,7 @@ ISTSharingTree
 	ISTSharingTree *res, *tmp;
 
 	res=ist_post_of_rules(t->tree_of_transitions, S);
-	ist_stat(res);
+//	ist_stat(res);
 	if (ist_is_empty(res) == false) {
 		tmp = ist_downward_closure(res);
 		ist_dispose(res);
@@ -1067,30 +1067,84 @@ ISTSharingTree *ist_abstract_post_star(ISTSharingTree *initial_marking, void
 		(*approx)(ISTSharingTree *S, integer16* b), integer16 *bound,
 		transition_system_t *t) 
 {
-	ISTSharingTree *S, *tmp, *_tmp;
+	ISTSharingTree *S, *tmp;
+	ISTSharingTree *Frontier;
 
 	S = ist_copy(initial_marking);
 	if(approx)
 		approx(S,bound);
 	ist_normalize(S);
+	Frontier = ist_copy(S);
 	while (true) {
-		printf("iteration dans abstract post star\n");
+		//printf("iteration dans abstract post star\n");
 
-		tmp = ist_abstract_post(S,approx,bound,t);
+		tmp = ist_abstract_post(Frontier,approx,bound,t);
 		//tmp = ist_abstract_post_transtree(S,approx,bound,t);
-		_tmp = ist_remove_subsumed_paths(tmp,S);
+		ist_dispose(Frontier);
+		Frontier = ist_remove_subsumed_paths(tmp,S);
 		ist_dispose(tmp);
-		if (ist_is_empty(_tmp)==false) {		
-			tmp = ist_remove_subsumed_paths(S,_tmp);
+		if (ist_is_empty(Frontier)==false) {
+			tmp = ist_remove_subsumed_paths(S,Frontier);
 			ist_dispose(S);
-			S = ist_union(tmp,_tmp);
+			S = ist_union(tmp,Frontier);
 			ist_dispose(tmp);
-			ist_dispose(_tmp);
 		} else {
-			ist_dispose(_tmp);
 			break;
 		}
+//		ist_write(S);
+
 	}
+	return S;	
+}
+
+
+
+/* Assume initial_marking is a downward closed marking and the ist is minimal */
+ISTSharingTree *ist_abstract_post_star_until_reach_bad(ISTSharingTree *initial_marking, void
+		(*approx)(ISTSharingTree *S, integer16* b), integer16 *bound,
+		transition_system_t *t, ISTSharingTree *bad) 
+{
+	ISTSharingTree *S, *tmp;
+	ISTSharingTree *Frontier;
+	ISTSharingTree *inter;
+
+	S = ist_copy(initial_marking);
+	if(approx)
+		approx(S,bound);
+	ist_normalize(S);
+	Frontier = ist_copy(S);
+	inter = ist_intersection(Frontier,bad);
+	if (ist_is_empty(inter) == true) {
+		ist_dispose(inter);
+		while (true) {
+			//printf("iteration dans abstract post star\n");
+
+			tmp = ist_abstract_post(Frontier,approx,bound,t);
+			//tmp = ist_abstract_post_transtree(S,approx,bound,t);
+			ist_dispose(Frontier);
+			Frontier = ist_remove_subsumed_paths(tmp,S);
+			ist_dispose(tmp);
+			if (ist_is_empty(Frontier)==false) {
+				//Test for termination
+				inter = ist_intersection(Frontier,bad);
+				if (ist_is_empty(inter) == true) {
+					ist_dispose(inter);
+					tmp = ist_remove_subsumed_paths(S,Frontier);
+					ist_dispose(S);
+					S = ist_union(tmp,Frontier);
+					ist_dispose(tmp);
+				} else {
+					ist_dispose(S);
+					S = inter;
+					break;
+				}
+			} else {
+				break;
+			}
+//		ist_write(S);
+
+		}
+	} else ist_dispose(inter);
 	return S;	
 }
 
