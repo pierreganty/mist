@@ -48,6 +48,7 @@ mist2_SOURCES = \
 	normalize.c \
 	normalize.h \
 	parser.y \
+	parser.h \
 	predtrans.c \
 	predtrans.h \
 	proc.c \

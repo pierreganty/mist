@@ -38,6 +38,7 @@
  */
 ISTSharingTree *ist_compute_subsumed_paths(ISTSharingTree *ST1, ISTSharingTree *ST2) ;
 ISTSharingTree *ist_remove_subsumed_paths(ISTSharingTree *S, ISTSharingTree *T) ;
+ISTSharingTree *ist_remove_subsumed_paths_restricted(ISTSharingTree *S, ISTSharingTree *T);
 ISTSharingTree *ist_compute_who_subsumes(ISTSharingTree *ST1,ISTSharingTree *ST2);
 ISTSharingTree *ist_compute_subsumed_paths_within_tree(ISTSharingTree *S) ;
 ISTSharingTree *ist_minimal_form(ISTSharingTree *S) ;

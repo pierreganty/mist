@@ -119,6 +119,6 @@ void build_problem_instance(T_PTR_tree tree, transition_system_t **system,
 	ISTSharingTree **init, ISTSharingTree **safe);
 void dispose_transition_system(transition_system_t *sys);
 void print_transition_system(transition_system_t *sys);
-void from_tansitions_to_tree(transition_system_t *sys, boolean *mask);
+void from_transitions_to_tree(transition_system_t *sys, boolean *mask);
 
 #endif

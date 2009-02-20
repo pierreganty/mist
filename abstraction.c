@@ -837,6 +837,9 @@ abstraction_t *new_abstraction_lub(ISTSharingTree *S, int nb_var, abstraction_t 
 	for(i=0;i < result_abs->nbV;++i)
 		result_abs->bound[i] = 1;
 
+	// DEBUG
+	assert(old_abs->nbV < result_abs->nbV);
+
 	return result_abs;
 }
 
@@ -1062,6 +1065,87 @@ ISTSharingTree
 	return res;
 }
 
+/* remove nodes with unbounded value */
+void RemoveUnboundedNodes(ISTSharingTree *S) 
+{
+	ISTLayer *Layer;
+	ISTNode *Node;
+	boolean stop;
+	Layer=S->FirstLayer;
+	while(Layer!=S->LastLayer) {
+		Node = Layer->FirstNode;
+		while (Node != NULL){
+			if (ist_greater_or_equal_value(Node->Info->Right,INFINITY)==true)
+				ist_remove_sons(Node);
+			Node = Node->Next;
+		}
+		Layer=Layer->Next;
+	}
+	ist_remove_node_without_father(S);
+	ist_remove_node_without_son(S);
+	/* Remove empty layers if any */
+	stop = false;
+	while (!stop) {
+		if (S->LastLayer == NULL)
+			stop = true;
+		else {
+			if (S->LastLayer->FirstNode != NULL)
+				stop = true;
+			else
+				ist_remove_last_layer(S);
+		}
+	}
+	if (!ist_is_empty(S)) 
+		ist_adjust_second_condition(S);
+}
+
+/* Assume initial_marking is a downward closed marking and the ist is minimal */
+ISTSharingTree *ist_abstract_post_star_tsi(ISTSharingTree *initial_marking, void
+		(*approx)(ISTSharingTree *S, integer16* b), integer16 *bound,
+		transition_system_t *t) 
+{
+	ISTSharingTree *S, *post, *tmp, *_tmp, *__tmp;
+
+	S = ist_copy(initial_marking);
+	if(approx)
+		approx(S,bound);
+	ist_normalize(S);
+	puts("ist_abstract_post_star_tsi");
+	while (true) {
+		printf(".");
+		fflush(NULL);
+		post = ist_abstract_post_transtree(S,approx,bound,t);
+
+		/* Minimization of the result */
+		tmp=ist_copy(post);
+		RemoveUnboundedNodes(tmp);
+		_tmp=ist_minimal_form(tmp); /* minimize bounded markings */
+		__tmp=ist_minus(post,tmp);
+		ist_dispose(post);
+		ist_dispose(tmp);
+		tmp=ist_minimal_form(__tmp); /* minimize unbounded markings */
+		ist_dispose(__tmp);
+		post=ist_union(tmp,_tmp);
+		ist_dispose(tmp);
+		ist_dispose(_tmp);
+
+		_tmp = ist_remove_subsumed_paths_restricted(post,S);
+		ist_dispose(post);
+		if (ist_is_empty(_tmp)==false) {		
+			tmp = ist_remove_subsumed_paths_restricted(S,_tmp);
+			ist_dispose(S);
+			S = ist_union(tmp,_tmp);
+			ist_dispose(tmp);
+			ist_dispose(_tmp);
+		} else {
+			ist_dispose(_tmp);
+			break;
+		}
+	}
+	printf("\n");
+	return S;	
+}
+
 /* Assume initial_marking is a downward closed marking and the ist is minimal */
 ISTSharingTree *ist_abstract_post_star(ISTSharingTree *initial_marking, void
 		(*approx)(ISTSharingTree *S, integer16* b), integer16 *bound,
@@ -1259,7 +1343,6 @@ ISTSharingTree *adhoc_pre_star_pruned_unless_hit_m0(ISTSharingTree *S, ISTSharin
 	int iter, i, j;
 	boolean *maskpre;
 
-	iter=0;
 
 	tmp=ist_prune_a_uc_ist_with_a_dc_ist(S,cutter);
 	if(ist_is_empty(tmp)==true){
@@ -1280,16 +1363,18 @@ ISTSharingTree *adhoc_pre_star_pruned_unless_hit_m0(ISTSharingTree *S, ISTSharin
 				maskpre[i]=false;
 		}
 	}
-	from_tansitions_to_tree(sys, maskpre);
+	from_transitions_to_tree(sys, maskpre);
 	free(maskpre);
+	puts("Tree of transitions:");
 	ist_stat(sys->tree_of_transitions);
 	ist_write(sys->tree_of_transitions);
 	if(ist_is_empty(sys->tree_of_transitions)==true)
 		return result;
 
+	iter=0;
 	while(true) {
 		iter++;
-		printf("iteration %d\n",iter);
+		printf("adhoc_pre_star_pruned_unless_hit_m0: iteration %d\n",iter);
 	//	tmp = adhoc_pre(frontier,sys);
 		tmp = ist_pre_of_rules(sys->tree_of_transitions,frontier);
 		ist_dispose(frontier);
@@ -1306,6 +1391,7 @@ ISTSharingTree *adhoc_pre_star_pruned_unless_hit_m0(ISTSharingTree *S, ISTSharin
 				ist_dispose(inter);
 				ist_dispose(result);
 				result = NULL;
+				puts("hit m0");
 				break;
 			}
 			tmp = ist_remove_subsumed_paths(result,frontier);
@@ -1314,6 +1400,7 @@ ISTSharingTree *adhoc_pre_star_pruned_unless_hit_m0(ISTSharingTree *S, ISTSharin
 			ist_dispose(tmp);
 		} else {
 			ist_dispose(frontier);
+			puts("frontier is empty");
 			break;
 		}
 	}

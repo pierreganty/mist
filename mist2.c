@@ -89,134 +89,18 @@ int * compute_bound_from_ucs(ISTSharingTree * S) {
 	return result;
 }
 
-boolean equal_bounds(int * b1,int * b2, int dim) {
-	int i;
 
-	for(i=0 ; (i< dim) && (b1[i] == b2[i]) ; i++); 
-	return (i == dim);
-}
-
-boolean backward_reachability_basic(system, initial_marking, frontier) 
+ISTSharingTree *backward_reachability(system, initial_marking, frontier, bounds) 
 	transition_system_t *system;
 	ISTSharingTree *frontier, *initial_marking;
+	int *bounds;
 {
 	ISTSharingTree *old_frontier, *temp, *reached_elem;
 	size_t nbr_iteration;
 	boolean Continue;
 	boolean reached;
 	THeadListIST List;
-	
-	/* Now we declare variables to measure the time consumed by the function */
-	long int tick_sec=0 ;
-	struct tms before, after;
-	float comp_u, comp_s ;
-
-	times(&before) ;
-
-	temp = ist_remove_with_all_invar_exact(frontier, system);
-	/* We de not call ist_dispose(frontier); since we do not want
-	 * to modify the IN parameter */
-	frontier = temp;
-	/* reached_elem is set to frontier that is in the "worst case" the empty IST */
-	reached_elem = ist_copy(frontier);
-
-	Continue = true;
-	temp=ist_intersection(initial_marking,reached_elem);
-	reached = (ist_is_empty(temp) == true ? false : true);
-	ist_dispose(temp);
-	if (ist_is_empty(frontier) == true ||  reached == true) {
-		Continue = false;
-		puts("Unsafe region is empty or lies outside the invariants or contrains some initial states");
-	}
-	ist_init_list_ist(&List);
-	nbr_iteration = 1;
-	while (Continue == true) {
-		printf("\n\nIteration\t%3d\n", nbr_iteration);
-		puts("Computation of the symbolic predecessors states ...");
-		old_frontier = frontier;
-		/* As post cond, we have that frontier is minimal (in a 1to1 comparison) w.r.t reached_elem */
-		frontier = ist_pre_pruned_wth_inv_and_prev_iterates(old_frontier, reached_elem, system);
-
-		if (ist_is_empty(frontier) == false) {
-
-			printf("The new frontier counts :\n");
-			ist_checkup(frontier);
-#ifdef VERBOSE
-			ist_write(frontier);
-#endif
-			temp=ist_intersection(initial_marking,frontier);
-			reached = (ist_is_empty(temp) == true ? false : true);
-			ist_dispose(temp);
-			if (reached == true) {
-				puts("+-------------------------------------+");
-				puts("|Initial states intersect the frontier|");
-				puts("+-------------------------------------+");
-				Continue = false;
-				ist_insert_at_the_beginning_list_ist(&List,old_frontier);
-				/* 
-				 * Exact subsumption test is relevant ONLY FOR INTERVALS 
-				 *			 else if (ist_exact_subsumption_test(frontier,reached_elem))
-				 *				printf("reached_elem subsumes frontier \n");
-				 *				Continue = false; 
-				 */
-			} else {
-				temp = ist_remove_subsumed_paths(reached_elem, frontier);
-				/* 
-				 * Here we prune trivial 1to1 inclusion 
-				 * We don't use simulation relations, we compute it exactly !
-				 */
-				ist_dispose(reached_elem);
-				reached_elem = ist_union(temp, frontier);
-				/* To minimize we can use:
-				 * ist_minimal_form or ist_minimal_form_sim_based
-				 */
-				puts("After union, the reached symbolic state space is:");
-				ist_checkup(reached_elem);
-				ist_insert_at_the_beginning_list_ist(&List,old_frontier);
-				old_frontier = frontier;
-			}
-
-		} else 
-			Continue = false;
-		nbr_iteration++;
-	}
-
-	if (nbr_iteration != 0){
-		puts("The reached symbolic state space is:");
-		ist_stat(reached_elem);
-#ifdef VERBOSE
-		ist_write(reached_elem);
-#endif
-	}
-	if (reached == true)
-		ist_print_error_trace(initial_marking,&List,system);
-	ist_empty_list_ist_with_info(&List);
-	times(&after);
-	tick_sec = sysconf (_SC_CLK_TCK) ;
-	comp_u = ((float)after.tms_utime - (float)before.tms_utime)/(float)tick_sec ;
-	comp_s = ((float)after.tms_stime - (float)before.tms_stime)/(float)tick_sec ;
-	printf("Total time of computation (user)   -> %6.3f sec.\n",comp_u);
-	printf("                          (system) -> %6.3f sec.\n",comp_s);
-
-	ist_dispose(reached_elem);
-	
-	/* Is the system safe ? */
-	return (reached== true ? false : true);
-}
-
-
-
-ISTSharingTree * backward_reachability(system, initial_marking, frontier, bounds) 
-	transition_system_t *system;
-	ISTSharingTree *frontier, *initial_marking;
-	int * bounds;
-{
-	ISTSharingTree *old_frontier, *temp, *reached_elem;
-	size_t nbr_iteration;
-	boolean Continue;
-	boolean reached;
-	THeadListIST List;
-	int * new_bounds;
+	int *new_bounds, i;
 	
 	/* Now we declare variables to measure the time consumed by the function */
 	long int tick_sec=0 ;
@@ -308,9 +192,12 @@ ISTSharingTree * backward_reachability(system, initial_marking, frontier, bounds
 				//ist_insert_at_the_beginning_list_ist(&List,old_frontier);
 				old_frontier = frontier;
 			}
-			/* We test if we must stop because we find new borns*/
+			/* We test if we must stop because we find new bounds*/
 			new_bounds = compute_bound_from_ucs(reached_elem);
-			if (!equal_bounds(new_bounds,bounds, system->limits.nbr_variables))
+
+			for(i=0 ; (i< system->limits.nbr_variables) && (new_bounds[i] == bounds[i]) ; i++); 
+
+			if (i!=system->limits.nbr_variables)
 				Continue = false;
 			else
 				free(new_bounds); 	
@@ -345,6 +232,114 @@ ISTSharingTree * backward_reachability(system, initial_marking, frontier, bounds
 	
 	/* Is the system safe ? */
 	return (reached_elem);
+}
+
+void backward_reachability_basic(system, initial_marking, frontier) 
+	transition_system_t *system;
+	ISTSharingTree *frontier, *initial_marking;
+{
+	ISTSharingTree *old_frontier, *temp, *reached_elem;
+	size_t nbr_iteration;
+	boolean Continue;
+	boolean reached;
+	THeadListIST List;
+	
+	/* Now we declare variables to measure the time consumed by the function */
+	long int tick_sec=0 ;
+	struct tms before, after;
+	float comp_u, comp_s ;
+
+	times(&before) ;
+
+	temp = ist_remove_with_all_invar_exact(frontier, system);
+	/* We de not call ist_dispose(frontier); since we do not want
+	 * to modify the IN parameter */
+	frontier = temp;
+	/* reached_elem is set to frontier that is in the "worst case" the empty IST */
+	reached_elem = ist_copy(frontier);
+
+	Continue = true;
+	temp=ist_intersection(initial_marking,reached_elem);
+	reached = (ist_is_empty(temp) == true ? false : true);
+	ist_dispose(temp);
+	if (ist_is_empty(frontier) == true ||  reached == true) {
+		Continue = false;
+		puts("Unsafe region is empty or lies outside the invariants or contrains some initial states");
+	}
+	ist_init_list_ist(&List);
+	nbr_iteration = 1;
+	while (Continue == true) {
+		printf("\n\nIteration\t%3d\n", nbr_iteration);
+		puts("Computation of the symbolic predecessors states ...");
+		old_frontier = frontier;
+		/* As post cond, we have that frontier is minimal (in a 1to1 comparison) w.r.t reached_elem */
+		frontier = ist_pre_pruned_wth_inv_and_prev_iterates(old_frontier, reached_elem, system);
+
+		if (ist_is_empty(frontier) == false) {
+
+			printf("The new frontier counts :\n");
+			ist_checkup(frontier);
+#ifdef VERBOSE
+			ist_write(frontier);
+#endif
+			temp=ist_intersection(initial_marking,frontier);
+			reached = (ist_is_empty(temp) == true ? false : true);
+			ist_dispose(temp);
+			if (reached == true) {
+				Continue = false;
+				ist_insert_at_the_beginning_list_ist(&List,old_frontier);
+				/* 
+				 * Exact subsumption test is relevant ONLY FOR INTERVALS 
+				 *			 else if (ist_exact_subsumption_test(frontier,reached_elem))
+				 *				printf("reached_elem subsumes frontier \n");
+				 *				Continue = false; 
+				 */
+			} else {
+				temp = ist_remove_subsumed_paths(reached_elem, frontier);
+				/* 
+				 * Here we prune trivial 1to1 inclusion 
+				 * We don't use simulation relations, we compute it exactly !
+				 */
+				ist_dispose(reached_elem);
+				reached_elem = ist_union(temp, frontier);
+				/* To minimize we can use:
+				 * ist_minimal_form or ist_minimal_form_sim_based
+				 */
+				puts("After union, the reached symbolic state space is:");
+				ist_checkup(reached_elem);
+				ist_insert_at_the_beginning_list_ist(&List,old_frontier);
+				old_frontier = frontier;
+			}
+
+		} else 
+			Continue = false;
+		nbr_iteration++;
+	}
+
+	if (nbr_iteration != 0){
+		puts("The reached symbolic state space is:");
+		ist_stat(reached_elem);
+#ifdef VERBOSE
+		ist_write(reached_elem);
+#endif
+	}
+	if (reached == true)
+		ist_print_error_trace(initial_marking,&List,system);
+	ist_empty_list_ist_with_info(&List);
+	times(&after);
+	tick_sec = sysconf (_SC_CLK_TCK) ;
+	comp_u = ((float)after.tms_utime - (float)before.tms_utime)/(float)tick_sec ;
+	comp_s = ((float)after.tms_stime - (float)before.tms_stime)/(float)tick_sec ;
+	printf("Total time of computation (user)   -> %6.3f sec.\n",comp_u);
+	printf("                          (system) -> %6.3f sec.\n",comp_s);
+
+	ist_dispose(reached_elem);
+	
+	/* Is the system safe ? */
+	if (reached == true)
+		puts("backward algorithm concludes unsafe");
+	else 
+		puts("backward algorithm concludes safe");
 }
 
 static void print_version() {
@@ -421,7 +416,7 @@ void abstract_bound(ISTSharingTree *S, integer16 *bound)
 
 	for(L = S->FirstLayer, i = 0 ; L != S->LastLayer ; L = L->Next, i++) 
 		for(N = L->FirstNode ; N != NULL ; N = N->Next) 
-			if (ist_less_or_equal_value(N->Info->Right,bound[i]) == false)
+			if (!ist_less_or_equal_value(N->Info->Right,bound[i]))
 				N->Info->Right=INFINITY;
 }
 
@@ -437,172 +432,21 @@ void bound_values(ISTSharingTree *S, integer16 *bound)
 }
 
 
-/* remove nodes with unbounded value */
-void RemoveUnboundedNodes(ISTSharingTree *S) 
-{
-	ISTLayer *Layer;
-	ISTNode *Node;
-	boolean stop;
-	Layer=S->FirstLayer;
-	while(Layer!=S->LastLayer) {
-		Node = Layer->FirstNode;
-		while (Node != NULL){
-			if (ist_greater_or_equal_value(Node->Info->Right,INFINITY)==true)
-				ist_remove_sons(Node);
-			Node = Node->Next;
-		}
-		Layer=Layer->Next;
-	}
-	ist_remove_node_without_father(S);
-	ist_remove_node_without_son(S);
-	/* Remove empty layers if any */
-	stop = false;
-	while (!stop) {
-		if (S->LastLayer == NULL)
-			stop = true;
-		else {
-			if (S->LastLayer->FirstNode != NULL)
-				stop = true;
-			else
-				ist_remove_last_layer(S);
-		}
-	}
-	if (!ist_is_empty(S)) 
-		ist_adjust_second_condition(S);
-}
 
 
 /*
- * for the TSI paper 
+ * lfp is a out parameter which is 
+ * 1) an inductive invariant of the system
+ * 2) a dc-set
+ * WORKS FOR PETRI NET ONLY
  */
-boolean eec_bound(system, abs, initial_marking, bad, lfp)
-	transition_system_t *system;
-	abstraction_t *abs; /* For the bounds on the places */
-	ISTSharingTree *initial_marking, *bad, **lfp;
-{
-	boolean retval;
-	ISTSharingTree *abs_post_star, *inter, *downward_closed_initial_marking, *bpost, *tmp, *_tmp, * new_bad;
-	boolean finished;
-	size_t i;
-	
-	float comp_u,comp_s; 
-	long int tick_sec=0 ;
-	struct tms before, after;
-
-	int * new_bound;
-	
-	times(&before);	
-
-	/*initialisation des bornes */
-	new_bound = compute_bound_from_ucs(bad); 
-	for(i = 0; i < system->limits.nbr_variables; i++)
-		abs->bound[i] = new_bound[i];
-	print_abstraction(abs);
-	/* fin de l'initialisation des bornes */
-
-	
-	downward_closed_initial_marking = ist_downward_closure(initial_marking);
-	ist_normalize(downward_closed_initial_marking);
-//	assert(ist_checkup(downward_closed_initial_marking)==true);
-
-	finished=false;
-	while (finished == false) {
-		printf("eec: ENLARGE begin\t\n");
-		fflush(NULL);
-		/* To OVERapproximate we use abstract_bound */
-		abs_post_star = ist_abstract_post_star_until_reach_bad(downward_closed_initial_marking,abstract_bound,abs->bound,system,bad);
-//		assert(ist_checkup(abs_post_star)==true);
-		puts("end");
-		*lfp = abs_post_star;
-		inter = ist_intersection(abs_post_star,bad);
-		finished=ist_is_empty(inter);
-		ist_dispose(inter);
-		if (finished==true) { 
-			/* finished==true -> the system is safe */
-//			ist_write(*lfp);
-//			ist_write(bad);
-			retval = true;
-		} else {
-			printf("eec: EXPAND begin\t");
-			fflush(NULL);
-			/* use bpost = ist_abstract_post_star(downward_closed_initial_marking,bound_values,abs->bound,system)
-			 * if you want to compute the lfp. Instead we make something more
-			 * efficient by testing, at each iteration, for the emptiness of
-			 * intersection w/ bad. */
-
-			bpost = ist_copy(downward_closed_initial_marking);
-			bound_values(bpost,abs->bound);
-			ist_normalize(bpost);
-			inter=ist_intersection(bpost,bad);
-			finished= ist_is_empty(inter) == true ? false : true;
-			ist_dispose(inter);
-
-			ISTSharingTree * Frontier = ist_copy(bpost);
-
-			while (finished==false) {
-				tmp = ist_abstract_post(Frontier,bound_values,abs->bound,system);
-				//tmp = ist_abstract_post_transtree(bpost,bound_values,abs->bound,system);
-				ist_dispose(Frontier);
-				Frontier =  ist_remove_subsumed_paths(tmp,bpost);
-				ist_dispose(tmp);
-				if (ist_is_empty(Frontier)==false) {		
-					inter=ist_intersection(Frontier,bad);
-					finished=ist_is_empty(inter) == true ? false : true;
-					ist_dispose(inter);
-					tmp = ist_remove_subsumed_paths(bpost,Frontier);
-					ist_dispose(bpost);
-					bpost = ist_union(tmp,Frontier);
-					ist_dispose(tmp);
-				} else {
-					break;
-				}
-			}
-			assert(ist_checkup(bpost)==true);
-			ist_dispose(bpost);
-			puts("end");
-			if (finished==true)
-				/* finished==true -> we hitted the bad states, the system is unsafe */
-				retval=false;
-			else {
-				/* One more iteration is needed because both bpost and
-				 * abs_post_star does not allow to conclude */
-				ist_dispose(abs_post_star);
-				printf("eec: BOUNDS\t");
-				//for(i=0;i<abs->nbV;printf("%d ",++abs->bound[i++]));
-				/* nouvelle methode de calcul des bornes */
-				new_bad = backward_reachability(system, initial_marking, bad, new_bound);
-				ist_dispose(bad);
-				bad = new_bad;
-				free(new_bound);
-				new_bound = compute_bound_from_ucs(bad); 
-				for(i = 0; i < system->limits.nbr_variables; i++)
-					abs->bound[i] = new_bound[i];
-			
-				printf("\n");
-				printf("New bounds");
-				print_abstraction(abs);
-			}
-		}
-	}
-	ist_dispose(downward_closed_initial_marking);
-
-	times(&after);
-	tick_sec = sysconf (_SC_CLK_TCK) ;
-	comp_u = ((float)after.tms_utime - (float)before.tms_utime)/(float)tick_sec ;
-	comp_s = ((float)after.tms_stime - (float)before.tms_stime)/(float)tick_sec ;
-	printf("Total time of computation (user)   -> %6.3f sec.\n",comp_u);
-	printf("                          (system) -> %6.3f sec.\n",comp_s);	
-	
-	return retval;
-}
-
 boolean eec_fp(system, abs, initial_marking, bad, lfp)
 	transition_system_t *system;
 	abstraction_t *abs; /* For the bounds on the places */
 	ISTSharingTree *initial_marking, *bad, **lfp;
 {
 	boolean retval;
-	ISTSharingTree *abs_post_star, *inter, *downward_closed_initial_marking, *bpost, *tmp, *_tmp, * new_bad;
+	ISTSharingTree *abs_post_star, *inter, *downward_closed_initial_marking, *bpost, *tmp, *_tmp;
 	boolean finished;
 	size_t i;
 	
@@ -610,28 +454,30 @@ boolean eec_fp(system, abs, initial_marking, bad, lfp)
 	long int tick_sec=0 ;
 	struct tms before, after;
 
-	int * new_bound;
+	//int *new_bound;
 	
 	times(&before);	
 
 	/*initialisation des bornes */
-//	new_bound = compute_bound_from_ucs(bad); 
+	//new_bound = compute_bound_from_ucs(bad); 
 	for(i = 0; i < system->limits.nbr_variables; i++)
 		abs->bound[i] = 1;
-	print_abstraction(abs);
 	/* fin de l'initialisation des bornes */
 
 	
 	downward_closed_initial_marking = ist_downward_closure(initial_marking);
 	ist_normalize(downward_closed_initial_marking);
-//	assert(ist_checkup(downward_closed_initial_marking)==true);
+	assert(ist_checkup(downward_closed_initial_marking)==true);
 
 	finished=false;
 	while (finished == false) {
 		printf("eec: ENLARGE begin\t\n");
 		fflush(NULL);
 		/* To OVERapproximate we use abstract_bound */
+		/* Do not use ist_abstract_post_star_until_reach_bad it produces incorrect results/non termination.  
 		abs_post_star = ist_abstract_post_star_until_reach_bad(downward_closed_initial_marking,abstract_bound,abs->bound,system,bad);
+		*/
+		abs_post_star = ist_abstract_post_star(downward_closed_initial_marking,abstract_bound,abs->bound,system);
 //		assert(ist_checkup(abs_post_star)==true);
 		puts("end");
 		*lfp = abs_post_star;
@@ -657,24 +503,22 @@ boolean eec_fp(system, abs, initial_marking, bad, lfp)
 			inter=ist_intersection(bpost,bad);
 			finished= ist_is_empty(inter) == true ? false : true;
 			ist_dispose(inter);
-
-			ISTSharingTree * Frontier = ist_copy(bpost);
-
 			while (finished==false) {
-				tmp = ist_abstract_post(Frontier,bound_values,abs->bound,system);
-				//tmp = ist_abstract_post_transtree(bpost,bound_values,abs->bound,system);
-				ist_dispose(Frontier);
-				Frontier =  ist_remove_subsumed_paths(tmp,bpost);
+				//tmp = ist_abstract_post(bpost,bound_values,abs->bound,system);
+				tmp = ist_abstract_post_transtree(bpost,bound_values,abs->bound,system);
+				_tmp =  ist_remove_subsumed_paths(tmp,bpost);
 				ist_dispose(tmp);
-				if (ist_is_empty(Frontier)==false) {		
-					inter=ist_intersection(Frontier,bad);
+				if (ist_is_empty(_tmp)==false) {		
+					inter=ist_intersection(_tmp,bad);
 					finished=ist_is_empty(inter) == true ? false : true;
 					ist_dispose(inter);
-					tmp = ist_remove_subsumed_paths(bpost,Frontier);
+					tmp = ist_remove_subsumed_paths(bpost,_tmp);
 					ist_dispose(bpost);
-					bpost = ist_union(tmp,Frontier);
+					bpost = ist_union(tmp,_tmp);
 					ist_dispose(tmp);
+					ist_dispose(_tmp);
 				} else {
+					ist_dispose(_tmp);
 					break;
 				}
 			}
@@ -703,14 +547,11 @@ boolean eec_fp(system, abs, initial_marking, bad, lfp)
 	tick_sec = sysconf (_SC_CLK_TCK) ;
 	comp_u = ((float)after.tms_utime - (float)before.tms_utime)/(float)tick_sec ;
 	comp_s = ((float)after.tms_stime - (float)before.tms_stime)/(float)tick_sec ;
-	printf("Total time of computation (user)   -> %6.3f sec.\n",comp_u);
+	printf("EEC time of computation (user)   -> %6.3f sec.\n",comp_u);
 	printf("                          (system) -> %6.3f sec.\n",comp_s);	
 	
 	return retval;
 }
-
-
-
 
 /*
  * List is a out parameter from which we 
@@ -1036,9 +877,13 @@ void ic4pn(system, initial_marking, bad)
 	abstraction_t *myabs, *newabs;
 	transition_system_t *sysabs;
 	ISTSharingTree *tmp, *_tmp, *a_neg_Z, *alpha_initial_marking, *neg_Z,\
-		*inter, *frontier, *lfp;
+		*inter, *frontier, *lfp, *old_lfp /* used to ensure properties of the checker */;
 	size_t i,j,nb_iteration;
 	boolean *maskpre, *maskpost, conclusive, eec_conclusive;
+
+
+        // initialization of old_lfp used to ensure the properties of the checker 
+        old_lfp = NULL;
 
 	/* Set constant abstraction top (all places merged) */
 	abstraction_t *topabs;
@@ -1061,7 +906,7 @@ void ic4pn(system, initial_marking, bad)
 		printf("Answer = true\n");
 	else
 		printf("Answer = false\n"); */
-	printf("IC4PN..\n");
+	puts("IC4PN..");
 
 	neg_Z = ist_copy(bad);
 
@@ -1084,18 +929,18 @@ void ic4pn(system, initial_marking, bad)
 		maskpost=(boolean *)xrealloc(maskpost, sysabs->limits.nbr_rules*sizeof(boolean));
 		for(i=0;i<sysabs->limits.nbr_rules;++i) 
 			maskpost[i]=true;
-		from_tansitions_to_tree(sysabs, maskpost);
+		from_transitions_to_tree(sysabs, maskpost);
 //		ist_stat(sysabs->tree_of_transitions);
 //		ist_write(sysabs->tree_of_transitions);
 
-//		puts("The current abstraction is :");
-//		print_abstraction(myabs);
+		puts("The current abstraction is :");
+		print_abstraction(myabs);
 		// Set a_neg_Z, alpha_initial_marking 
 		a_neg_Z = ist_abstraction(neg_Z,myabs);
 		ist_dispose(neg_Z);
-//		assert(ist_checkup(a_neg_Z)==true);
+		assert(ist_checkup(a_neg_Z)==true);
 		alpha_initial_marking = ist_abstraction(initial_marking,myabs);
-//		assert(ist_checkup(alpha_initial_marking)==true);
+		assert(ist_checkup(alpha_initial_marking)==true);
 
 		eec_conclusive=eec_fp(sysabs, myabs, alpha_initial_marking, a_neg_Z, &lfp);
 
@@ -1105,6 +950,23 @@ void ic4pn(system, initial_marking, bad)
 			print_abstraction(myabs);
 			conclusive = true;
 		} else {
+
+			//here we must add intersection to ensure properties of the checker
+			if (nb_iteration > 0) {
+				tmp = ist_abstraction(old_lfp,myabs);
+				ist_dispose(old_lfp);
+				old_lfp = tmp;
+
+				tmp = ist_intersection(lfp,old_lfp);
+				ist_dispose(lfp);
+				ist_dispose(old_lfp);
+				lfp = tmp;
+				old_lfp = ist_concretisation(lfp,myabs);
+
+			} else 
+				old_lfp = ist_concretisation(lfp,myabs);
+			////////////////////////////////////////////////////////////////////
+
 			tmp = adhoc_pre_star_pruned_unless_hit_m0(a_neg_Z, lfp, sysabs, alpha_initial_marking);	
 
 			if (tmp == NULL) {
@@ -1150,6 +1012,265 @@ void ic4pn(system, initial_marking, bad)
 	dispose_abstraction(myabs);
 }
 
+/*
+ * deprecated, used in old version of TSI
+ */
+boolean eec_bound(system, abs, initial_marking, bad, lfp)
+	transition_system_t *system;
+	abstraction_t *abs; /* For the bounds on the places */
+	ISTSharingTree *initial_marking, *bad, **lfp;
+{
+	boolean retval;
+	ISTSharingTree *abs_post_star, *inter, *downward_closed_initial_marking, *bpost, *tmp, *new_bad;
+	boolean finished;
+	size_t i;
+	
+	float comp_u,comp_s; 
+	long int tick_sec=0 ;
+	struct tms before, after;
+
+	int * new_bound;
+	
+	times(&before);	
+
+	/*initialisation des bornes */
+	new_bound = compute_bound_from_ucs(bad); 
+	for(i = 0; i < system->limits.nbr_variables; i++)
+		abs->bound[i] = new_bound[i];
+	print_abstraction(abs);
+	/* fin de l'initialisation des bornes */
+
+	
+	downward_closed_initial_marking = ist_downward_closure(initial_marking);
+	ist_normalize(downward_closed_initial_marking);
+//	assert(ist_checkup(downward_closed_initial_marking)==true);
+
+	finished=false;
+	while (finished == false) {
+		printf("eec: ENLARGE begin\t\n");
+		fflush(NULL);
+		/* To OVERapproximate we use abstract_bound */
+		abs_post_star = ist_abstract_post_star(downward_closed_initial_marking,abstract_bound,abs->bound,system);
+		//abs_post_star = ist_abstract_post_star_until_reach_bad(downward_closed_initial_marking,abstract_bound,abs->bound,system,bad);
+//		assert(ist_checkup(abs_post_star)==true);
+		puts("end");
+		*lfp = abs_post_star;
+		inter = ist_intersection(abs_post_star,bad);
+		finished=ist_is_empty(inter);
+		ist_dispose(inter);
+		if (finished==true) { 
+			/* finished==true -> the system is safe */
+//			ist_write(*lfp);
+//			ist_write(bad);
+			retval = true;
+		} else {
+			printf("eec: EXPAND begin\t");
+			fflush(NULL);
+			/* use bpost = ist_abstract_post_star(downward_closed_initial_marking,bound_values,abs->bound,system)
+			 * if you want to compute the lfp. Instead we make something more
+			 * efficient by testing, at each iteration, for the emptiness of
+			 * intersection w/ bad. */
+
+			bpost = ist_copy(downward_closed_initial_marking);
+			bound_values(bpost,abs->bound);
+			ist_normalize(bpost);
+			inter=ist_intersection(bpost,bad);
+			finished= ist_is_empty(inter) == true ? false : true;
+			ist_dispose(inter);
+
+			ISTSharingTree * Frontier = ist_copy(bpost);
+
+			while (finished==false) {
+				tmp = ist_abstract_post(Frontier,bound_values,abs->bound,system);
+				//tmp = ist_abstract_post_transtree(bpost,bound_values,abs->bound,system);
+				ist_dispose(Frontier);
+				Frontier =  ist_remove_subsumed_paths(tmp,bpost);
+				ist_dispose(tmp);
+				if (ist_is_empty(Frontier)==false) {		
+					inter=ist_intersection(Frontier,bad);
+					finished=ist_is_empty(inter) == true ? false : true;
+					ist_dispose(inter);
+					tmp = ist_remove_subsumed_paths(bpost,Frontier);
+					ist_dispose(bpost);
+					bpost = ist_union(tmp,Frontier);
+					ist_dispose(tmp);
+				} else {
+					break;
+				}
+			}
+			assert(ist_checkup(bpost)==true);
+			ist_dispose(bpost);
+			puts("end");
+			if (finished==true)
+				/* finished==true -> we hitted the bad states, the system is unsafe */
+				retval=false;
+			else {
+				/* One more iteration is needed because both bpost and
+				 * abs_post_star does not allow to conclude */
+				ist_dispose(abs_post_star);
+				printf("eec: BOUNDS\t");
+				//for(i=0;i<abs->nbV;printf("%d ",++abs->bound[i++]));
+				/* nouvelle methode de calcul des bornes */
+				new_bad = backward_reachability(system, initial_marking, bad, new_bound);
+				ist_dispose(bad);
+				bad = new_bad;
+				free(new_bound);
+				new_bound = compute_bound_from_ucs(bad); 
+				for(i = 0; i < system->limits.nbr_variables; i++)
+					abs->bound[i] = new_bound[i];
+			
+				printf("\n");
+				printf("New bounds");
+				print_abstraction(abs);
+			}
+		}
+	}
+	ist_dispose(downward_closed_initial_marking);
+
+	times(&after);
+	tick_sec = sysconf (_SC_CLK_TCK) ;
+	comp_u = ((float)after.tms_utime - (float)before.tms_utime)/(float)tick_sec ;
+	comp_s = ((float)after.tms_stime - (float)before.tms_stime)/(float)tick_sec ;
+	printf("Total time of computation (user)   -> %6.3f sec.\n",comp_u);
+	printf("                          (system) -> %6.3f sec.\n",comp_s);	
+	
+	return retval;
+}
+
+int *bound(S)
+	ISTSharingTree *S;
+{
+	ISTLayer *layer;
+	ISTNode *node;
+	int i, *res;
+	res=(int *) xmalloc((ist_nb_layers(S)-1)*sizeof(int));
+
+	i=0;
+	layer=S->FirstLayer;	
+	while(layer!=S->LastLayer) {
+		res[i]=0;
+		node=layer->FirstNode;
+		while(node!=NULL){
+			res[i]= node->Info->Left > res[i] ? node->Info->Left : res[i];
+			node=node->Next;
+		}
+		layer=layer->Next;
+		++i;
+	}
+	return res;
+}
+
+void tsi(system, initial_marking, bad) 
+	transition_system_t *system;
+	ISTSharingTree *bad, *initial_marking;
+{
+	ISTSharingTree *B, *F, *tmp, *_tmp, *curR, *nextR, *downward_closed_initial_marking;
+	boolean *mask, conclusive, out, diff;
+	int i, *b1, *b2, *mybound;
+
+	mask=(boolean *)xmalloc(system->limits.nbr_rules*sizeof(boolean));
+	for(i=0;i<system->limits.nbr_rules;++i) 
+		mask[i]=true;
+	from_transitions_to_tree(system, mask);
+	B=ist_copy(bad);
+	mybound=bound(B);
+	conclusive=false;
+	downward_closed_initial_marking = ist_downward_closure(initial_marking);
+	ist_normalize(downward_closed_initial_marking);
+	assert(ist_checkup(downward_closed_initial_marking)==true);
+
+	while(conclusive == false) {
+		F=ist_abstract_post_star_tsi(downward_closed_initial_marking, abstract_bound, mybound, system);
+		tmp=ist_copy(F);
+		RemoveUnboundedNodes(tmp);
+		_tmp=ist_intersection(tmp,B);
+		conclusive = !ist_is_empty(_tmp);
+		ist_dispose(tmp);
+		ist_dispose(_tmp);
+		if(conclusive==false){
+			tmp=ist_intersection(F,B);
+			conclusive = !ist_is_empty(tmp);
+			ist_dispose(tmp);
+			if (conclusive==false){
+				curR=ist_copy(B);
+				do {
+					tmp=ist_pre_of_rules(system->tree_of_transitions, curR);
+					/* if needed, fined grained subsumptionbased pruning */
+					_tmp=ist_union(curR, tmp);
+					nextR=ist_minimal_form(_tmp);
+					ist_dispose(_tmp);
+					b1=bound(nextR);
+					b2=bound(curR);
+					_tmp=ist_remove_subsumed_paths(nextR, curR);
+					diff=false;
+					i=0;
+					while(!diff && i<ist_nb_layers(nextR)-1){
+						diff = !(b1[i]==b2[i]);
+						i++;
+					}
+					out = diff ? ist_is_empty(_tmp) : true;
+					free(b1);
+					free(b2);
+					ist_dispose(_tmp);
+					ist_dispose(curR);
+					curR=nextR;
+				} while(out==true);
+				ist_dispose(B);
+				B=curR;
+				free(mybound);
+				mybound=bound(B);
+			} else 
+				puts("tsi concludes safe");
+		} else 
+			puts("tsi concludes unsafe");
+		ist_dispose(F);
+	}
+	ist_dispose(downward_closed_initial_marking);
+}
+
+
+void eec(system, initial_marking, bad) 
+	transition_system_t *system;
+	ISTSharingTree *bad, *initial_marking;
+{
+	boolean *maskpost, eec_conclusive;
+	abstraction_t *bottomabs;
+	ISTSharingTree *lfp_eec=NULL;
+        int i,j;
+	/* no abstraction is used to we build the bottom partition */
+	bottomabs=(abstraction_t *)xmalloc(sizeof(abstraction_t));
+	bottomabs->nbConcreteV=system->limits.nbr_variables;
+	bottomabs->nbV=system->limits.nbr_variables;
+	bottomabs->bound=(integer16 *)xmalloc(bottomabs->nbV*sizeof(integer16));
+	bottomabs->A=(integer16 **)xmalloc(bottomabs->nbV*sizeof(integer16 *));
+	for(i=0;i<bottomabs->nbV;++i) {
+		bottomabs->A[i]=(integer16 *)xmalloc(system->limits.nbr_variables*sizeof(integer16));
+		bottomabs->bound[i]=1;
+		for(j=0;j<system->limits.nbr_variables;++j) 
+			if (i==j)
+				bottomabs->A[i][j]=1;
+			else
+				bottomabs->A[i][j]=0;	
+	}
+
+	printf("EEC for the concrete system\n");
+	print_abstraction(bottomabs);
+
+	maskpost=(boolean *)xmalloc(system->limits.nbr_rules*sizeof(boolean));
+	for(i=0;i<system->limits.nbr_rules;++i) 
+		maskpost[i]=true;
+	printf("transition system\n");
+	from_transitions_to_tree(system, maskpost);
+	ist_stat(system->tree_of_transitions);
+	ist_write(system->tree_of_transitions);
+
+        eec_conclusive=eec_fp(system,bottomabs,initial_marking,bad,&lfp_eec);
+	if (eec_conclusive == true)
+		puts("EEC concludes safe");
+	else
+		puts("EEC concludes unsafe");
+}
+
 int main(int argc, char *argv[ ])
 {
 	T_PTR_tree atree;
@@ -1186,57 +1307,25 @@ int main(int argc, char *argv[ ])
 	build_problem_instance(atree, &system, &initial_marking, &bad);
 	printf("System has %3d variables, %3d transitions and %2d actual invariants\n",system->limits.nbr_variables, system->limits.nbr_rules, system->limits.nbr_invariants);
 
-	backward_reachability_basic(system,initial_marking,bad);
-	//ic4pn(system,initial_marking,bad);
+/* Our various coverability checker: 
+ * - backward_reachability is described in Laurent Van Begin Thesis and my master thesis (work for PN and extensions).
+ * - ic4pn is described in ICATPN'07 paper and in fundamentae informatica'08.
+ * - cegar development has been stalled for a couple of years, it is a counterexample based abstraction refinement coverability checker. 
+ * - tsi is described in our TSI journal paper.
+ * - eec implements the expand, enlarge and check algorithm described briefly in our ICATPN'07 and fundamentae informatica'08 papers
+ *   and described in details in Gilles Geerearts' thesis.
+ */
+	//backward_reachability_basic(system,initial_marking,bad);
+	ic4pn(system,initial_marking,bad);
 	//cegar(system,initial_marking,bad);
+	//tsi(system,initial_marking,bad);
+	//eec(system,initial_marking,bad);
 
-/*	boolean *maskpost;
-	transition_system_t *sysabs;
-	abstraction_t *bottomabs;
-	ISTSharingTree *lfp_eec=NULL;
-        int i,j;
-	boolean eec_conclusive;
-	bottomabs=(abstraction_t *)xmalloc(sizeof(abstraction_t));
-	bottomabs->nbConcreteV=system->limits.nbr_variables;
-	bottomabs->nbV=system->limits.nbr_variables;
-	bottomabs->bound=(integer16 *)xmalloc(bottomabs->nbV*sizeof(integer16));
-	bottomabs->A=(integer16 **)xmalloc(bottomabs->nbV*sizeof(integer16 *));
-	for(i=0;i<bottomabs->nbV;++i) {
-		bottomabs->A[i]=(integer16 *)xmalloc(system->limits.nbr_variables*sizeof(integer16));
-		bottomabs->bound[i]=1;
-		for(j=0;j<system->limits.nbr_variables;++j) 
-			if (i==j)
-				bottomabs->A[i][j]=1;
-			else
-				bottomabs->A[i][j]=0;	
-	}
-*/
-/*	printf("EEC for the concrete system\n");
-	print_abstraction(bottomabs);
-
-	maskpost=(boolean *)xmalloc(system->limits.nbr_rules*sizeof(boolean));
-	for(i=0;i<system->limits.nbr_rules;++i) 
-		maskpost[i]=true;
-	printf("transition system\n");
-	from_tansitions_to_tree(system, maskpost);
-	ist_stat(system->tree_of_transitions);
-	ist_write(system->tree_of_transitions);
-*/
-//	boolean eec_conclusive;
-//	eec_conclusive=eec_bound(system,bottomabs,initial_marking,bad,&lfp_eec);
-/*        eec_conclusive=eec_fp(system,bottomabs,initial_marking,bad,&lfp_eec);
-	if (eec_conclusive == true)
-		printf("Answer = true\n");
-	else
-		printf("Answer = false\n");
-*/
-/*	ist_dispose(initial_marking);
+	ist_dispose(initial_marking);
 	ist_dispose(bad);
 	dispose_transition_system(system);
 
 	tbsymbol_destroy(&tbsymbol);
-*/
 	puts("Thanks for using this tool");
-
 	return 0;
 }

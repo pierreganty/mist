@@ -113,7 +113,7 @@
 
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */
-/* #undef YYTEXT_POINTER */
+#define YYTEXT_POINTER 1
 
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */

@@ -71,6 +71,10 @@ ISTSharingTree
 *ist_abstract_post_star(ISTSharingTree *initial_marking, void
 		(*approx)(ISTSharingTree *S, integer16* b), integer16 *bound,
 		transition_system_t *t);
+void RemoveUnboundedNodes(ISTSharingTree *S);
+ISTSharingTree *ist_abstract_post_star_tsi(ISTSharingTree *initial_marking, void
+		(*approx)(ISTSharingTree *S, integer16* b), integer16 *bound,
+		transition_system_t *t);
 
 /* adhoc in the sense that only a subset is actulally considered, see atpn
  * paper for details */
@@ -86,4 +90,8 @@ ISTSharingTree *adhoc_pre_star_pruned_unless_hit_m0(ISTSharingTree *S,\
 ISTSharingTree
 *ist_abstract_post_transtree(ISTSharingTree *S, void (*approx)(ISTSharingTree
 			*S, integer16 *b), integer16 *bound, transition_system_t *t);
+
+ISTSharingTree *ist_abstract_post_star_until_reach_bad(ISTSharingTree *initial_marking, void
+		(*approx)(ISTSharingTree *S, integer16* b), integer16 *bound,
+		transition_system_t *t, ISTSharingTree *bad); 
 #endif

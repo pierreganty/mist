@@ -80,7 +80,7 @@ build_problem_instance(tree, system, init, unsafe)
 
 /* precond: sys->tree_of_transitions has been disposed if necessary */
 void
-from_tansitions_to_tree(transition_system_t *sys, boolean *mask)
+from_transitions_to_tree(transition_system_t *sys, boolean *mask)
 {
 	ISTInterval **transition;
 	int i,j;
