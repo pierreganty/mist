@@ -253,30 +253,6 @@ ISTSharingTree *ist_remove_subsumed_paths(S, T)
 	return Sol;
 }
 
-/* this version used for TSI remove a marking (resp omega marking) provided it is subsumed by another marking (resp omega marking)  */
-ISTSharingTree *ist_remove_subsumed_paths_restricted(S, T)
-	ISTSharingTree *S, *T;
-{
-	ISTSharingTree *bS, *bT, *uS, *uT, *tmp, *_tmp, *res;
-
-	bS=ist_copy(S);
-	bT=ist_copy(T);
-	RemoveUnboundedNodes(bS);
-	RemoveUnboundedNodes(bT);
-	uS=ist_minus(S,bS);
-	uT=ist_minus(T,bT);
-	tmp=ist_remove_subsumed_paths(bS, bT);
-	ist_dispose(bS);
-	ist_dispose(bT);
-	_tmp=ist_remove_subsumed_paths(uS,uT);
-	ist_dispose(uS);
-	ist_dispose(uT);
-	res=ist_union(tmp,_tmp);
-	ist_dispose(tmp);
-	ist_dispose(_tmp);
-	return res;
-}
-
 
 
 static ISTNode *SubsumedPathsWithinTree(node1, node2, DifferentNode, LINK)

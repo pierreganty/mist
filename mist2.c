@@ -81,7 +81,7 @@ int * compute_bound_from_ucs(ISTSharingTree * S) {
 	
 	for(layer = S->FirstLayer; layer->Next != NULL; nblayer++,layer = layer->Next);
 
-	result = (int *)malloc(nblayer * sizeof(int));
+	result = (int *)xmalloc(nblayer * sizeof(int));
 	for(i=0,layer=S->FirstLayer ; i<nblayer ; i++,layer=layer->Next) {
 		result[i] = layer->LastNode->Info->Left;
 	}
@@ -113,9 +113,9 @@ ISTSharingTree *backward_reachability(system, initial_marking, frontier, bounds)
 	ISTSharingTree *a=ist_pre(frontier,system);
 	a = ist_remove_subsumed_paths(a,frontier);
 	if (ist_is_empty(a) == true)
-		printf("<<<<<<<<<<<<<<<<<<<<< fix point >>>>>>>>>>>>>>>>>>>>>>");
+		puts("<<<<<<<<<<<<<<<<<<<<< fix point >>>>>>>>>>>>>>>>>>>>>>");
 	else
-		printf("<<<<<<<<<<<<<<<<<<<<< not fix point >>>>>>>>>>>>>>>>>>");
+		puts("<<<<<<<<<<<<<<<<<<<<< not fix point >>>>>>>>>>>>>>>>>>");
 	ist_checkup(frontier);
 
 
@@ -200,7 +200,7 @@ ISTSharingTree *backward_reachability(system, initial_marking, frontier, bounds)
 			if (i!=system->limits.nbr_variables)
 				Continue = false;
 			else
-				free(new_bounds); 	
+				xfree(new_bounds); 	
 
 		} else  {
 			Continue = false;
@@ -356,7 +356,7 @@ static void print_help()
 
 static void head_msg()
 {
-	puts("Copyright (C) 2002-2007 Pierre Ganty, Laurent Van Begin.");
+	puts("Copyright (C) 2002-2009 Pierre Ganty, Laurent Van Begin.");
 	puts("mist2 is free software, covered by the GNU General Public License, and you are");
 	puts("welcome to change it and/or distribute copies of it under certains conditions.");
 	puts("There is absolutely no warranty for mist2. See the COPYING for details.");
@@ -1013,7 +1013,7 @@ void ic4pn(system, initial_marking, bad)
 }
 
 /*
- * deprecated, used in old version of TSI
+ * TSI
  */
 boolean eec_bound(system, abs, initial_marking, bad, lfp)
 	transition_system_t *system;
@@ -1029,7 +1029,7 @@ boolean eec_bound(system, abs, initial_marking, bad, lfp)
 	long int tick_sec=0 ;
 	struct tms before, after;
 
-	int * new_bound;
+	int *new_bound;
 	
 	times(&before);	
 
@@ -1050,8 +1050,8 @@ boolean eec_bound(system, abs, initial_marking, bad, lfp)
 		printf("eec: ENLARGE begin\t\n");
 		fflush(NULL);
 		/* To OVERapproximate we use abstract_bound */
-		abs_post_star = ist_abstract_post_star(downward_closed_initial_marking,abstract_bound,abs->bound,system);
-		//abs_post_star = ist_abstract_post_star_until_reach_bad(downward_closed_initial_marking,abstract_bound,abs->bound,system,bad);
+		//abs_post_star = ist_abstract_post_star(downward_closed_initial_marking,abstract_bound,abs->bound,system);
+		abs_post_star = ist_abstract_post_star_until_reach_bad(downward_closed_initial_marking,abstract_bound,abs->bound,system,bad);
 //		assert(ist_checkup(abs_post_star)==true);
 		puts("end");
 		*lfp = abs_post_star;
@@ -1101,7 +1101,7 @@ boolean eec_bound(system, abs, initial_marking, bad, lfp)
 			assert(ist_checkup(bpost)==true);
 			ist_dispose(bpost);
 			puts("end");
-			if (finished==true)
+			if (finished==true) 
 				/* finished==true -> we hitted the bad states, the system is unsafe */
 				retval=false;
 			else {
@@ -1114,7 +1114,7 @@ boolean eec_bound(system, abs, initial_marking, bad, lfp)
 				new_bad = backward_reachability(system, initial_marking, bad, new_bound);
 				ist_dispose(bad);
 				bad = new_bad;
-				free(new_bound);
+				xfree(new_bound);
 				new_bound = compute_bound_from_ucs(bad); 
 				for(i = 0; i < system->limits.nbr_variables; i++)
 					abs->bound[i] = new_bound[i];
@@ -1131,101 +1131,10 @@ boolean eec_bound(system, abs, initial_marking, bad, lfp)
 	tick_sec = sysconf (_SC_CLK_TCK) ;
 	comp_u = ((float)after.tms_utime - (float)before.tms_utime)/(float)tick_sec ;
 	comp_s = ((float)after.tms_stime - (float)before.tms_stime)/(float)tick_sec ;
-	printf("Total time of computation (user)   -> %6.3f sec.\n",comp_u);
+	printf("TSI time of computation (user)   -> %6.3f sec.\n",comp_u);
 	printf("                          (system) -> %6.3f sec.\n",comp_s);	
 	
 	return retval;
-}
-
-int *bound(S)
-	ISTSharingTree *S;
-{
-	ISTLayer *layer;
-	ISTNode *node;
-	int i, *res;
-	res=(int *) xmalloc((ist_nb_layers(S)-1)*sizeof(int));
-
-	i=0;
-	layer=S->FirstLayer;	
-	while(layer!=S->LastLayer) {
-		res[i]=0;
-		node=layer->FirstNode;
-		while(node!=NULL){
-			res[i]= node->Info->Left > res[i] ? node->Info->Left : res[i];
-			node=node->Next;
-		}
-		layer=layer->Next;
-		++i;
-	}
-	return res;
-}
-
-void tsi(system, initial_marking, bad) 
-	transition_system_t *system;
-	ISTSharingTree *bad, *initial_marking;
-{
-	ISTSharingTree *B, *F, *tmp, *_tmp, *curR, *nextR, *downward_closed_initial_marking;
-	boolean *mask, conclusive, out, diff;
-	int i, *b1, *b2, *mybound;
-
-	mask=(boolean *)xmalloc(system->limits.nbr_rules*sizeof(boolean));
-	for(i=0;i<system->limits.nbr_rules;++i) 
-		mask[i]=true;
-	from_transitions_to_tree(system, mask);
-	B=ist_copy(bad);
-	mybound=bound(B);
-	conclusive=false;
-	downward_closed_initial_marking = ist_downward_closure(initial_marking);
-	ist_normalize(downward_closed_initial_marking);
-	assert(ist_checkup(downward_closed_initial_marking)==true);
-
-	while(conclusive == false) {
-		F=ist_abstract_post_star_tsi(downward_closed_initial_marking, abstract_bound, mybound, system);
-		tmp=ist_copy(F);
-		RemoveUnboundedNodes(tmp);
-		_tmp=ist_intersection(tmp,B);
-		conclusive = !ist_is_empty(_tmp);
-		ist_dispose(tmp);
-		ist_dispose(_tmp);
-		if(conclusive==false){
-			tmp=ist_intersection(F,B);
-			conclusive = !ist_is_empty(tmp);
-			ist_dispose(tmp);
-			if (conclusive==false){
-				curR=ist_copy(B);
-				do {
-					tmp=ist_pre_of_rules(system->tree_of_transitions, curR);
-					/* if needed, fined grained subsumptionbased pruning */
-					_tmp=ist_union(curR, tmp);
-					nextR=ist_minimal_form(_tmp);
-					ist_dispose(_tmp);
-					b1=bound(nextR);
-					b2=bound(curR);
-					_tmp=ist_remove_subsumed_paths(nextR, curR);
-					diff=false;
-					i=0;
-					while(!diff && i<ist_nb_layers(nextR)-1){
-						diff = !(b1[i]==b2[i]);
-						i++;
-					}
-					out = diff ? ist_is_empty(_tmp) : true;
-					free(b1);
-					free(b2);
-					ist_dispose(_tmp);
-					ist_dispose(curR);
-					curR=nextR;
-				} while(out==true);
-				ist_dispose(B);
-				B=curR;
-				free(mybound);
-				mybound=bound(B);
-			} else 
-				puts("tsi concludes safe");
-		} else 
-			puts("tsi concludes unsafe");
-		ist_dispose(F);
-	}
-	ist_dispose(downward_closed_initial_marking);
 }
 
 
@@ -1270,6 +1179,48 @@ void eec(system, initial_marking, bad)
 	else
 		puts("EEC concludes unsafe");
 }
+
+void tsi(system, initial_marking, bad) 
+	transition_system_t *system;
+	ISTSharingTree *bad, *initial_marking;
+{
+	boolean *maskpost, eec_conclusive;
+	abstraction_t *bottomabs;
+	ISTSharingTree *lfp_eec=NULL;
+        int i,j;
+	/* no abstraction is used, so we build the bottom partition */
+	bottomabs=(abstraction_t *)xmalloc(sizeof(abstraction_t));
+	bottomabs->nbConcreteV=system->limits.nbr_variables;
+	bottomabs->nbV=system->limits.nbr_variables;
+	bottomabs->bound=(integer16 *)xmalloc(bottomabs->nbV*sizeof(integer16));
+	bottomabs->A=(integer16 **)xmalloc(bottomabs->nbV*sizeof(integer16 *));
+	for(i=0;i<bottomabs->nbV;++i) {
+		bottomabs->A[i]=(integer16 *)xmalloc(system->limits.nbr_variables*sizeof(integer16));
+		bottomabs->bound[i]=1;
+		for(j=0;j<system->limits.nbr_variables;++j) 
+			if (i==j)
+				bottomabs->A[i][j]=1;
+			else
+				bottomabs->A[i][j]=0;	
+	}
+	print_abstraction(bottomabs);
+
+	maskpost=(boolean *)xmalloc(system->limits.nbr_rules*sizeof(boolean));
+	for(i=0;i<system->limits.nbr_rules;++i) 
+		maskpost[i]=true;
+	printf("transition system\n");
+	from_transitions_to_tree(system, maskpost);
+	ist_stat(system->tree_of_transitions);
+	ist_write(system->tree_of_transitions);
+
+	/* the TSI algorithm is built as a modification of the EEC algorithm */
+        eec_conclusive=eec_bound(system,bottomabs,initial_marking,bad,&lfp_eec);
+	if (eec_conclusive == true)
+		puts("TSI concludes safe");
+	else
+		puts("TSI concludes unsafe");
+}
+
 
 int main(int argc, char *argv[ ])
 {
@@ -1316,9 +1267,9 @@ int main(int argc, char *argv[ ])
  *   and described in details in Gilles Geerearts' thesis.
  */
 	//backward_reachability_basic(system,initial_marking,bad);
-	ic4pn(system,initial_marking,bad);
+	//ic4pn(system,initial_marking,bad);
 	//cegar(system,initial_marking,bad);
-	//tsi(system,initial_marking,bad);
+	tsi(system,initial_marking,bad);
 	//eec(system,initial_marking,bad);
 
 	ist_dispose(initial_marking);
