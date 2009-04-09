@@ -90,7 +90,7 @@ int * compute_bound_from_ucs(ISTSharingTree * S) {
 }
 
 
-ISTSharingTree *backward_reachability(system, initial_marking, frontier, bounds) 
+ISTSharingTree *backward(system, initial_marking, frontier, bounds) 
 	transition_system_t *system;
 	ISTSharingTree *frontier, *initial_marking;
 	int *bounds;
@@ -234,7 +234,7 @@ ISTSharingTree *backward_reachability(system, initial_marking, frontier, bounds)
 	return (reached_elem);
 }
 
-void backward_reachability_basic(system, initial_marking, frontier) 
+void backward_basic(system, initial_marking, frontier) 
 	transition_system_t *system;
 	ISTSharingTree *frontier, *initial_marking;
 {
@@ -350,8 +350,12 @@ static void print_help()
 {
 	puts("Usage: mist2 [options] filename\n");
 	puts("Options:");
-	puts("     --help, -h   this help");
-	puts("     --version    show version numbers");
+	puts("     --help		this help");
+	puts("     --version	show version numbers");
+	puts("     --backward	the backward algorithm");
+	puts("     --ic4pn		the algorithm implemented in FI");
+	puts("     --tsi    	the algorithm implemented in TSI");
+	puts("     --eec    	the Expand, Enlarge and Check algorithm");
 }
 
 static void head_msg()
@@ -360,48 +364,6 @@ static void head_msg()
 	puts("mist2 is free software, covered by the GNU General Public License, and you are");
 	puts("welcome to change it and/or distribute copies of it under certains conditions.");
 	puts("There is absolutely no warranty for mist2. See the COPYING for details.");
-}
-
-static void mist_cmdline_options_handle(int argc, char *argv[ ]) 
-{
-	int c;
-
-	while (1) {
-		int option_index = 0;
-		static struct option long_options[] = {
-			{"help", 0, 0, 'h'},
-			{"version", 0, 0, 0},
-			{0, 0, 0, 0}
-		};
-
-		c = getopt_long (argc, argv, "h", long_options, &option_index);
-		if (c == -1)
-			break;
-
-		switch (c)
-		{
-			case 0:
-				if (strcmp(long_options[option_index].name,"version") == 0) {
-					print_version();
-					exit(EXIT_SUCCESS);
-				} 
-				break;
-
-			case 'h':
-				print_help();
-				exit(EXIT_SUCCESS);
-				break;
-
-			default:
-				print_help();
-				err_quit("?? getopt returned character code 0%o ??\n", c);
-		}
-	}
-
-	if (optind >= argc) {
-		print_help();
-		err_quit("Missing filename");
-	}
 }
 
 /*
@@ -1111,7 +1073,7 @@ boolean eec_bound(system, abs, initial_marking, bad, lfp)
 				printf("eec: BOUNDS\t");
 				//for(i=0;i<abs->nbV;printf("%d ",++abs->bound[i++]));
 				/* nouvelle methode de calcul des bornes */
-				new_bad = backward_reachability(system, initial_marking, bad, new_bound);
+				new_bad = backward(system, initial_marking, bad, new_bound);
 				ist_dispose(bad);
 				bad = new_bad;
 				xfree(new_bound);
@@ -1221,15 +1183,80 @@ void tsi(system, initial_marking, bad)
 		puts("TSI concludes unsafe");
 }
 
+static void* mist_cmdline_options_handle(int argc, char *argv[ ]) 
+{
+	int c;
+	void *retval=NULL;
+
+	while (1) {
+		int option_index = 0;
+		static struct option long_options[] = {
+			{"help", 0, 0, 'h'},
+			{"version", 0, 0, 0},
+			{"backward", 0, 0, 'b'},
+			{"ic4pn", 0, 0, 'i'},
+			{"tsi", 0, 0, 't'},
+			{"eec", 0, 0, 'e'},
+			{0, 0, 0, 0}
+		};
+
+		c = getopt_long (argc, argv, "h", long_options, &option_index);
+		if (c == -1)
+			break;
+
+		switch (c)
+		{
+			case 0:
+				if (strcmp(long_options[option_index].name,"version") == 0) {
+					print_version();
+					exit(EXIT_SUCCESS);
+				} 
+				break;
+
+			case 'h':
+				print_help();
+				exit(EXIT_SUCCESS);
+				break;
+
+			case 'b':
+				retval=&backward_basic;
+				break;
+
+			case 'i':
+				retval=&ic4pn;
+				break;
+
+			case 't':
+				retval=&tsi;
+				break;
+
+			case 'e':
+				retval=&eec;
+				break;
+			default:
+				print_help();
+				err_quit("?? getopt returned character code 0%o ??\n", c);
+		}
+	}
+
+	if (optind >= argc) {
+		print_help();
+		err_quit("Missing filename");
+	}
+	return retval;
+}
+
 
 int main(int argc, char *argv[ ])
 {
 	T_PTR_tree atree;
 	transition_system_t *system;
 	ISTSharingTree *initial_marking, *bad;
+	void (*mc)(transition_system_t *sys, ISTSharingTree *init, ISTSharingTree *bad);
 
 	head_msg();
-	mist_cmdline_options_handle(argc, argv);
+	mc=mist_cmdline_options_handle(argc, argv);
+	assert(mc!=NULL);
 
 	linenumber = 1;
 	tbsymbol_init(&tbsymbol, 4096);
@@ -1259,17 +1286,18 @@ int main(int argc, char *argv[ ])
 	printf("System has %3d variables, %3d transitions and %2d actual invariants\n",system->limits.nbr_variables, system->limits.nbr_rules, system->limits.nbr_invariants);
 
 /* Our various coverability checker: 
- * - backward_reachability is described in Laurent Van Begin Thesis and my master thesis (work for PN and extensions).
+ * - backward is described in Laurent Van Begin Thesis and my master thesis (work for PN and extensions).
  * - ic4pn is described in ICATPN'07 paper and in fundamentae informatica'08.
  * - cegar development has been stalled for a couple of years, it is a counterexample based abstraction refinement coverability checker. 
  * - tsi is described in our TSI journal paper.
  * - eec implements the expand, enlarge and check algorithm described briefly in our ICATPN'07 and fundamentae informatica'08 papers
  *   and described in details in Gilles Geerearts' thesis.
  */
-	//backward_reachability_basic(system,initial_marking,bad);
+	//backward_basic(system,initial_marking,bad);
 	//ic4pn(system,initial_marking,bad);
 	//cegar(system,initial_marking,bad);
-	tsi(system,initial_marking,bad);
+	if(mc)
+		mc(system,initial_marking,bad);
 	//eec(system,initial_marking,bad);
 
 	ist_dispose(initial_marking);
