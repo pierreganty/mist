@@ -1186,7 +1186,7 @@ void tsi(system, initial_marking, bad)
 static void* mist_cmdline_options_handle(int argc, char *argv[ ]) 
 {
 	int c;
-	void *retval=NULL;
+	void *retval=&ic4pn;
 
 	while (1) {
 		int option_index = 0;
@@ -1296,9 +1296,10 @@ int main(int argc, char *argv[ ])
 	//backward_basic(system,initial_marking,bad);
 	//ic4pn(system,initial_marking,bad);
 	//cegar(system,initial_marking,bad);
+	//eec(system,initial_marking,bad);
+	//tsi(system,initial_marking,bad);
 	if(mc)
 		mc(system,initial_marking,bad);
-	//eec(system,initial_marking,bad);
 
 	ist_dispose(initial_marking);
 	ist_dispose(bad);
