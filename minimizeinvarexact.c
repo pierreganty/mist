@@ -204,13 +204,13 @@ ISTSharingTree *ist_remove_with_all_invar_exact(S, system)
     Sol = ist_copy(S);
     NuInv = 0;
     while ((NuInv < system->limits.nbr_invariants) && (ist_is_empty(Sol) == false)) {
-	/*
-	 * IST_m0_p should be deleted and replaced by system->invariants[NuInv]->m0_p
-	 */
-	Temp = ist_intersection_with_invar(Sol, &system->invariants[NuInv], system->limits.nbr_variables);
-	ist_dispose(Sol);
-	Sol = Temp;
-	NuInv++;
+		/*
+		 * IST_m0_p should be deleted and replaced by system->invariants[NuInv]->m0_p
+		 */
+		Temp = ist_intersection_with_invar(Sol, &system->invariants[NuInv], system->limits.nbr_variables);
+		ist_dispose(Sol);
+		Sol = Temp;
+		NuInv++;
     }
     return Sol;
 }
