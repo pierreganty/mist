@@ -71,6 +71,7 @@ void ist_print_error_trace(ISTSharingTree * initial_marking,THeadListIST * list_
 			Siter = ist_next_element_list_ist(list_ist);
 	}
 	printf("\n");
+	ist_dispose(S);
 }
 
 int * compute_bound_from_ucs(ISTSharingTree * S) {
@@ -302,6 +303,7 @@ void backward_basic(system, initial_marking, frontier)
 				 */
 				ist_dispose(reached_elem);
 				reached_elem = ist_union(temp, frontier);
+				ist_dispose(temp);
 				/* To minimize we can use:
 				 * ist_minimal_form or ist_minimal_form_sim_based
 				 */
@@ -334,6 +336,8 @@ void backward_basic(system, initial_marking, frontier)
 	printf("                          (system) -> %6.3f sec.\n",comp_s);
 
 	ist_dispose(reached_elem);
+ 	/* old_frontier should be disposed, when the loop is exited but it wasn't added to the error trace */
+   	if(ist_is_empty(frontier)) ist_dispose(old_frontier);
 	
 	/* Is the system safe ? */
 	if (reached == true)
@@ -350,17 +354,17 @@ static void print_help()
 {
 	puts("Usage: mist2 [options] filename\n");
 	puts("Options:");
-	puts("     --help		this help");
-	puts("     --version	show version numbers");
-	puts("     --backward	the backward algorithm");
-	puts("     --ic4pn		the algorithm implemented in FI");
-	puts("     --tsi    	the algorithm implemented in TSI");
-	puts("     --eec    	the Expand, Enlarge and Check algorithm");
+	puts("     --help       this help");
+	puts("     --version    show version numbers");
+	puts("     --backward   the backward algorithm with invariant pruning");
+	puts("     --ic4pn      the algorithm described in FI");
+	puts("     --tsi        the algorithm described in TSI");
+	puts("     --eec        the Expand, Enlarge and Check algorithm");
 }
 
 static void head_msg()
 {
-	puts("Copyright (C) 2002-2009 Pierre Ganty, Laurent Van Begin.");
+	puts("Copyright (C) 2002-2009 Pierre Ganty, 2003-2008 Laurent Van Begin.");
 	puts("mist2 is free software, covered by the GNU General Public License, and you are");
 	puts("welcome to change it and/or distribute copies of it under certains conditions.");
 	puts("There is absolutely no warranty for mist2. See the COPYING for details.");
@@ -441,6 +445,7 @@ boolean eec_fp(system, abs, initial_marking, bad, lfp)
 		*/
 		abs_post_star = ist_abstract_post_star(downward_closed_initial_marking,abstract_bound,abs->bound,system);
 //		assert(ist_checkup(abs_post_star)==true);
+		ist_write(abs_post_star);
 		puts("end");
 		*lfp = abs_post_star;
 		inter = ist_intersection(abs_post_star,bad);
@@ -466,8 +471,8 @@ boolean eec_fp(system, abs, initial_marking, bad, lfp)
 			finished= ist_is_empty(inter) == true ? false : true;
 			ist_dispose(inter);
 			while (finished==false) {
-				//tmp = ist_abstract_post(bpost,bound_values,abs->bound,system);
-				tmp = ist_abstract_post_transtree(bpost,bound_values,abs->bound,system);
+				tmp = ist_abstract_post(bpost,bound_values,abs->bound,system);
+				//tmp = ist_abstract_post_transtree(bpost,bound_values,abs->bound,system);
 				_tmp =  ist_remove_subsumed_paths(tmp,bpost);
 				ist_dispose(tmp);
 				if (ist_is_empty(_tmp)==false) {		

@@ -35,7 +35,7 @@
 #define HAVE_LIMITS_H 1
 
 /* Define to 1 if you have the <malloc.h> header file. */
-#define HAVE_MALLOC_H 1
+/* #undef HAVE_MALLOC_H */
 
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
@@ -91,6 +91,9 @@
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME ""
 
+/* Define to the home page for this package. */
+#define PACKAGE_URL ""
+
 /* Define to the version of this package. */
 #define PACKAGE_VERSION ""
 
@@ -109,7 +112,7 @@
 #define TIME_WITH_SYS_TIME 1
 
 /* Version number of package */
-#define VERSION "0.9"
+#define VERSION "1.0.3"
 
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */

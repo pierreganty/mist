@@ -1053,6 +1053,7 @@ ISTSharingTree *ist_pre_pruned_wth_inv_and_prev_iterates(prec, reached_elem, sys
 			}
 
 		}
+		ist_dispose(pre_of_ith_rule);
 		++i;
 	}
 	return pre_until_ith_rule;
@@ -1092,6 +1093,7 @@ ISTSharingTree *ist_pre(prec, system)
 
 			}
 		}
+		ist_dispose(pre_of_ith_rule);
 		++i;
 	}
 	return pre_until_ith_rule;
