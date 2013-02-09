@@ -77,7 +77,7 @@
 #define HAVE_VPRINTF 1
 
 /* Name of package */
-#define PACKAGE "mist2"
+#define PACKAGE "mist"
 
 /* Define to the address where bug reports for this package should be sent. */
 #define PACKAGE_BUGREPORT ""
