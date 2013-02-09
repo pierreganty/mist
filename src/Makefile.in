@@ -48,11 +48,11 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
-bin_PROGRAMS = mist2$(EXEEXT)
+bin_PROGRAMS = mist$(EXEEXT)
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(srcdir)/config.h.in lexer.c parser.c $(top_srcdir)/depcomp \
-	$(top_srcdir)/ylwrap
+	$(top_srcdir)/ylwrap TODO
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
@@ -63,7 +63,7 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_mist2_OBJECTS = abstraction.$(OBJEXT) basis.$(OBJEXT) \
+am_mist_OBJECTS = abstraction.$(OBJEXT) basis.$(OBJEXT) \
 	checkup.$(OBJEXT) codegengoals.$(OBJEXT) codegeninit.$(OBJEXT) \
 	codegeninvar.$(OBJEXT) codegenrules.$(OBJEXT) \
 	complement.$(OBJEXT) computesim.$(OBJEXT) \
@@ -71,12 +71,12 @@ am_mist2_OBJECTS = abstraction.$(OBJEXT) basis.$(OBJEXT) \
 	interval.$(OBJEXT) ist_to_ps.$(OBJEXT) lexer.$(OBJEXT) \
 	list_ist.$(OBJEXT) listnode.$(OBJEXT) minimize.$(OBJEXT) \
 	minimizeinvarexact.$(OBJEXT) minimizeinvarheuristic.$(OBJEXT) \
-	mist2.$(OBJEXT) normalize.$(OBJEXT) parser.$(OBJEXT) \
+	mist.$(OBJEXT) normalize.$(OBJEXT) parser.$(OBJEXT) \
 	predtrans.$(OBJEXT) proc.$(OBJEXT) remove.$(OBJEXT) \
 	tbsymbol.$(OBJEXT) tbsymbolinfo.$(OBJEXT) \
 	transsystem.$(OBJEXT) tree.$(OBJEXT) xmalloc.$(OBJEXT)
-mist2_OBJECTS = $(am_mist2_OBJECTS)
-mist2_LDADD = $(LDADD)
+mist_OBJECTS = $(am_mist_OBJECTS)
+mist_LDADD = $(LDADD)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -118,8 +118,8 @@ AM_V_YACC = $(am__v_YACC_@AM_V@)
 am__v_YACC_ = $(am__v_YACC_@AM_DEFAULT_V@)
 am__v_YACC_0 = @echo "  YACC    " $@;
 am__v_YACC_1 = 
-SOURCES = $(mist2_SOURCES)
-DIST_SOURCES = $(mist2_SOURCES)
+SOURCES = $(mist_SOURCES)
+DIST_SOURCES = $(mist_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -240,7 +240,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CPPFLAGS = -I.
-mist2_SOURCES = \
+mist_SOURCES = \
 	abstraction.c \
 	abstraction.h \
 	basis.c \
@@ -283,7 +283,7 @@ mist2_SOURCES = \
 	minimizeinvarexact.h \
 	minimizeinvarheuristic.c \
 	minimizeinvarheuristic.h \
-	mist2.c \
+	mist.c \
 	normalize.c \
 	normalize.h \
 	parser.y \
@@ -397,9 +397,9 @@ uninstall-binPROGRAMS:
 
 clean-binPROGRAMS:
 	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
-mist2$(EXEEXT): $(mist2_OBJECTS) $(mist2_DEPENDENCIES) $(EXTRA_mist2_DEPENDENCIES) 
-	@rm -f mist2$(EXEEXT)
-	$(AM_V_CCLD)$(LINK) $(mist2_OBJECTS) $(mist2_LDADD) $(LIBS)
+mist$(EXEEXT): $(mist_OBJECTS) $(mist_DEPENDENCIES) $(EXTRA_mist_DEPENDENCIES) 
+	@rm -f mist$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(mist_OBJECTS) $(mist_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -427,7 +427,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/minimize.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/minimizeinvarexact.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/minimizeinvarheuristic.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mist2.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mist.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/normalize.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parser.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/predtrans.Po@am__quote@

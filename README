@@ -3,9 +3,8 @@ mist
 
 Safety checker for Petri Nets (and some extensions)
 
-% last updated: Sat Feb  9 20:53:10 CET 2013
 
-COMPILATION
+Compilation
 -----------
 
 To compile:
@@ -20,18 +19,17 @@ To uninstall:
    'make uninstall'
 
 
-EXECUTION
+Execution
 ---------
 
-The runnable file are in 'src/':
-   'src/mist'
-   or 'mist' if you installed the package.
+The runnable file are in 	src/:
+	src/mist
 
 Running:
-   'mist --<algorithm> <input_file>'
+	mist --\<algorithm\> \<input_file\>
 
 
-CONTEXT
+Context
 -------
 
 mist provides a set of functions together with a data structure (IST that
@@ -42,7 +40,7 @@ Petri Net formalism). MTN is a infinite state model for finite abstraction of
 Java multi-threaded programs. In fact, each thread can be viewed as a finite
 automata for which an abitrary number of instances can be considered.
 
-REFERENCES
+References
 ----------
 
 For the original sharing tree data structure
@@ -69,7 +67,7 @@ Further reading on IST:
 structures de données efficaces pour la manipulation de contraintes sur les
 intervalles. Université Libre de Bruxelles. 2002.
 
-MAIN AUTHOR COORDINATES
+Main author coordinates
 -----------------------
 
 pierreganty@gmail.com

@@ -1,6 +1,6 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT([mist2], 1.1)
-AC_CONFIG_SRCDIR([src/mist2.c])
+AC_INIT([mist], 1.1)
+AC_CONFIG_SRCDIR([src/mist.c])
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([src/config.h])
 

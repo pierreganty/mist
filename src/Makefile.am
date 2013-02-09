@@ -1,7 +1,7 @@
 DEFS=@DEFS@ -DTRANSFERT
 AM_CPPFLAGS=-I.
-bin_PROGRAMS = mist2
-mist2_SOURCES = \
+bin_PROGRAMS = mist
+mist_SOURCES = \
 	abstraction.c \
 	abstraction.h \
 	basis.c \
@@ -44,7 +44,7 @@ mist2_SOURCES = \
 	minimizeinvarexact.h \
 	minimizeinvarheuristic.c \
 	minimizeinvarheuristic.h \
-	mist2.c \
+	mist.c \
 	normalize.c \
 	normalize.h \
 	parser.y \
