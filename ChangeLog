@@ -1,0 +1,10 @@
+1.1
+---
+
+Moving the code to github
+
+1.0.3
+-----
+
+Fixed a bug that was making ic4pn returns incorrect results (or crash) for
+large Petri Nets (above 50 places)
