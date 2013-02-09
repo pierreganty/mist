@@ -1,5 +1,5 @@
 DEFS=@DEFS@ -DTRANSFERT
-INCLUDES=-I.
+AM_CPPFLAGS=-I.
 bin_PROGRAMS = mist2
 mist2_SOURCES = \
 	abstraction.c \
