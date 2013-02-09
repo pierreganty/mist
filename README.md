@@ -24,12 +24,12 @@ To uninstall: `make uninstall`
 
 ### Options ###
  
-`--help`       |this help 
-`--version`    |show version numbers 
-`--backward`   |the backward algorithm with invariant pruning 
-`--ic4pn`      |the algorithm described in FI 
-`--tsi`        |the algorithm described in TSI 
-`--eec`        |the Expand, Enlarge and Check algorithm 
+* `--help`       | this help 
+* `--version`    | show version numbers 
+* `--backward`   | the backward algorithm with invariant pruning 
+* `--ic4pn`      | the algorithm described in FI 
+* `--tsi`        | the algorithm described in TSI 
+* `--eec`        | the Expand, Enlarge and Check algorithm 
 
 ## Context ##
 
