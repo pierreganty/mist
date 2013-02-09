@@ -1,0 +1,70 @@
+digraph readwrite {
+size="7,11"
+X0 [label="X0"] ;
+X1 [label="X1"] ;
+X2 [label="X2"] ;
+X3 [label="X3"] ;
+X4 [label="X4"] ;
+X5 [label="X5"] ;
+X6 [label="X6"] ;
+X7 [label="X7"] ;
+X8 [label="X8"] ;
+X9 [label="X9"] ;
+X10 [label="X10"] ;
+X11 [label="X11"] ;
+X12 [label="X12"] ;
+
+T1 [label="T1", shape=box] ;
+T2 [label="T2", shape=box] ;
+T3 [label="T3", shape=box] ;
+T4 [label="T4", shape=box] ;
+T5 [label="T5", shape=box] ;
+T6 [label="T6", shape=box] ;
+T7 [label="T7", shape=box] ;
+T8 [label="T8", shape=box] ;
+T9 [label="T9", shape=box] ;
+
+X0 -> T1 ;
+T1 -> X1 ;
+
+X1 -> T2 ;
+X4 -> T2 ;
+T2 -> X0 ;
+T2 -> X3 ;
+
+X2 -> T3 ;
+X11 -> T3 ;
+T3 -> X1 ;
+
+X1 -> T4 ;
+T4 -> X2 ;
+T4 -> X5 ;
+T4 -> X9 ;
+
+X6 -> T5 ;
+T5 -> X7
+
+X3 -> T6 ;
+X7 -> T6 ;
+T6 -> X4 ;
+T6 -> X6 ;
+
+X8 -> T7 ;
+X12 -> T7 ;
+T7 -> X4 [label="5"] ;
+T7 -> X7 ;
+
+X4 -> T8 [label="5"];
+X5 -> T8 ;
+X7 -> T8 ;
+T8 -> X8 ;
+T8 -> X10 ;
+
+X9 -> T9 ;
+X10 -> T9 ;
+T9 -> X11 ;
+T9 -> X12 ;
+
+
+
+}

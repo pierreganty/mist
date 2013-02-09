@@ -1,0 +1,12 @@
+fms_attic is a different version of FMS whose provenance is unfortunately unknown.
+
+ping pong is a PN model for an asynchronous program (stemming from some tests with M. Emmi).
+
+The bingham_h examples are *contrived* examples whose description is given in
+J. Bingham, INFINITY'04. They show some weaknesses of our approach especially
+of our data structure which does not scale too well with nets with many places.
+Also it shows that ic4pn does not perform well because it has to refine until
+almost all places are separated.
+
+On a positive note, bingham_h250_attic has a different target from bingham_h250. 
+On this example ic4pn terminates with 10 variables.
