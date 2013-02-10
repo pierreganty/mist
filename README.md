@@ -1,42 +1,34 @@
-# mist #
+# mist - a safety checker for Petri Nets and extensions
 
----
+## Compilation
 
-Safety checker for Petri Nets (and some extensions). Find more details (e.g.
-the input format) [here][inputformat]. 
+To install (last step of optional):
 
-## Compilation ##
+     $ ./autogen.sh
+     $ ./configure
+     $ make
+     $ make install 
 
-`./autogen.sh`
+To uninstall:     
 
-`./configure`
-
-`make`
-
-`make install` (optional)
-
-To uninstall: `make uninstall`
+     $ make uninstall
 
 
-## Name ##
+## Synopsis
 
-`mist`, safety checker for Petri Nets and extensions.
+     $ mist --[options] <input_file>
 
-## Synopsis ##
-
-`mist --[options] <input_file>`
-
-### Options ###
+### options
 
 <table>
   <tr>
     <td>backward</td><td>the backward algorithm with invariant pruning described in Laurent Van Begin PhD thesis</td>
   </tr>
   <tr>
-    <td>ic4pn</td><td>the algorithm described in Fundamenta Informaticae, 88(3), 2008</td>
+    <td>ic4pn</td><td>the abstraction refinement algorithm described in Fundamenta Informaticae, 88(3), 2008</td>
   </tr>
   <tr>
-    <td>tsi</td><td>the algorithm described in Technique et Sciences Informatiques, 28(9), 2009</td>
+    <td>tsi</td><td>the abstraction refinement algorithm described in Technique et Sciences Informatiques, 28(9), 2009</td>
   </tr>
   <tr>
     <td>eec</td><td> Expand, Enlarge and Check algorithm described in the
@@ -49,12 +41,20 @@ To uninstall: `make uninstall`
     <td>version</td><td>show version number</td>
   </tr>
 </table>
+
+## Input file format and further details
+
+Further information can be found on the mist original [webpage][mistpage]. 
+
+## Reporting Problems 
+
+Please report issues on [GitHub][issueslist].
  
-## Further Questions ##
+## Further Questions
 
-* More details including the [algorithms and input format][inputformat].
-* Contact the author, [Pierre Ganty][email].
+Contact the author, [Pierre Ganty][email].
 
+[issueslist]:https://github.com/pierreganty/mist/issues
 [homepage]:http://software.imdea.org/people/pierre.ganty/index.html
-[inputformat]:http://software.imdea.org/~pierreganty/ist.html
+[mistpage]:http://software.imdea.org/~pierreganty/ist.html
 [email]:mailto:pierreganty@gmail.com
