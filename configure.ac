@@ -29,7 +29,7 @@ AC_CHECK_FUNCS([gettimeofday, strerror])
 # Compiler flag
 CFLAGS="-O3 -Wall"
 #CFLAGS="-g -D VERBOSE"
-YFLAGS="$YFLAGS -d"
+#YFLAGS="$YFLAGS -d"
 
 #AC_CONFIG_FILES()
 AC_SUBST(CFLAGS)

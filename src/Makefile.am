@@ -1,5 +1,7 @@
 DEFS=@DEFS@ -DTRANSFERT
 AM_CPPFLAGS=-I.
+BUILT_SOURCES = parser.h
+AM_YFLAGS = -d
 bin_PROGRAMS = mist
 mist_SOURCES = \
 	abstraction.c \

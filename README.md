@@ -11,9 +11,9 @@ the input format) [here][inputformat].
 
 `./configure`
 
-`./make`
+`make`
 
-`./make install` (optional)
+`make install` (optional)
 
 To uninstall: `make uninstall`
 
