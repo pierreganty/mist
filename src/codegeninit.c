@@ -53,7 +53,7 @@ init(T_PTR_tree entry) {
 
       tokensinit = (ISTInterval **)xmalloc(nbr_var*sizeof(ISTInterval *));
       for (i = 0 ; i < nbr_var; i++)
-		  tokensinit[i] = ist_build_interval(0,0);
+		  tokensinit[i] = ist_build_interval(0,INFINITY);
 
       initor(entry);
       nbrinitcmd = 1;

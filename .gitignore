@@ -15,3 +15,26 @@
 *.exe
 *.out
 *.app
+
+# Generated files
+Makefile
+Makefile.in
+aclocal.m4
+autom4te.cache/*
+config.log
+config.status
+configure
+depcomp
+install-sh
+missing
+src/.deps/*
+src/Makefile
+src/Makefile.in
+src/config.h
+src/config.h.in
+src/lexer.c
+src/mist
+src/parser.c
+src/parser.h
+src/stamp-h1
+ylwrap
