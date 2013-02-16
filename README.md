@@ -44,7 +44,7 @@ To uninstall:
 
 ## Input file format and further details
 
-Further information can be found on the mist original [webpage][mistpage]. 
+Further information can be found on the [wiki][mistpage]. 
 
 ## Reporting Problems 
 
@@ -56,5 +56,5 @@ Contact the author, [Pierre Ganty][email].
 
 [issueslist]:https://github.com/pierreganty/mist/issues
 [homepage]:http://software.imdea.org/people/pierre.ganty/index.html
-[mistpage]:http://software.imdea.org/~pierreganty/ist.html
+[mistpage]:https://github.com/pierreganty/mist/wiki
 [email]:mailto:pierreganty@gmail.com
