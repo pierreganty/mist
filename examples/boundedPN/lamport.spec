@@ -47,7 +47,7 @@ rules
 
 
 init
-    p1 = 0 , p2 = 1 , p3 = 0 , x_eq_0 = 0 , x_eq_1 = 1 , y_eq_1 = 1 , q1 = 0 , q1 = 0 , q2
+    p1 = 0 , p2 = 1 , p3 = 0 , x_eq_0 = 0 , x_eq_1 = 1 , y_eq_1 = 1 , q1 = 0 , q2 = 0 , q3
 = 0 , q4 = 0 , q5 = 1
 
 target
