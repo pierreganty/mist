@@ -57,7 +57,4 @@ target
 	point1>=1, point2>=1
 	
 invariants
-begin=1, do=1, sc1=1, oh_ns=1, point1=1, oh_a_dt=1, sc2=1, point2=1
-begin=1, do=1, sc1=1, oh_ns=1, point1=1, oh_a_dt=1, sc3=1, point2=1
-begin=1, do=1, sc1=1, oh_ns=1, point1=1, oh_a_dt=1, point2=1
-begin=1, do=1, sc1=1, oh_ns=1, point2=1
+begin=1, do=1, sc1=1, oh_ns=1, point1=1, oh_a_dt=1, sc2=1, sc3=1, point2=1
