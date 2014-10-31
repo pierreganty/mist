@@ -6,7 +6,7 @@ def list_files_with_spec_extension(folder_to_explore, output_list):
     list_all = os.listdir(folder_to_explore)
     for elem in list_all:
         full_name_elem = folder_to_explore+"/"+elem
-        if os.path.isfile(full_name_elem):
+        if os.path.isfile(full_name_elem) and elem != "README":
             output_list.append(full_name_elem)
         if os.path.isdir(full_name_elem):
             list_files_with_spec_extension(full_name_elem,output_list)
@@ -39,9 +39,6 @@ for test in sorted(list_spec_files):
     count +=1
     print "Round:", count, "\n Wroking with test: ", test, "\n"
     output_file.write("test: " + test + "\n")
-    if count == 8:
-        output_file.close()
-        sys.exit(1)
 
     for argument in tool_arguments:
         print "Executing example with arguments: ", argument

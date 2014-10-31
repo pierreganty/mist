@@ -52,7 +52,6 @@ doc/*.ind
 doc/*.log
 doc/*.out
 doc/*.gz
-doc/*.tex
 doc/*.bak
 doc/*.toc
 
