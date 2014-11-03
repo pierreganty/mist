@@ -38,23 +38,3 @@ src/parser.c
 src/parser.h
 src/stamp-h1
 ylwrap
-
-#Latex auxiliar files
-doc/img/*
-doc/pdf/*
-doc/tex/*
-doc/tikz/*
-doc/tikzgen/*
-doc/*.aux
-doc/*.idx
-doc/*.ilg
-doc/*.ind
-doc/*.log
-doc/*.out
-doc/*.gz
-doc/*.bak
-doc/*.toc
-
-#Auxiliar files for tests
-tests/tmp
-test/output.txt

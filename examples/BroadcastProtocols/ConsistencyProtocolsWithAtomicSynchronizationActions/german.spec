@@ -1,3 +1,4 @@
+#expected result: safe
 #variable definition
 vars
   Idle ServeS ServeE GrantS GrantE ex notex Null WaitS WaitE Shared Exclusive
@@ -104,7 +105,7 @@ init
 
 #Goals section
 target
-  Exclusive >= 2 
+  Exclusive >= 2
 
 invariants
 

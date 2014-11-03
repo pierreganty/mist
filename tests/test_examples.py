@@ -2,6 +2,75 @@
 import os
 import sys
 
+# This funcion read the next results from the file 'input_file'.
+# The file must be already opened. The function lets the file ready to be used again by this same function
+#
+# Return a list with the test name and the result of a simple analysis. This result can be:
+#   match
+#   dismatch
+#   wrong
+#   unuseless
+def get_next_result(input_file):
+    new_line = input_file.readline()
+    flag = True #Let us set only one time the return value to avoid overwriting
+    if new_line == "":
+        return "end"
+
+    test_full_name = new_line.split()[1]
+    test_name = os.path.splitext(os.path.basename(test_full_name))[0];
+
+    ret = [test_name]
+
+    new_line = input_file.readline()
+    if "EEC" not in new_line:
+        ret.append("useless")
+        flag = False
+    else:
+        tmp_result = new_line.split()[2]
+    if flag:
+        new_line = input_file.readline()
+        if "backward" not in new_line:
+            ret.append("useless")
+            flag = False
+        else:
+            if tmp_result != new_line.split()[3]:
+                ret.append("wrong")
+                flag = False
+        if flag:
+            new_line = input_file.readline()
+            if "TSI" not in new_line:
+                ret.append("useless")
+                flag = False
+            else:
+                if tmp_result != new_line.split()[2]:
+                    ret.append("wrong")
+                    flag = False
+
+        # At this point we have a correct result stored into variable tmp_result
+        if flag:
+            example_file = open(test_full_name,"r")
+            expected_result = example_file.readline()
+            if "expected" in expected_result:
+                if tmp_result == expected_result.split()[2]:
+                    ret.append("match")
+                else:
+                    ret.append("dismatch")
+            else:
+                ret.append("unknown")
+
+    # Advance to the next interesting line
+    while "----------" not in new_line:
+        new_line = input_file.readline()
+
+    input_file.readline()
+    return ret
+
+
+# This function collects all the examples from the folder folder_to_explore
+# and subfolders and store it in the ouput_list
+#
+# Each element stored in the list is a path to an .spec example
+# Returns: nothing
 def list_files_with_spec_extension(folder_to_explore, output_list):
     list_all = os.listdir(folder_to_explore)
     for elem in list_all:
@@ -12,6 +81,39 @@ def list_files_with_spec_extension(folder_to_explore, output_list):
             list_files_with_spec_extension(full_name_elem,output_list)
 
 
+# This functions read all results from the file results_to_check_file
+# and anlyze each of them, showing the results of the analysis by the
+# standar ouput
+#
+# Returns: nothing
+def analyze_results(results_to_check_file):
+    results_to_check_file = open(results_to_check_file, "r")
+    print "Comparing results..."
+    while True:
+        result_to_check = get_next_result(results_to_check_file)
+
+        if result_to_check == "end":
+            break
+
+        print "Test: ", result_to_check[0]
+
+        if result_to_check[1] == "wrong":
+            print "\033[31;01mSomething is wrong\n\033[00m"
+        else:
+            if result_to_check[1] == "useless":
+                print "At least one of the tests was too slow\n"
+            else:
+                if result_to_check[1] == "unknown":
+                    print "\033[34;01mThere is no expected value for this example\n\033[00m"
+                else:
+                    if result_to_check[1] == "match":
+                        print "\033[32;01mTest passed correctly\n\033[00m"
+                    else:
+                        print "\033[33;01mDismatch\n\033[00m"
+
+
+########################################################################
+# Start of the program
 if len(sys.argv) != 3:
     print "Invalid imput format:"
     print "test_examples <folder> <output>"
@@ -57,4 +159,7 @@ for test in sorted(list_spec_files):
 
 print "All examples given has been executed"
 output_file.close()
+
+# Analyze results
+analyze_results(sys.argv[2])
 

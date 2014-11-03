@@ -1,3 +1,4 @@
+#expected result: unsafe
 #variable definition
 vars
   whileinc incx xi notifyincx endincx incy yi notifyincy endincy endinc whiledec decx while1 wait1 afterwait1 xd enddecx1 enddecx2 decy while2 wait2 afterwait2 yd enddecy1 enddecy2 enddec xpos notxpos ypos notypos lock unlock
@@ -89,7 +90,7 @@ endincy >= 1 , lock >= 1 ->
 	endincy' = endincy - 1
 	,
 	endinc' = endinc + 1
-	, 
+	,
 	lock' = lock - 1
 	,
 	unlock' = unlock + 1;
@@ -157,7 +158,7 @@ xd >=1 ->
 
 enddecx1 >= 1 , lock >= 1 ->
 	enddecx1' = enddecx1 - 1
-	,	
+	,
 	decy' = decy + 1
 	,
 	lock' = lock - 1
@@ -200,7 +201,7 @@ afterwait2 >= 1 , unlock >= 1 ->
 	,
 	lock' = lock + 1;
 
-while2 >= 1 , ypos >= 1 -> 
+while2 >= 1 , ypos >= 1 ->
 	while2' = while2 - 1
 	,
 	yd' = yd + 1;
@@ -212,7 +213,7 @@ yd >= 1 ->
 	,
 	ypos' = ypos + notypos + 0
 	,
-	notypos' = 0; 
+	notypos' = 0;
 
 yd >= 1 ->
         yd' = yd - 1
@@ -221,7 +222,7 @@ yd >= 1 ->
         ,
         notypos' = ypos + notypos + 0
         ,
-        ypos' = 0; 
+        ypos' = 0;
 
 enddecy1 >= 1 , lock >= 1 ->
 	enddecy1' =enddecy1 - 1
@@ -253,7 +254,7 @@ init
 
 #Goals section
 target
-  decy >= 1 , incy >= 1 
+  decy >= 1 , incy >= 1
 
 invariants
 xpos = 1, notxpos = 1
