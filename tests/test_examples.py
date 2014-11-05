@@ -133,7 +133,7 @@ def analyze_results(results_to_check_file):
             print "\033[31;01mSomething is wrong\n\033[00m"
         else:
             if result_to_check[1] == "useless":
-                print "At least one of the tests was too slow\n"
+                print "At least one of the tests hadn't been completed\n"
             else:
                 if result_to_check[1] == "unknown":
                     print "\033[34;01mThere is no expected value for this example\n\033[00m"
@@ -144,47 +144,90 @@ def analyze_results(results_to_check_file):
                         print "\033[33;01mDismatch\n\033[00m"
 
 
+def show_help():
+    print "This script allows you to run a set of tests storing the results and analyzing them. The script also show you a summary about the correctness of the results obtained"
+    print ""
+    print "Usage: ./test_examples [--options] [folder] [file]"
+    print ""
+    print "Options:"
+    print "\t\033[01m--help\033[00m -Show this output"
+    print "\t\033[01m--run\033[00m -Run the examples from the folder given and write a summary of the outputs in file"
+    print "\t\033[01m--analyze\033[00m -Analyze the results stored into the file"
+    print "\t\033[01m--all\033[00m -Run all the test from the folder, stores the results into file and analyze it"
+
+
 ########################################################################
-# Start of the program
-if len(sys.argv) != 3:
-    print "Invalid imput format:"
-    print "test_examples <folder> <output>"
-    sys.exit(0)
+# Begin of the program
+
+run = False
+analyze = False
+# Parse input
+if len(sys.argv) == 1 or sys.argv[1] == "--help":
+    show_help()
+else:
+    if len(sys.argv) == 3:
+        if sys.argv[1] == "--analyze":
+            analyze = True
+            output_file = sys.argv[2]
+        else:
+            print "Invalid imput format:"
+            show_help()
+            sys.exit(0)
+    elif len(sys.argv) == 4:
+        if sys.argv[1] == "--run":
+            run=True
+            output_file = sys.argv[3]
+            folder = sys.argv[2]
+        elif sys.argv[1] == "--all":
+            run = True
+            analyze = True
+            output_file = sys.argv[3]
+            folder = sys.argv[2]
+        else:
+            print "Invalid imput format:"
+            show_help()
+            sys.exit(0)
+    else:
+        print "Invalid imput format:"
+        show_help()
+        sys.exit(0)
+
 
 # Mutex to sincronyse the thread when writing the output
-mutex = threading.Lock()
+if run:
+    mutex = threading.Lock()
 
-folder = sys.argv[1]
-tmp_output = "tmp"
-command = "mist "
-tool_arguments = ["--eec ", "--backward ", "--tsi "]
+    tmp_output = "tmp"
+    command = "mist "
+    tool_arguments = ["--eec ", "--backward ", "--tsi "]
+
+    print "This script execute mist tool whih all the examples contained in the foler given as argument whith extension .spec"
+
+    #Empty list to store in it all the test files
+    list_spec_files = []
+
+    list_files_with_spec_extension(folder, list_spec_files)
+
+    # We already have all the test stored in the variable 'list_spec_files'
+    # Now we have to execute all of them and store the output
+
+    count = 0
+    list_of_threads = []
+    for test in sorted(list_spec_files):
+        count +=1
+        print "\nRound:", count, "\n Wroking with test: ", test
+
+        thread = threading.Thread(target=execute_test, args=[output_file, mutex, command, test, tool_arguments])
+        thread.start()
+        list_of_threads.append(thread)
 
 
-print "This script execute mist tool whih all the examples contained in the foler given as argument whith extension .spec"
+    # Analyze results
+    print "Waiting for the threads..."
+    [x.join() for x in list_of_threads]
 
-#Empty list to store in it all the test files
-list_spec_files = []
+    print "All examples given has been executed"
 
-list_files_with_spec_extension(folder, list_spec_files)
-
-# We already have all the test stored in the variable 'list_spec_files'
-# Now we have to execute all of them and store the output
-
-count = 0
-list_of_threads = []
-for test in sorted(list_spec_files):
-    count +=1
-    print "\nRound:", count, "\n Wroking with test: ", test
-
-    thread = threading.Thread(target=execute_test, args=[sys.argv[2], mutex, command, test, tool_arguments])
-    thread.start()
-    list_of_threads.append(thread)
-
-
-# Analyze results
-print "Waiting for the threads..."
-[x.join() for x in list_of_threads]
-
-print "All examples given has been executed"
-analyze_results(sys.argv[2])
+if analyze:
+    analyze_results(output_file)
 
