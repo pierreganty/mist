@@ -1,6 +1,38 @@
 #! /usr/bin/python
 import os
 import sys
+import multiprocessing
+import threading
+
+# Function to execute a test.
+# This function receives the name of the file to print there the results and a mutex
+# to keep sincronysed with other threads
+#
+# Returns: nothin
+def execute_test(output, mutex, command, test, tool_arguments):
+    tmp_file_name = "thread" + str(threading.current_thread().ident)
+
+    for argument in tool_arguments:
+        print "Executing example with arguments: ", argument
+        os.system(command + argument + test + ">> " + tmp_file_name)
+
+    tmp_output_file = open(tmp_file_name, "r")
+
+    line = tmp_output_file.readline()
+    mutex.acquire()
+    output_file = open(output, "a")
+    output_file.write("test: " + test + "\n")
+    while line != "":
+        if ("concludes" in line):
+            output_file.write(line)
+
+        line = tmp_output_file.readline()
+    output_file.write("-------------------------------------------------\n\n")
+    output_file.close()
+    os.remove(tmp_file_name)
+    mutex.release()
+    tmp_output_file.close()
+
 
 # This funcion read the next results from the file 'input_file'.
 # The file must be already opened. The function lets the file ready to be used again by this same function
@@ -119,8 +151,10 @@ if len(sys.argv) != 3:
     print "test_examples <folder> <output>"
     sys.exit(0)
 
+# Mutex to sincronyse the thread when writing the output
+mutex = threading.Lock()
+
 folder = sys.argv[1]
-output_file = open(sys.argv[2], "w")
 tmp_output = "tmp"
 command = "mist "
 tool_arguments = ["--eec ", "--backward ", "--tsi "]
@@ -137,29 +171,20 @@ list_files_with_spec_extension(folder, list_spec_files)
 # Now we have to execute all of them and store the output
 
 count = 0
+list_of_threads = []
 for test in sorted(list_spec_files):
     count +=1
-    print "Round:", count, "\n Wroking with test: ", test, "\n"
-    output_file.write("test: " + test + "\n")
+    print "\nRound:", count, "\n Wroking with test: ", test
 
-    for argument in tool_arguments:
-        print "Executing example with arguments: ", argument
-        os.system(command + argument + test + "> " + tmp_output)
-        tmp_output_file = open(tmp_output)
+    thread = threading.Thread(target=execute_test, args=[sys.argv[2], mutex, command, test, tool_arguments])
+    thread.start()
+    list_of_threads.append(thread)
 
-        line = tmp_output_file.readline()
-        while line != "":
-          if ("concludes" in line):
-            output_file.write(line)
-
-          line = tmp_output_file.readline()
-
-        tmp_output_file.close()
-    output_file.write("-------------------------------------------------\n\n")
-
-print "All examples given has been executed"
-output_file.close()
 
 # Analyze results
+print "Waiting for the threads..."
+[x.join() for x in list_of_threads]
+
+print "All examples given has been executed"
 analyze_results(sys.argv[2])
 
