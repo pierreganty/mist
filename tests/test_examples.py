@@ -1,7 +1,69 @@
 #! /usr/bin/python
 import os
 import sys
+import re
 import subprocess
+from operator import xor
+
+# This function receives a file an determines if the net described in it is
+# a Petri Net or doesn't
+#
+# Return
+#   True: The net is a Petri Net
+#   False: The net is not a Petri Net
+def is_petri_net(test_file_name):
+    test_file = open(test_file_name, "r")
+
+    line = test_file.readline()
+    regex_const = re.compile("[0-9]+") # regex to determine if we have a constant
+
+    # This regex let us to split any effect of a rule into three kind of tokens:
+    #  - strings
+    #  - constants
+    #  - empty tokens
+    #
+    # I.E.
+    # The effect x0'=x0-1 will be splitted into :
+    # [x0',x0,1] (And possible many empty tokens)
+    delimiters = "+", "-", "'", "\n", "'", " ", "\t", "=", ","
+    regexPattern = '|'.join(map(re.escape, delimiters))
+
+    while line != "":
+        if "->" in line:
+            # For each rule, we group all effects into one string where each effect will be delimited by commas
+            rule = line.split('->')[1]
+            #If the rule is written along several lines
+            if ";" not in rule:
+                # Read lines until reach the end of the rule
+                line = test_file.readline()
+                while ";" not in line:
+                    rule = rule + line
+                    line = test_file.readline()
+                # Add the last line, which contains ';'
+                rule = rule + line
+
+            # For each effect on the rule
+            for effect in rule.split(','):
+                # Split the effect into tokens according to what explained before
+                splits_tmp = re.split(regexPattern, effect)
+                #print splits_tmp
+
+                #Removing empty tokens
+                splits = [x for x in splits_tmp if x and x!=";"]
+                #print splits
+
+                if len(splits) != 3:
+                    # If it was a petri net we should have 3 not empty tokens:
+                    #   - New_variable'
+                    #   - Old_variable'
+                    #   - Constant
+                    return False
+                if (regex_const.match(splits[1]) is None and regex_const.match(splits[2]) is None) or (regex_const.match(splits[1]) is not None and regex_const.match(splits[2]) is not None):
+                    return False
+
+        line=test_file.readline()
+    return True
+
 
 # This funcion read the next results from the file 'input_file'.
 # The file must be already opened. The function lets the file ready to be used again by this same function
@@ -35,14 +97,14 @@ def get_next_result(input_file):
     # List of tests whose output mismatch the expected one
     mismatch = []
     # List of tests whose output is unknown. At the begining all results are unknown
-    unknown = ["eec", "backward", "tsi"]
+    unknown = ["eec", "backward", "tsi", "ic4pn"]
 
     new_line = input_file.readline()
 
     while "----------" not in new_line:
         if "EEC" in new_line:
             unknown.remove("eec")
-            if expected_result == new_line.split()[2]:
+            if new_line.split()[2] == "*" or expected_result == new_line.split()[2]:
                 match.append("eec")
             else:
                 mismatch.append("eec")
@@ -56,10 +118,17 @@ def get_next_result(input_file):
 
         if "TSI" in new_line:
             unknown.remove("tsi")
-            if expected_result == new_line.split()[2]:
+            if new_line.split()[2] == "*" or expected_result == new_line.split()[2]:
                 match.append("tsi")
             else:
                 mismatch.append("tsi")
+
+        if "ic4pn" in new_line:
+            unknown.remove("ic4pn")
+            if new_line.split()[2] == "*" or expected_result == new_line.split()[2]:
+                match.append("ic4pn")
+            else:
+                mismatch.append("ic4pn")
 
 
         new_line = input_file.readline()
@@ -119,10 +188,13 @@ def analyze_results(results_to_check_file):
             mismatch = result_to_check[2]
             unknown = result_to_check[3]
 
-            if len(match) == 3:
+            if len(match) == 4:
                 print "Test ", result_to_check[0], "\033[32;01m OK\033[00m"
             else:
-                print "Test ", result_to_check[0], "\033[31;01m ERR\033[00m"
+                if len(match) + len(unknown) == 4:
+                    print "Test ", result_to_check[0], "\033[33;01m INCOMPLETE\033[00m"
+                else:
+                    print "Test ", result_to_check[0], "\033[31;01m ERR\033[00m"
                 if len(match) != 0:
                     print "\033[01m Match: \033[00m", ", ".join(match)
                 if len(mismatch) != 0:
@@ -140,9 +212,10 @@ def show_help():
     print ""
     print "Options:"
     print "\t\033[01m--help\033[00m Shows this output"
-    print "\t\033[01m--run\033[00m Runs the examples from the folder given and write a summary of the outputs in file"
-    print "\t\033[01m--analyze\033[00m Analyzes the results stored into the file"
-    print "\t\033[01m--all\033[00m Runs all the test from the folder, stores the results into file and analyze it"
+    print "\t\033[01m--run\033[00m Runs mist on the examples in [folder] and writes the results to [file]"
+    print "\t\033[01m--analyze\033[00m Compares the results stored in [file] against expected outcomes"
+    print "\t\033[01m--all\033[00m Runs mist on the example in [folder], writes the results in [file] and compares against expected outcomes"
+
 
 
 # This function checks if a tool called 'name' exists or not
@@ -163,7 +236,7 @@ def is_tool(name):
 
 # Check if mist is instlled:
 if is_tool("mist") == False:
-    print "You should install mist before run this script"
+    print "You should install mist before running this script"
     sys.exit(0)
 
 run = False
@@ -203,25 +276,23 @@ else:
 # Mutex to sincronyse the thread when writing the output
 if run:
     if os.path.isfile(output_file_name):
-        print "The file ", output_file_name, " already exists. It would be overwritten."
+        print "The file ", output_file_name, " already exists. It will be overwritten."
         print "Do you want to continue anyways? [Y/N]"
         line = sys.stdin.readline()
         if line == "Y\n":
-            print "The file will be overwritted"
+            print "The file will be overwritten"
         else:
             print "Exit"
             sys.exit(0)
 
     output_file = open(output_file_name, "w")
 
-    print "This script execute mist tool whih all the examples contained in the foler given as argument whith extension .spec"
+    print "This script runs the algorithms of mist on the files in [folder], output is collected in [file] and compared against expected outcomes. The script also outputs a summary of the results obtained."
 
     #Empty list to store in it all the test files
     list_spec_files = []
 
     list_files_with_spec_extension(folder, list_spec_files)
-
-    print list_spec_files
 
     # We already have all the test stored in the variable 'list_spec_files'
     # Now we have to execute all of them and store the output
@@ -229,27 +300,57 @@ if run:
     count = 0
     list_of_process = []
     for test in list_spec_files:
-        count +=1
-        print "\nRound:", count, "\n Wroking with test: ", test
-        process = subprocess.Popen(['./execute_test.py', test], stdout=subprocess.PIPE)
+        count += 1
+        process = []
+        print "\nExample:", count, "\n Working with test: ", test
+        if (not is_petri_net(test)):
+            tool_arguments = ["--backward "]
+            process.append(subprocess.Popen('echo TSI concludes \*', stdout=subprocess.PIPE, shell = True))
+            process.append(subprocess.Popen('echo EEC concludes \*', stdout=subprocess.PIPE, shell = True))
+            process.append(subprocess.Popen('echo ic4pn concludes \*', stdout=subprocess.PIPE, shell = True))
+        else:
+            tool_arguments = ["--eec ", "--backward ", "--tsi ", "--ic4pn "]
+
+        for argument in tool_arguments:
+            print "Executing algorithm", argument, "of mist \n"
+            process.append(subprocess.Popen('mist ' + argument + test, stdout=subprocess.PIPE, shell = True))
+
+
         list_of_process.append(process)
 
-
     # Analyze results
-    print "Waiting for the threads..."
+    print "mist is running. Please wait."
 
     index = 0
+
     for p in list_of_process:
+        ic4pn = False
+        conclusion = ""
+        reachable = False
         output_file.write("test: " + list_spec_files[index] + "\n")
-        process_output = p.communicate()[0].split('\n')
-        for line in process_output:
-            if ("concludes" in line):
-                output_file.write(line + "\n")
+        for process_output_list in p:
+            process_output = process_output_list.communicate()[0].split('\n')
+            for line in process_output:
+                if "IC4PN" in line:
+                    ic4pn = True
+
+                if "concludes " in line:
+                    if ic4pn:
+                        conclusion = line #We must store the conclusion and take the last one
+                    else:
+                        output_file.write(line + "\n")
+                if "Reachable " in line:
+                    reachable = True
+
+            if conclusion != "":
+                output_file.write("ic4pn concludes" + conclusion.split("concludes")[1] + "\n") # Write the conclusion of ic4pn
+            if reachable:
+                output_file.write("ic4pn concludes unsafe \n") # Write the conclusion of ic4pn
         output_file.write("-------------------------------------------------\n\n")
         index += 1
 
     output_file.close()
-    print "All given examples has been executed"
+    print "Tests completed"
 
 if analyze:
     analyze_results(output_file_name)
