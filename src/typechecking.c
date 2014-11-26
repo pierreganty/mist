@@ -25,6 +25,7 @@
 #include "tree.h"
 #include "typechecking.h"
 #include "def.h"
+#include "tree.h"
 
 boolean possible_petri_net(T_PTR_tree entry){
   //printf("Checking if the node: %s belongs to a petri net \n", (char*)entry->info);
@@ -50,35 +51,5 @@ boolean possible_petri_net(T_PTR_tree entry){
 }
 
 boolean is_petri_net(T_PTR_tree tree){
-  size_t i;
-  //printf("Welcome to is_petri_net\n");
-  if (tree) {
-    //printf("We have a tree\n");
-     if (tree->nbrsubtrees) {
-        tree->state = CONT;
-        //printf("Checking if is possible to have a petri net\n");
-        if (!possible_petri_net(tree)) return false;
-        //printf("It's possible!!");
-        switch (tree->state)
-        {
-           case CONT:
-              for (i = 0; i < tree->nbrsubtrees && tree->state != BRK; i++)
-                 if (tree->subtrees[i]) {
-                    //printf("Calling myself\n");
-                    if (!is_petri_net(tree->subtrees[i])) return false;
-                    if (tree->subtrees[i]->state == BRK)
-                       tree_brk_branch(tree);
-                 }
-              break;
-           case BRK:
-              break;
-           case BRK_BRANCH:
-              tree->state = CONT;
-              break;
-           default:
-              err_quit ("Unknown state in is_petri_net\n");
-        }
-     }
-  }
-  return true;
+  return tree_dump(tree, possible_petri_net, NULL, NULL);
 }
