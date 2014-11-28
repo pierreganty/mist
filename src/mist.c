@@ -1272,11 +1272,12 @@ int main(int argc, char *argv[ ])
 
 	my_yyparse(&atree, argv[optind++]);
 
-	if (!is_petri_net(atree){
+	if (!is_petri_net(atree)){
 		if (mc == eec || mc == ic4pn || mc == tsi){
-			err_quit("The algorithm you selected only accepts PEtri Net and the input net is no a Petri net\n");
+			err_quit("The algorithm you selected only accepts Petri Net and the input net is no a Petri net\n");
 		}
 	}
+
 	/* We initialize the memory management of the system (must do it before parsing) */
 	printf("Allocating memory for data structure.. ");
 	ist_init_system();
