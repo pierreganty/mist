@@ -1,84 +1,23 @@
 #! /usr/bin/python
 import os
 import sys
-import re
+import signal
+import multiprocessing
 import subprocess
-import select
-import threading
-from operator import xor
+import Queue
 
-def timeout_func(process):
- if process.poll() is None:
-    try:
-        del fd_process_dic[process.stdout.fileno()]
-        fd_output_dic[process.pid] = ["Timeout"]
-        if process.stdout.fileno() in ended_process:
-            ended_process.remove(process.stdout.fileno())
-        poller.unregister(process.stdout.fileno())
-        process.kill()
-    except OSError as e:
-        if e.errno != errno.ESRCH:
-            raise
+# This function represents a worker, which will be used by multiprocessing
+# to determine the job that a subprocess should do
+def worker(input, output):
+    for test in iter(input.get, 'STOP'):
+        worker_result = test + "*+*+"
+        subprocesses = []
+        for argument in ["--eec", "--backward", "--tsi", "--ic4pn"]:
+            subprocesses.append(subprocess.Popen(['mist', argument, test], stdout=subprocess.PIPE, shell = False))
 
-
-# This function receives a file an determines if the net described in it is
-# a Petri Net or doesn't
-#
-# Return
-#   True: The net is a Petri Net
-#   False: The net is not a Petri Net
-def is_petri_net(test_file_name):
-    test_file = open(test_file_name, "r")
-
-    line = test_file.readline()
-    regex_const = re.compile("[0-9]+") # regex to determine if we have a constant
-
-    # This regex let us to split any effect of a rule into three kind of tokens:
-    #  - strings
-    #  - constants
-    #  - empty tokens
-    #
-    # I.E.
-    # The effect x0'=x0-1 will be splitted into :
-    # [x0',x0,1] (And possible many empty tokens)
-    delimiters = "+", "-", "'", "\n", "'", " ", "\t", "=", ","
-    regexPattern = '|'.join(map(re.escape, delimiters))
-
-    while line != "":
-        if "->" in line:
-            # For each rule, we group all effects into one string where each effect will be delimited by commas
-            rule = line.split('->')[1]
-            #If the rule is written along several lines
-            if ";" not in rule:
-                # Read lines until reach the end of the rule
-                line = test_file.readline()
-                while ";" not in line:
-                    rule = rule + line
-                    line = test_file.readline()
-                # Add the last line, which contains ';'
-                rule = rule + line
-
-            # For each effect on the rule
-            for effect in rule.split(','):
-                # Split the effect into tokens according to what explained before
-                splits_tmp = re.split(regexPattern, effect)
-                #print splits_tmp
-
-                #Removing empty tokens
-                splits = [x for x in splits_tmp if x and x!=";"]
-                #print splits
-
-                if len(splits) != 3:
-                    # If it was a petri net we should have 3 not empty tokens:
-                    #   - New_variable'
-                    #   - Old_variable'
-                    #   - Constant
-                    return False
-                if (regex_const.match(splits[1]) is None and regex_const.match(splits[2]) is None) or (regex_const.match(splits[1]) is not None and regex_const.match(splits[2]) is not None):
-                    return False
-
-        line=test_file.readline()
-    return True
+        for sp in subprocesses:
+            worker_result += sp.communicate()[0]
+        output.put(worker_result)
 
 
 # This funcion read the next results from the file 'input_file'.
@@ -233,10 +172,11 @@ def analyze_results(results_to_check_file):
                     print "\033[01m Mismatch: \033[00m", ", ".join(mismatch)
                 if len(unknown) != 0:
                     print "\033[01m Unknown: \033[00m", ", ".join(unknown)
-                    print "\033[01m Timeout: \033[00m", num_timeouts, " tests"
+                    print "\033[01m \tTimeout: \033[00m", num_timeouts, " tests"
                 if len(not_executed) != 0:
                     print "\033[01m Not executed: \033[00m", ", ".join(not_executed)
                 print ""
+    print "If there are more unknown results than timeouts then some example has crashed"
 
 
  # Function tu show help menu
@@ -269,18 +209,6 @@ def is_tool(name):
     return True
 
 
-def extracting_ended_processes(ended_process, fd_process_dic, fd_output_dic):
-    for fd in ended_process:
-        try:
-            old_process = fd_process_dic[fd[0]] # Taking process from dict
-            old_process[2].cancel() # Stop timer
-            fd_output_dic[old_process[1]] = old_process[0].communicate()[0].split('\n') # Collecting its output and storing it
-            del fd_process_dic[fd[0]] # Deleting entry from process in execution
-            poller.unregister(fd[0]) # Deleting entry from the poll
-        except KeyError:
-            print 'File descriptor ', fd[0], ' closed by timeout during poll. It is not important'
-
-
 ########################################################################
 # Begin of the program
 
@@ -291,7 +219,9 @@ if is_tool("mist") == False:
 
 run = False
 analyze = False
+
 # Parse input
+#########################################################
 if len(sys.argv) == 1 or sys.argv[1] == "--help":
     show_help()
 else:
@@ -321,10 +251,10 @@ else:
         print "Invalid imput format:"
         show_help()
         sys.exit(0)
+#########################################################
 
-
-# Mutex to sincronyse the thread when writing the output
 if run:
+    # Preparing the output file
     if os.path.isfile(output_file_name):
         print "The file ", output_file_name, " already exists. It will be overwritten."
         print "Do you want to continue anyways? [Y/N]"
@@ -337,9 +267,9 @@ if run:
 
     output_file = open(output_file_name, "w")
     max_number_of_subprocess = int(sys.argv[len(sys.argv)-2])
-    timeout = int(sys.argv[len(sys.argv)-1])
 
     print "This script runs the algorithms of mist on the files in [folder], output is collected in [file] and compared against expected outcomes. The script also outputs a summary of the results obtained. The max number of subprocess to be used is [number of subprocess]"
+
 
     #Empty list to store in it all the test files
     list_spec_files = []
@@ -349,82 +279,53 @@ if run:
     # We already have all the test stored in the variable 'list_spec_files'
     # Now we have to execute all of them and store the output
 
-    count = 0 # Counter for the number of tests executed
-    list_of_process = [] # List of lists of processes. Each sublist contains the subprocesses related to an example and the different algorithms that can be used on it.
-    fd_process_dic = {} # Dictionary which associates each file descriptor with the subprocess
-    fd_output_dic = {} # Dictionary which will contains the ouput of each process
-    poller = select.poll() # Poll to check if any process has finished
-    for test in list_spec_files:
-        count += 1
-        process = []
-        print "\nExample:", count, "\n Working with test: ", test
-        if (not is_petri_net(test)):
-            tool_arguments = ["--backward"]
-            # These prints simplify the analyzer's work
-            for not_arg in ["TSI", "EEC", "ic4pn"]:
-                process.append(not_arg)
-                fd_output_dic[not_arg] = [not_arg + " concludes *"]
-        else:
-            tool_arguments = ["--eec", "--backward", "--tsi", "--ic4pn"]
+    # Create queues
+    task_queue = multiprocessing.Queue()
+    done_queue = multiprocessing.Queue()
 
-        for argument in tool_arguments:
-            ended_process = poller.poll(1) # Collect the processes that have already finished
-            flag_print = True
-            # Check if we have reached the maximum number of process working on time
-            while (len(fd_process_dic.keys()) - len(ended_process)) >= max_number_of_subprocess:
-                if flag_print:
-                    print "Waiting for some subprocess to end...";
-                    flag_print = False
-                extracting_ended_processes(ended_process, fd_process_dic, fd_output_dic)
-                ended_process = poller.poll(1) # Check if any other tests has ended.
+    # Submit tasks
+    for task in list_spec_files:
+        task_queue.put(task)
 
-            extracting_ended_processes(ended_process, fd_process_dic, fd_output_dic)
+    # Start worker processes
+    for i in range(max_number_of_subprocess):
+        multiprocessing.Process(target=worker, args=(task_queue, done_queue)).start()
 
-            print "Executing algorithm", argument, "of mist \n"
-            new_process = subprocess.Popen(['mist', argument, test], stdout=subprocess.PIPE, shell = False)
-            process.append(new_process.pid) # To keep the process ordered and grouped by example
-            poller.register(new_process.stdout, select.EPOLLHUP) # Adding fd to the poll
-            t = threading.Timer(timeout, timeout_func, [new_process] )
-            t.start()
-            fd_process_dic[new_process.stdout.fileno()] = [new_process, new_process.pid, t]; # Addinf fd - process to the dictionary
-
-        list_of_process.append(process)
-
-    # Analyze results
-    print "mist is running. Please wait."
-    ended_process = poller.poll(1) # Check if all tests has ended
-    while len(fd_process_dic.keys()) > 0:
-        extracting_ended_processes(ended_process, fd_process_dic, fd_output_dic)
-        ended_process = poller.poll(1) # Check if any other tests has ended.
-
-    index = 0
-
-    for p in list_of_process:
-        ic4pn = False
-        conclusion = ""
-        reachable = False
-        output_file.write("test: " + list_spec_files[index] + "\n")
-        for process_output in p:
-            for line in fd_output_dic[process_output]:
+    # Get and print results
+    end = 0
+    while end != len(list_spec_files):
+        try:
+            ic4pn = False
+            conclusion = ""
+            reachable = False
+            process_output = done_queue.get()
+            output_file.write("test: " + process_output.split('*+*+')[0] + "\n")
+            for line in process_output.split('*+*+')[1].split("\n"):
                 if "IC4PN" in line:
-                    ic4pn = True
-
+                    ic4pn = True # As Ic4pn will send so many information, we must know when we are analyzing its output
                 if "concludes " in line:
                     if ic4pn:
                         conclusion = line #We must store the conclusion and take the last one
                     else:
                         output_file.write(line + "\n")
-                if "Reachable " in line:
+                if "Reachable " in line and ic4pn:
                     reachable = True
                 if "Timeout" in line:
                     output_file.write(line + "\n")
 
-            if conclusion != "":
-                output_file.write("ic4pn concludes" + conclusion.split("concludes")[1] + "\n") # Write the conclusion of ic4pn
-            if reachable:
-                output_file.write("ic4pn concludes unsafe \n") # Write the conclusion of ic4pn
-        output_file.write("-------------------------------------------------\n\n")
-        index += 1
+                if conclusion != "":
+                    output_file.write("ic4pn concludes" + conclusion.split("concludes")[1] + "\n") # Write the conclusion of ic4pn
+                    conclusion = ""
+                if reachable:
+                    output_file.write("ic4pn concludes unsafe \n") # Write the conclusion of ic4pn
+            output_file.write("-------------------------------------------------\n\n")
+            end += 1
+        except Queue.Empty:
+            print "Some problem occurs"
+
+    # Tell child processes to stop
+    for i in range(max_number_of_subprocess):
+        task_queue.put('STOP')
 
     output_file.close()
     print "Tests completed"
