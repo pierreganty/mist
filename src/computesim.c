@@ -90,7 +90,7 @@ void DisposeRel(N)
 		s = sn;
 	}
 	N->Rel = NULL;
-}  
+}
 
 static void WriteRel(L, P)
 	ISTSon *L;
@@ -104,7 +104,7 @@ static void WriteRel(L, P)
 			printf(" \n");
 		L = L->Next;
 	}
-} 
+}
 
 void STWriteRel(S)
 	ISTSharingTree *S;
@@ -129,7 +129,7 @@ void STWriteRel(S)
 	}
 	printf("Root simulated by \n");
 	WriteRel(S->Root->Rel, S->Root);
-} 
+}
 
 static void AddNodeToRelNotOrdered(Node, RelNode)
 	ISTNode *Node, *RelNode;
@@ -247,7 +247,7 @@ void STWriteBackRel(S)
 	}
 	printf("Root simulated by \n");
 	WriteRel(S->Root->BackRel, S->Root);
-}  
+}
 
 
 void DisposeBackRel(N)
@@ -262,7 +262,7 @@ void DisposeBackRel(N)
 		s = sn;
 	}
 	N->BackRel = NULL;
-} 
+}
 
 
 void DisposeInfoRel(S)
@@ -321,7 +321,7 @@ void DisposeInfoRelAndBackRel(S)
 		}
 		Layer = Layer->Next;
 	}
-} 
+}
 
 
 /*compute for each layer of S the forward simulation */
@@ -346,7 +346,7 @@ void ComputeForwardSimulation(S)
 		/*if the matrice is too small*/
 		if (NbNode > MatriceLenght) {
 			printf("Depasse%12ld\n", NbNode);
-			err_quit("ComputeForwardSimulation(S) : Too many nodes on this layer! Be more reasonable!\n"); 
+			err_quit("ComputeForwardSimulation(S) : Too many nodes on this layer! Be more reasonable!\n");
 		} else {
 			if (NbNode > Matrice.MaxDimUsed) {
 				InitMatrice(Matrice.MaxDimUsed + 1, NbNode);
@@ -363,18 +363,18 @@ void ComputeForwardSimulation(S)
 						if (FatherSimul->Son->Mark != NodeSon->AuxI) {
 							/*
 							 * If we acess more than once the same FatherSimul  wrt the same NodeSon,
-							 * it's not relevant to recompute the simulation relation since we have 
+							 * it's not relevant to recompute the simulation relation since we have
 							 * already computed it before.
 							 */
 							FatherSimul->Son->Mark = NodeSon->AuxI;
 							FatherNode = FirstSimuled;
 							while (FatherNode != NULL) {
-								if (FatherNode->Son->Info->Left < FatherSimul->Son->Info->Left) 
-									/* 
+								if (FatherNode->Son->Info->Left < FatherSimul->Son->Info->Left)
+									/*
 									 * If we satisfy this test, we know that we can't have
 									 * FatherNode->Son is simulated by FatherSimul->Son. We know also
-									 * that by the order on fathers that this FatherNode won't 
-									 * be simulated by any FatherSimul 
+									 * that by the order on fathers that this FatherNode won't
+									 * be simulated by any FatherSimul
 									 */
 									FirstSimuled = FirstSimuled->Next;
 								else {
@@ -433,7 +433,7 @@ void ComputeBackwardSimulation(S)
 		/*if the matrice is too small*/
 		if (NbNode > MatriceLenght) {
 			printf("Depasse%12ld\n", NbNode);
-			err_quit("ComputeForwardSimulation(S) : Too many nodes on this layer! Be more reasonable!\n"); 
+			err_quit("ComputeForwardSimulation(S) : Too many nodes on this layer! Be more reasonable!\n");
 			exit(EXIT_FAILURE);
 		} else {
 			if (NbNode > Matrice.MaxDimUsed) {
@@ -452,12 +452,12 @@ void ComputeBackwardSimulation(S)
 							SonSimul->Son->Mark = NodeFather->AuxI;
 							SonNode = FirstSimuled;
 							while (SonNode != NULL) {
-								if (SonNode->Son->Info->Left < SonSimul->Son->Info->Left) 
-									/* 
+								if (SonNode->Son->Info->Left < SonSimul->Son->Info->Left)
+									/*
 									 * If we satisfy this test, we know that we can't have
 									 * FatherNode->Son is simulated by FatherSimul->Son. We know also
-									 * that by the order on fathers that this FatherNode won't 
-									 * be simulated by any FatherSimul 
+									 * that by the order on fathers that this FatherNode won't
+									 * be simulated by any FatherSimul
 									 */
 									FirstSimuled = FirstSimuled->Next;
 								else {

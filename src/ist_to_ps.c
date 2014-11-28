@@ -27,9 +27,9 @@ static void rec_parc(FILE * f, ISTNode *n)
 {
     ISTSon *p=n->FirstSon ;
     if (n->AuxI != -1)
-    {	
+    {
 	fprintf(f, "node%p [shape=box, label=\"%ld,%ld\"];\n",n,n->Info->Left,n->Info->Right) ;
-	n->AuxI = -1 ; 
+	n->AuxI = -1 ;
 	/* We mark nodes because we could encounter them several times but we want to print them only once */
 	while(p)
 	{
@@ -42,7 +42,7 @@ static void rec_parc(FILE * f, ISTNode *n)
 	    p=p->Next ;
 	}
     }
-    fprintf(f, "\n\n") ; 
+    fprintf(f, "\n\n") ;
 }
 
 /*
@@ -73,6 +73,6 @@ void ist_dump_graph(char * filename, ISTSharingTree * T)
     ist_dispose(S);
 
     fprintf(f,"}\n") ;
-    fclose (f) ;	
+    fclose (f) ;
 
 }

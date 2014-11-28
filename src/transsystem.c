@@ -64,9 +64,9 @@ callback_tree_before(T_PTR_tree entry) {
 }
 
 void
-build_problem_instance(tree, system, init, unsafe) 
+build_problem_instance(tree, system, init, unsafe)
 	T_PTR_tree tree;
-	transition_system_t **system; 
+	transition_system_t **system;
 	ISTSharingTree **init, **unsafe;
 {
 
@@ -87,7 +87,7 @@ from_transitions_to_tree(transition_system_t *sys, boolean *mask)
 
 	ist_new(&sys->tree_of_transitions);
 
-	transition = (ISTInterval **)xmalloc(sys->limits.nbr_variables*sizeof(ISTInterval *)); 
+	transition = (ISTInterval **)xmalloc(sys->limits.nbr_variables*sizeof(ISTInterval *));
 	for (i=0; i<sys->limits.nbr_rules;++i) {
 			if (mask[i]==true) {
 				for (j=0; j<sys->limits.nbr_variables; ++j) {
@@ -95,7 +95,7 @@ from_transitions_to_tree(transition_system_t *sys, boolean *mask)
 					transition[j]->Right=sys->transition[i].cmd_for_place[j].delta;
 				}
 				ist_add(sys->tree_of_transitions, transition, sys->limits.nbr_variables);
-			}	
+			}
 	}
 }
 

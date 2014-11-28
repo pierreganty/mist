@@ -53,14 +53,14 @@ boolean ist_insert_list_node_without_redundancy(List,Node)
 	ISTNode *Node;
 {
 	ISTSon *tmp;
-	
+
 	tmp = List->FirstElem;
     while (tmp != NULL)
 		if (tmp->Son == Node)
 			return false;
 	    else
 	   		tmp = tmp->Next;
-	ist_insert_list_node(List,Node);	   
+	ist_insert_list_node(List,Node);
 	return true;
 }
 

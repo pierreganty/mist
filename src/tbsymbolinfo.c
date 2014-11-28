@@ -24,10 +24,10 @@
 #include "stdlib.h"
 #include "tbsymbolinfo.h"
 
-T_PTR_tbsymbol_info 
+T_PTR_tbsymbol_info
 tbsymbol_info_new() {
   T_PTR_tbsymbol_info info;
-    
+
   info = (T_PTR_tbsymbol_info)xmalloc(sizeof(T_tbsymbol_info));
   return info;
 }

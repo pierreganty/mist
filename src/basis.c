@@ -68,7 +68,7 @@ boolean ist_is_member(ST, Info, LInfo)
 		}
 	}
 	return Result;
-}  
+}
 
 
 /*
@@ -211,7 +211,7 @@ static boolean Included(node1, node2)
 /*
  * This function check if ST1 is included in ST2. By included we mean
  * a syntactic inclusion (w.r.t the labels of the nodes) not a semantic
- * one (i.e. work with intervals as set of values). 
+ * one (i.e. work with intervals as set of values).
  * The semantic one is defined by the function ist_exact_subsumption_test.
  */
 boolean ist_included(ST1, ST2)
@@ -221,9 +221,9 @@ boolean ist_included(ST1, ST2)
 	return (Included(ST1->Root, ST2->Root));
 }
 
-/*  
- * LOC_ist_add is a structure used locally in ist_add. Most of the time algorithms are recursive. 
- * To keep the code readable, instead of passing a plenty of parameters, we pass a data stucture 
+/*
+ * LOC_ist_add is a structure used locally in ist_add. Most of the time algorithms are recursive.
+ * To keep the code readable, instead of passing a plenty of parameters, we pass a data stucture
  * of this kind where all the parameters are wrapped in.
  */
 struct LOC_ist_add {
@@ -246,8 +246,8 @@ static ISTNode *Add(node, inlayer, mustchange, LINK)
 	ISTNode *node;
 	boolean inlayer, mustchange;
 	struct LOC_ist_add *LINK;
-	/* 
-	 * inlayer told us if the node is already in the layer LINK->layer or not 
+	/*
+	 * inlayer told us if the node is already in the layer LINK->layer or not
 	 * mustchange told us that we have to modify the sharing tree before adding the node 'node'
 	 */
 {
@@ -344,7 +344,7 @@ boolean ist_add(ST_, Info_, LInfo_)
 		res = Add(son, true, false, &V);
 	}
 	if (V.newelement) {
-		if (V.ST->NbElements >= 0)   
+		if (V.ST->NbElements >= 0)
 			V.ST->NbElements++;
 	}
 	return V.newelement;
@@ -385,7 +385,7 @@ static ISTNode *Union(node1, node2, LINK)
 				s1 = s1->Next;
 			} else if (ist_equal_interval(s1->Son->Info,s2->Son->Info)) {
 				/* s1	[	] 							*/
-				/* s2	[	]						 	*/	
+				/* s2	[	]						 	*/
 				LINK->memo = ist_get_memoization1(s1->Son, s2->Son);
 				if (LINK->memo != NULL)
 					rchild = LINK->memo->r;
@@ -447,10 +447,10 @@ ISTSharingTree *ist_union(ST1, ST2)
 	s1 = ST1->Root->FirstSon;
 	s2 = ST2->Root->FirstSon;
 	if (s1 != NULL || s2 != NULL){
-		/* The union of two empty sets is also an empty set */  
+		/* The union of two empty sets is also an empty set */
 		V.rlayer = ist_add_last_layer(V.STR);
 		while (s1 != NULL || s2 != NULL) {
-			/* Notice that this is a OR */  
+			/* Notice that this is a OR */
 			if (s1 == NULL) {
 				rchild = Copy(s2->Son, &V);
 				s2 = s2->Next;
@@ -459,26 +459,26 @@ ISTSharingTree *ist_union(ST1, ST2)
 				s1 = s1->Next;
 			} else if (ist_equal_interval(s1->Son->Info,s2->Son->Info))  {
 				/* s1	[	] 							*/
-				/* s2	[	]						 	*/	
+				/* s2	[	]						 	*/
 				rchild = Union(s1->Son, s2->Son, &V);
 				s1 = s1->Next;
 				s2 = s2->Next;
 			} else if (ist_less_interval(s1->Son->Info,s2->Son->Info)) {
-				/* s1	[				
-				   s2	    [				
-				   OR	 s1	[	]			
+				/* s1	[
+				   s2	    [
+				   OR	 s1	[	]
 				   s2	[		]		*/
 				rchild = Copy(s1->Son, &V);
 				s1 = s1->Next;
 			} else if (ist_greater_interval(s1->Son->Info,s2->Son->Info)) {
-				/* s1	[		]		
-				   s2	[	]		
-				   OR	 s1		[		
+				/* s1	[		]
+				   s2	[	]
+				   OR	 s1		[
 				   s2	[			*/
 				rchild = Copy(s2->Son, &V);
 				s2 = s2->Next;
 			}
-			if (rchild != NULL) 
+			if (rchild != NULL)
 				ist_add_son(V.STR->Root, rchild);
 		}
 		V.STR->NbElements = V.STR->Root->AuxI;
@@ -494,7 +494,7 @@ static ISTNode *Intersection(node1, node2, LINK)
 	ISTNode *node1, *node2;
 	struct LOC_ist_method  *LINK;
 {
-	/* We have to test all the combinations of nodes */ 
+	/* We have to test all the combinations of nodes */
 	ISTSon *s1, *s2;
 	ISTNode *rnode, *rchild;
 
@@ -520,7 +520,7 @@ static ISTNode *Intersection(node1, node2, LINK)
 						ist_dispose_info(LINK->intersect);
 					} else
 						rchild = Intersection(s1->Son, s2->Son, LINK);
-					if (rchild != NULL) 
+					if (rchild != NULL)
 						ist_add_son(rnode, rchild);
 				}
 				s2 = s2->Next;
@@ -562,7 +562,7 @@ ISTSharingTree *ist_intersection(ST1, ST2)
 			V.intersect = ist_intersect_intervals(s1->Son->Info,s2->Son->Info);
 			if (V.intersect != NULL) {
 				rchild = Intersection(s1->Son, s2->Son, &V);
-				if (rchild != NULL) 
+				if (rchild != NULL)
 					ist_add_son(V.STR->Root, rchild);
 			}
 			s2 = s2->Next;
@@ -703,7 +703,7 @@ ISTSharingTree *ist_minus(ST1, ST2)
 				stop = true;
 			else
 				ist_remove_last_layer(V.STR);
-		}  
+		}
 	}
 	WITH->NbElements = WITH->Root->AuxI;
 	return V.STR;
@@ -764,7 +764,7 @@ int ist_nb_layers(ST)
 		layer = layer->Next;
 	}
 	return n;
-} 
+}
 
 
 long ist_nb_elements(S)
@@ -812,7 +812,7 @@ static void STWriteElem(path, l)
 //			printf(",  ]");
 //		else
 			printf(",%2ld]", path[i]->Right);
-	}  
+	}
 	printf(">-\n");
 #endif
 }
@@ -883,11 +883,11 @@ ISTInterval **ist_firstpath2array(S)
 		Sol[i]=node->FirstSon->Son->Info;
 		node=node->FirstSon->Son;
 	}
-	return Sol; 
+	return Sol;
 }
 
 ISTHeadListNode *NoProject(ISTNode *node,ISTSharingTree *STR, ISTLayer *rlayer, int nlayer, integer16 *mask);
-ISTNode *YesProject(ISTNode *node,ISTSharingTree *STR, ISTLayer *rlayer, int nlayer, integer16 *mask) 
+ISTNode *YesProject(ISTNode *node,ISTSharingTree *STR, ISTLayer *rlayer, int nlayer, integer16 *mask)
 {
 	ISTSon *s;
 	ISTNode *rchild;
@@ -902,9 +902,9 @@ ISTNode *YesProject(ISTNode *node,ISTSharingTree *STR, ISTLayer *rlayer, int nla
 		ist_init_list_node(&list_tmp);
 		rnode = ist_create_node(node->Info);
 		rlayer = rlayer->Next;
-		if (rlayer == NULL) 
+		if (rlayer == NULL)
 			rlayer = ist_add_last_layer(STR);
-		
+
 		for(s=node->FirstSon;s != NULL;s=s->Next){
 			if (mask[nlayer+1] == 0) {
 				list = NoProject(s->Son,STR,rlayer,nlayer+1,mask);
@@ -916,10 +916,10 @@ ISTNode *YesProject(ISTNode *node,ISTSharingTree *STR, ISTLayer *rlayer, int nla
 				memo = ist_get_memoization1(s->Son, s->Son);
 				if (memo != NULL)
 					rchild = memo->r;
-				else 
+				else
 					rchild = YesProject(s->Son,STR,rlayer,nlayer+1,mask);
 				ist_add_son(rnode,rchild);
-				
+
 			}
 		}
 		/*if the next layer is not projected, we add the new sons */
@@ -934,17 +934,17 @@ ISTNode *YesProject(ISTNode *node,ISTSharingTree *STR, ISTLayer *rlayer, int nla
 		xfree(list_tmp);
 	}
 	ist_put_memoization1(node,node,rnode);
-	return rnode;	  
+	return rnode;
 }
 
-ISTHeadListNode *NoProject(ISTNode *node,ISTSharingTree *STR, ISTLayer *rlayer, int nlayer, integer16 *mask) 
+ISTHeadListNode *NoProject(ISTNode *node,ISTSharingTree *STR, ISTLayer *rlayer, int nlayer, integer16 *mask)
 {
 	ISTSon *s;
 	ISTNode *n;
 	ISTHeadListNode *list, *list_tmp;
 	ISTLayer *layer = rlayer;
 	TMemo1 *memo;
-	int l;	
+	int l;
 
 	ist_init_list_node(&list);
 	ist_insert_list_node(list,node);
@@ -960,7 +960,7 @@ ISTHeadListNode *NoProject(ISTNode *node,ISTSharingTree *STR, ISTLayer *rlayer, 
 		for(n = ist_remove_first_elem_list_node(list); n != NULL;n = ist_remove_first_elem_list_node(list)) {
 			for(s = n->FirstSon;s!=NULL;s=s->Next) {
 				if (s->Son->AuxI != ist_get_magic_number()) {
-					s->Son->AuxI = ist_get_magic_number();	
+					s->Son->AuxI = ist_get_magic_number();
 					ist_insert_list_node(list_tmp,s->Son);
 				}
 			}
@@ -977,9 +977,9 @@ ISTHeadListNode *NoProject(ISTNode *node,ISTSharingTree *STR, ISTLayer *rlayer, 
 			memo = ist_get_memoization1(s->Son, s->Son);
 			if (memo != NULL)
 				ist_insert_list_node(list_tmp,memo->r);
-			else 
+			else
 				ist_insert_list_node(list_tmp,YesProject(s->Son,STR,layer,l+1,mask));
-				
+
 		}
 	}
 
@@ -1045,7 +1045,7 @@ static ISTNode *Downward_closure(node, LINK)
 	ISTSon *s;
 	ISTNode *rnode;
 	ISTInterval i;
-	
+
 	if (ist_not_equal_interval(node->Info,&IST_end_of_list)) {
 		i.Left = 0;
 		i.Right = node->Info->Right;

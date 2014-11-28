@@ -41,7 +41,7 @@ static ISTHeadListNode* generate_new_sons_for_node(ISTNode *Node){
 	ISTSon *son, *copy_all_sons, *sons_of_new_node ;
 	float bound;
 	long new_left, new_right;
-	ISTHeadListNode *list_node; 
+	ISTHeadListNode *list_node;
 	boolean stop, authorized ;
 
 	head_list = NULL;
@@ -50,7 +50,7 @@ static ISTHeadListNode* generate_new_sons_for_node(ISTNode *Node){
 		bound = (float) son->Son->Info->Left - .5;
 		/*
 		 * Now we insert left bound sortedly and uniquely in the list,
-		 * remind that the left bound is always finite 
+		 * remind that the left bound is always finite
 		 */
 		p = head_list;
 		q = &head_list;
@@ -85,7 +85,7 @@ static ISTHeadListNode* generate_new_sons_for_node(ISTNode *Node){
 			} else if (p->val == INFINITY || p->val >= bound) {
 				/* If we are at the end or at the right place */
 				stop = true;
-			}	
+			}
 		}
 		if ((p != NULL &&  p->val != bound) || p == NULL){
 			new_elem = (list_val_t *)xmalloc(sizeof(list_val_t));
@@ -121,7 +121,7 @@ static ISTHeadListNode* generate_new_sons_for_node(ISTNode *Node){
 							if (sons_of_new_node->Son == copy_all_sons->Son){
 								authorized = false;
 							}
-							sons_of_new_node = sons_of_new_node->Next; 
+							sons_of_new_node = sons_of_new_node->Next;
 						}
 						if (authorized)
 							ist_add_son(new_node,copy_all_sons->Son);
@@ -133,14 +133,14 @@ static ISTHeadListNode* generate_new_sons_for_node(ISTNode *Node){
 			/*
 			 * We can also avoid to use ISTHeadListNode adding new_node
 			 * directly in the layer without father, afterwards we upgrade
-			 * the the sons of Node 
+			 * the the sons of Node
 			 */
 			if (new_node->FirstSon != NULL) {
 				ist_insert_list_node(list_node,new_node) ;
 			} else {
-				/* 
+				/*
 				   It can happen that you generate a son which is not included in any succ(Node)
-				   For instance take a Node with <0,0> and <3,3> as sons, you will generate 
+				   For instance take a Node with <0,0> and <3,3> as sons, you will generate
 				   <0,0> <1,2> and <3,3> with this procedure, so you have to get rid of <1,2>.
 				 */
 				ist_dispose_node(new_node);
@@ -154,7 +154,7 @@ static ISTHeadListNode* generate_new_sons_for_node(ISTNode *Node){
 void ist_determinize(ISTSharingTree *S){
 	ISTLayer *Layer;
 	ISTNode *Node, *new_node;
-	ISTHeadListNode *list_node; 
+	ISTHeadListNode *list_node;
 
 	list_node = generate_new_sons_for_node(S->Root);
 	ist_remove_sons(S->Root);

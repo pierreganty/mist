@@ -40,8 +40,8 @@ goalscode_produce(T_PTR_tree entry, ISTSharingTree **unsafe) {
   *unsafe = _unsafe;
 }
 
-static 
-void 
+static
+void
 goals(T_PTR_tree entry) {
 	size_t i;
 	char* info;
@@ -53,7 +53,7 @@ goals(T_PTR_tree entry) {
 			for (i = 0 ; i < nbr_var * tree_nbrsubtrees(entry) ; i++)
 				tokensgoals[i] = ist_build_interval(0,INFINITY);
 
-			for (nbrgoalscmd = 0 ; nbrgoalscmd < tree_nbrsubtrees(entry) ; nbrgoalscmd++) 
+			for (nbrgoalscmd = 0 ; nbrgoalscmd < tree_nbrsubtrees(entry) ; nbrgoalscmd++)
 				goalsor(tree_subtree(entry,nbrgoalscmd));
 
 		} else if (strcmp(info,"and") == 0) {
@@ -74,13 +74,13 @@ goals(T_PTR_tree entry) {
 		}
 		for (i=0;i<nbr_var*nbrgoalscmd;++i)
 			xfree(tokensgoals[i]);
-		xfree(tokensgoals);	
+		xfree(tokensgoals);
 	}
 }
 
 
-static 
-void 
+static
+void
 goalsor(T_PTR_tree entry) {
   size_t i;
 
@@ -91,8 +91,8 @@ goalsor(T_PTR_tree entry) {
 }
 
 
-static 
-void 
+static
+void
 goalsand(T_PTR_tree entry) {
 	T_PTR_tbsymbol_info infoid, infonb_left, infonb_right;
 	char *info;

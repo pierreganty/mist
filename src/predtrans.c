@@ -59,11 +59,11 @@ static ISTNode *PostOfTransfer(ISTNode *node,ISTSharingTree *STR, ISTLayer * rla
 			rnode = ist_create_node(node->Info);
 
 		rlayer = rlayer->Next;
-		if (rlayer == NULL) 
+		if (rlayer == NULL)
 			rlayer = ist_add_last_layer(STR);
-	
+
 		for(s=node->FirstSon;s != NULL;s=s->Next){
-			/* 
+			/*
 			 * We store the interval, in a univoque way inside a 32 bit field.
 			 * We take as asumption that -> Left and ->Right < 2^16.
 			 */
@@ -72,13 +72,13 @@ static ISTNode *PostOfTransfer(ISTNode *node,ISTSharingTree *STR, ISTLayer * rla
 					0x0000ffff : 0x0000ffff & val.Right) | (temp << 16);
 			memo = ist_get_memoization1(s->Son, (ISTNode*)temp);
 
-			if (memo != NULL) 
+			if (memo != NULL)
 				ist_add_son(rnode,memo->r);
 			else {
 				rchild = PostOfTransfer(s->Son,STR,rlayer,val,no_layer+1, origin, target);
 				ist_add_son(rnode,rchild);
 			}
-		}	
+		}
 		rlayer = rlayer->Previous;
 		if (no_layer == target)
 			ist_add_interval_to_interval(rnode->Info,&val);
@@ -88,7 +88,7 @@ static ISTNode *PostOfTransfer(ISTNode *node,ISTSharingTree *STR, ISTLayer * rla
 	temp =  (val.Right == INFINITY ?
 			0x0000ffff : 0x0000ffff & val.Right) | (temp << 16);
 	ist_put_memoization1(node, (ISTNode *)temp, rnode);
-	return rnode;	  
+	return rnode;
 }
 
 ISTSharingTree *ist_post_of_transfer(S, transfers)
@@ -113,7 +113,7 @@ ISTSharingTree *ist_post_of_transfer(S, transfers)
 }
 
 
-/* 
+/*
  * All that part (fron #ifdef TRANSFERT ... #else) is only dedicated to system
  */
 static boolean IsTarget(Place, transition)
@@ -202,7 +202,7 @@ static void ComputeOverApproximationOnLayerForValue(Layer, Value)
 	ISTLayer *Layer;
    	ISTInterval *Value;
 {
-	/* 
+	/*
 	 * Here we have 'Value' that is the target value we are dealing with. In
 	 * the target layer 'Layer' we have as many nodes as their previous value
 	 * == 'Value' but now their value is equal to [0,0] or [0,\infty) according
@@ -235,7 +235,7 @@ static void ComputeOverApproximationOnLayerForValue(Layer, Value)
 				ist_add_interval_to_interval(CurrentInterval,Rightincr);
 				NewNode = ist_create_node(CurrentInterval);
 				ist_copy_sons(Node,NewNode);
-				ist_insert_list_node(listnode,NewNode); 
+				ist_insert_list_node(listnode,NewNode);
 				NewNode->AuxP = Node->AuxP;
 				Node->AuxP = NewNode;
 			}
@@ -245,7 +245,7 @@ static void ComputeOverApproximationOnLayerForValue(Layer, Value)
 			ist_add_value_to_interval(CurrentInterval,1);
 			NewNode = ist_create_node(CurrentInterval);
 			ist_copy_sons(Node,NewNode);
-			ist_insert_list_node(listnode,NewNode); 
+			ist_insert_list_node(listnode,NewNode);
 			NewNode->AuxP = Node->AuxP;
 			Node->AuxP = NewNode;
 			if (lenghtofinterv != INFINITY){
@@ -254,12 +254,12 @@ static void ComputeOverApproximationOnLayerForValue(Layer, Value)
 					ist_add_interval_to_interval(CurrentInterval,Rightincr);
 					NewNode = ist_create_node(CurrentInterval);
 					ist_copy_sons(Node,NewNode);
-					ist_insert_list_node(listnode,NewNode); 
+					ist_insert_list_node(listnode,NewNode);
 					NewNode->AuxP = Node->AuxP;
 					Node->AuxP = NewNode;
 				}
 				ist_assign_interval_to_interval(CurrentInterval,Save);
-			} 
+			}
 
 		}
 		Node = Node->Next;
@@ -299,13 +299,13 @@ static void RemoveNodeWithoutValue(S, Target, Value)
 static void AdjustSonNode(Node)
 	ISTNode *Node;
 {
-	/* 
+	/*
 	 * This fonction is useful when we generate the over approxmiation for the
 	 * target value. In fact during this generation (AddValueLesserThan) we add
 	 * new nodes, we have also to take care about their parents.  The use of
 	 * the List is important, otherwise we will add several time the same son
 	 * to the same node.
-	 */ 
+	 */
 	ISTSon *Son;
 	ISTNode *NewSon;
 	ISTHeadListNode *ListSon;
@@ -342,9 +342,9 @@ static void ComputeOverApproximationForValue(S, Value, Trans)
    	ISTInterval *Value;
    	transfers_t *Trans;
 {
-	size_t i, nbr_variables; 
+	size_t i, nbr_variables;
 	ISTInterval *Temp;
-	ISTLayer *Layer; 
+	ISTLayer *Layer;
 	nbr_variables = ist_nb_layers(S)-1;
 	Temp = ist_build_interval(0,(Value->Right == INFINITY) ? INFINITY :0);
 	Layer = S->FirstLayer;
@@ -406,7 +406,7 @@ static ISTNode *IntersectionWithFormulaTransfert(node, Trans, MaxSum,  height, N
 						 ist_greater_value(LINK->intersect->Right,MaxSum->Right))){
 					stop = true;
 				} else {
-					/* 
+					/*
 					 * We store the interval, in a univoque way inside a 32 bit
 					 * field.  We take as asumption that -> Left and ->Right <
 					 * 2^16.
@@ -415,12 +415,12 @@ static ISTNode *IntersectionWithFormulaTransfert(node, Trans, MaxSum,  height, N
 					temp = (LINK->intersect->Right == INFINITY ? 0x0000ffff :
 							0x0000ffff & LINK->intersect->Right) | (temp << 16);
 					LINK->memo = ist_get_memoization1(s1->Son, (ISTNode*)temp);
-					/* 
+					/*
 					 * Here, we play with fire ... I explain. We take as
 					 * asumption that our values won't over 2^16 - 2 which is a
 					 * reasonable asumption.  In the case of infinity we encode
 					 * 0xffff as value. We take also as asumption that long is
-					 * over 32 bit 
+					 * over 32 bit
 					 */
 					if (LINK->memo != NULL){
 						rchild = LINK->memo->r;
@@ -430,12 +430,12 @@ static ISTNode *IntersectionWithFormulaTransfert(node, Trans, MaxSum,  height, N
 						ist_add_son(rnode, rchild);
 				}
 				ist_sub_interval_to_interval(LINK->intersect,s1->Son->Info);
-			} else {	
+			} else {
 				temp = (0x0000ffff & LINK->intersect->Left);
 				temp =  (LINK->intersect->Right == INFINITY ?  0x0000ffff :
 						0x0000ffff & LINK->intersect->Right) | (temp << 16);
 				LINK->memo = ist_get_memoization1(s1->Son, (ISTNode*)temp);
-				if (LINK->memo != NULL){ 
+				if (LINK->memo != NULL){
 					rchild = LINK->memo->r;
 				} else
 					rchild = IntersectionWithFormulaTransfert(s1->Son, Trans,MaxSum, height, NuLayer + 1, LINK);
@@ -549,9 +549,9 @@ ISTSharingTree *ist_pre_of_all_transfer(S, transition)
 			ist_dispose(STInt3);
 			STInt3 = STInt1;
 			ist_dispose(STInt2);
-			/* 
+			/*
 			 * It's not relevant to do the same computation on
-			 * the same value so we go to the next different value 
+			 * the same value so we go to the next different value
 			 */
 			stop = false;
 			Node = Node->Next;
@@ -561,7 +561,7 @@ ISTSharingTree *ist_pre_of_all_transfer(S, transition)
 				else {
 					if (ist_not_equal_interval(Node->Info,CurrentValue))
 						stop = true;
-					else 
+					else
 						Node = Node->Next;
 				}
 			}
@@ -648,7 +648,7 @@ ISTSharingTree * ist_pre_of_all_transfer_for_concretisation(ISTSharingTree * S,t
         Sol = STInt3;
     }
     return Sol;
-} 
+}
 
 
 ISTSharingTree *ist_symbolic_pre_of_rule(Prec, transition)
@@ -680,7 +680,7 @@ ISTSharingTree *ist_symbolic_pre_of_rule(Prec, transition)
 			while(Node !=NULL) {
 				inter = ist_intersect_intervals(&transition->cmd_for_place[l].guard,Node->Info);
 				if (inter == NULL)
-					ist_remove_sons(Node);                       
+					ist_remove_sons(Node);
 				else {
 					ist_dispose_info(Node->Info);
 					Node->Info = inter;
@@ -706,7 +706,7 @@ ISTSharingTree *ist_symbolic_pre_of_rule(Prec, transition)
 		}
 	}
 	ist_dispose_info(tau);
-	if (!ist_is_empty(STInt)) 
+	if (!ist_is_empty(STInt))
 		ist_normalize(STInt);
 	return STInt;
 }
@@ -726,8 +726,8 @@ ISTSharingTree *ist_pre_of_rule_plus_transfer(Prec, transition)
 
 	tau = ist_build_interval(0,INFINITY);
 	STInt=ist_copy(Prec);
-	if (transition->nbr_transfers > 0) 
-		modified=KeepMarkingsSatisfyingPostCondition(STInt,transition); 
+	if (transition->nbr_transfers > 0)
+		modified=KeepMarkingsSatisfyingPostCondition(STInt,transition);
 	if (ist_is_empty(STInt)== false){
 		if (transition->nbr_transfers > 0) {
 			if (modified == true )
@@ -742,7 +742,7 @@ ISTSharingTree *ist_pre_of_rule_plus_transfer(Prec, transition)
 			Layer=STInt->FirstLayer;
 			l=0;
 			while (Layer->Next != NULL ) {
-				if (transition->cmd_for_place[l].delta  != 0 
+				if (transition->cmd_for_place[l].delta  != 0
 						|| ist_not_equal_interval(&transition->cmd_for_place[l].guard, tau)){
 					Node=Layer->FirstNode;
 					while (Node!=NULL ) {
@@ -791,7 +791,7 @@ static ISTNode *PreOfRulesNode(node, nodetrans, LINK)
 			s2 = nodetrans->FirstSon;
 			while ( s2 != NULL) {
 				/* Set delta */
-				delta=s2->Son->Info->Right; 
+				delta=s2->Son->Info->Right;
 				/* Modify node */
 				ist_sub_value_to_interval(s1->Son->Info,delta);
 				/* Set guard */
@@ -809,7 +809,7 @@ static ISTNode *PreOfRulesNode(node, nodetrans, LINK)
 						ist_dispose_info(LINK->intersect);
 					} else
 						rchild = PreOfRulesNode(s1->Son, s2->Son, LINK);
-					if (rchild != NULL) 
+					if (rchild != NULL)
 						ist_add_son(rnode, rchild);
 				}
 				s2 = s2->Next;
@@ -854,7 +854,7 @@ ISTSharingTree *ist_pre_of_rules(IST_trans_tree, prec)
 		s2 = IST_trans_tree->Root->FirstSon;
 		while ( s2 != NULL) {
 			/* Set delta */
-			delta=s2->Son->Info->Right; 
+			delta=s2->Son->Info->Right;
 			/* Modify node */
 			ist_sub_value_to_interval(s1->Son->Info,delta);
 			/* Set guard */
@@ -866,7 +866,7 @@ ISTSharingTree *ist_pre_of_rules(IST_trans_tree, prec)
 			s2->Son->Info->Right=delta;
 			if (V.intersect != NULL) {
 				rchild = PreOfRulesNode(s1->Son, s2->Son, &V);
-				if (rchild != NULL) 
+				if (rchild != NULL)
 					ist_add_son(V.STR->Root, rchild);
 			}
 			s2 = s2->Next;
@@ -912,7 +912,7 @@ static ISTNode *PostOfRulesNode(node, nodetrans, LINK)
 			s2 = nodetrans->FirstSon;
 			while ( s2 != NULL) {
 				/* Set delta */
-				delta=s2->Son->Info->Right; 
+				delta=s2->Son->Info->Right;
 				/* Set guard */
 				s2->Son->Info->Right=INFINITY;
 				LINK->intersect = ist_intersect_intervals(s1->Son->Info,s2->Son->Info);
@@ -928,7 +928,7 @@ static ISTNode *PostOfRulesNode(node, nodetrans, LINK)
 						ist_dispose_info(LINK->intersect);
 					} else
 						rchild = PostOfRulesNode(s1->Son, s2->Son, LINK);
-					if (rchild != NULL) 
+					if (rchild != NULL)
 						ist_add_son(rnode, rchild);
 				}
 				s2 = s2->Next;
@@ -973,7 +973,7 @@ ISTSharingTree *ist_post_of_rules(IST_trans_tree, succ)
 		s2 = IST_trans_tree->Root->FirstSon;
 		while ( s2 != NULL) {
 			/* Set delta */
-			delta=s2->Son->Info->Right; 
+			delta=s2->Son->Info->Right;
 			/* Set guard */
 			s2->Son->Info->Right=INFINITY;
 			V.intersect = ist_intersect_intervals(s1->Son->Info,s2->Son->Info);
@@ -985,7 +985,7 @@ ISTSharingTree *ist_post_of_rules(IST_trans_tree, succ)
 				/* We compute dcl o post !!!! */
 				V.intersect->Left=0;
 				rchild = PostOfRulesNode(s1->Son, s2->Son, &V);
-				if (rchild != NULL) 
+				if (rchild != NULL)
 					ist_add_son(V.STR->Root, rchild);
 			}
 			s2 = s2->Next;
@@ -1021,27 +1021,27 @@ ISTSharingTree *ist_pre_pruned_wth_inv_and_prev_iterates(prec, reached_elem, sys
 	i = 0;
 	while (i < system->limits.nbr_rules && (ist_is_empty(prec) == false)){
 		pre_of_ith_rule = ist_pre_of_rule_plus_transfer(prec, &system->transition[i]);
-		if (ist_is_empty(pre_of_ith_rule) == false){ 
+		if (ist_is_empty(pre_of_ith_rule) == false){
 			ist_normalize(pre_of_ith_rule);
 			ist_remove_with_invar_heuristic(pre_of_ith_rule, i, system);
 
-			if (ist_is_empty(pre_of_ith_rule) == false){ 
+			if (ist_is_empty(pre_of_ith_rule) == false){
 				temp = ist_remove_subsumed_paths(pre_of_ith_rule,reached_elem);
 				ist_dispose(pre_of_ith_rule);
 				pre_of_ith_rule = temp;
 
-				if ((ist_is_empty(pre_of_ith_rule) == false) && (ist_is_empty(pre_until_ith_rule) == false)){ 
+				if ((ist_is_empty(pre_of_ith_rule) == false) && (ist_is_empty(pre_until_ith_rule) == false)){
 					temp = ist_remove_subsumed_paths(pre_of_ith_rule,pre_until_ith_rule);
 					ist_dispose(pre_of_ith_rule);
 					pre_of_ith_rule = temp;
 
-					if (ist_is_empty(pre_of_ith_rule) == false){ 
+					if (ist_is_empty(pre_of_ith_rule) == false){
 						temp = ist_remove_subsumed_paths(pre_until_ith_rule,pre_of_ith_rule);
 						ist_dispose(pre_until_ith_rule);
 						pre_until_ith_rule = temp;
 					}
 				}
-				if (ist_is_empty(pre_of_ith_rule) == false){ 
+				if (ist_is_empty(pre_of_ith_rule) == false){
 					temp = ist_minimal_form(pre_of_ith_rule);
 					ist_dispose(pre_of_ith_rule);
 					pre_of_ith_rule = temp;
@@ -1069,21 +1069,21 @@ ISTSharingTree *ist_pre(prec, system)
 	ist_new(&pre_until_ith_rule);
 	while (i < system->limits.nbr_rules && (ist_is_empty(prec) == false)){
 		pre_of_ith_rule = ist_pre_of_rule_plus_transfer(prec, &system->transition[i]);
-		if (ist_is_empty(pre_of_ith_rule) == false){ 
+		if (ist_is_empty(pre_of_ith_rule) == false){
 			ist_normalize(pre_of_ith_rule);
 
-			if ((ist_is_empty(pre_of_ith_rule) == false) && (ist_is_empty(pre_until_ith_rule) == false)){ 
+			if ((ist_is_empty(pre_of_ith_rule) == false) && (ist_is_empty(pre_until_ith_rule) == false)){
 				temp = ist_remove_subsumed_paths(pre_of_ith_rule,pre_until_ith_rule);
 				ist_dispose(pre_of_ith_rule);
 				pre_of_ith_rule = temp;
 
-				if (ist_is_empty(pre_of_ith_rule) == false){ 
+				if (ist_is_empty(pre_of_ith_rule) == false){
 					temp = ist_remove_subsumed_paths(pre_until_ith_rule,pre_of_ith_rule);
 					ist_dispose(pre_until_ith_rule);
 					pre_until_ith_rule = temp;
 				}
 			}
-			if (ist_is_empty(pre_of_ith_rule) == false){ 
+			if (ist_is_empty(pre_of_ith_rule) == false){
 				temp = ist_minimal_form(pre_of_ith_rule);
 				ist_dispose(pre_of_ith_rule);
 				pre_of_ith_rule = temp;
@@ -1116,7 +1116,7 @@ ISTSharingTree *ist_enumerative_pre_transition(ISTSharingTree *backward_p, trans
 	tuple = (ISTInterval **)xmalloc((system->limits.nbr_variables)*sizeof(ISTInterval *));
 	for (i = 0; i < system->limits.nbr_variables; ++i)
 		tuple[i] = ist_new_info();
-	/* 
+	/*
 	 * Now, we will enumerate all the elems of backward_p
 	 * for each compute the post for all the rules and add
 	 * them into res
@@ -1139,7 +1139,7 @@ ISTSharingTree *ist_enumerative_pre_transition(ISTSharingTree *backward_p, trans
 
 		if ( i == system->limits.nbr_variables){
 			/* We have a new tuple, we apply the post on it */
-			
+
 			for (k = 0; k < system->limits.nbr_variables; ++k){
 			   ist_assign_interval_to_interval(tuple[k],path[k]->Son->Info);
 			}
@@ -1201,7 +1201,7 @@ ISTSharingTree *ist_enumerative_pre(backward_p, system)
 	tuple = (ISTInterval **)xmalloc((system->limits.nbr_variables)*sizeof(ISTInterval *));
 	for (i = 0; i < system->limits.nbr_variables; ++i)
 		tuple[i] = ist_new_info();
-	/* 
+	/*
 	 * Now, we will browse all the elems of backward_p
 	 * for each compute the post for all the rules and add
 	 * them into res. The browsing is derecursified.
@@ -1228,9 +1228,9 @@ ISTSharingTree *ist_enumerative_pre(backward_p, system)
 				for (k = 0; k < system->limits.nbr_variables; ++k)
 					ist_assign_interval_to_interval(tuple[k],path[k]->Son->Info);
 				/*
-				 * We will compute the reversed effect of each transition (ommitting the transfer) 
+				 * We will compute the reversed effect of each transition (ommitting the transfer)
 				 */
-				for (k = 0; k < system->limits.nbr_variables; ++k) 
+				for (k = 0; k < system->limits.nbr_variables; ++k)
 					ist_sub_value_to_interval(tuple[k],system->transition[j].cmd_for_place[k].delta);
 				k = 0;
 				stop = false;
@@ -1288,7 +1288,7 @@ ISTSharingTree *ist_enumerative_post(forward_p, system)
 	tuple = (ISTInterval **)xmalloc((system->limits.nbr_variables)*sizeof(ISTInterval *));
 	for (i = 0; i < system->limits.nbr_variables; ++i)
 		tuple[i] = ist_new_info();
-	/* 
+	/*
 	 * Now, we will browse all the elems of forward_p
 	 * for each compute the post for all the rules and add
 	 * them into res. The browsing is derecursified.
@@ -1332,7 +1332,7 @@ ISTSharingTree *ist_enumerative_post(forward_p, system)
 				}
 				if (!stop){
 					/* If we can apply the rule on the tuple */
-					for (k = 0; k < system->limits.nbr_variables; ++k) 
+					for (k = 0; k < system->limits.nbr_variables; ++k)
 						/* then apply it  */
 						ist_add_value_to_interval(tuple[k],system->transition[j].cmd_for_place[k].delta);
 
@@ -1393,7 +1393,7 @@ ISTSharingTree *ist_enumerative_post_transition(forward_p, system, transition)
 	for (i = 0; i < system->limits.nbr_variables; ++i){
 		tuple[i] = ist_new_info();
 	}
-	/* 
+	/*
 	 * Now, we will enumerate all the elems of forward_p
 	 * for each compute the post for all the rules and add
 	 * them into res
@@ -1416,7 +1416,7 @@ ISTSharingTree *ist_enumerative_post_transition(forward_p, system, transition)
 
 		if ( i == system->limits.nbr_variables){
 			/* We have a new tuple, we apply the post on it */
-			
+
 			for (k = 0; k < system->limits.nbr_variables; ++k){
 			   ist_assign_interval_to_interval(tuple[k],path[k]->Son->Info);
 			}
@@ -1477,7 +1477,7 @@ ISTSharingTree *ist_enumerative_post_transition(forward_p, system, transition)
 	return res;
 }
 
-ISTSharingTree *ist_symbolic_post_of_rules(ISTSharingTree *S, transition_t *t) 
+ISTSharingTree *ist_symbolic_post_of_rules(ISTSharingTree *S, transition_t *t)
 {
 	ISTSharingTree * result;
 	ISTLayer * L;
@@ -1500,10 +1500,10 @@ ISTSharingTree *ist_symbolic_post_of_rules(ISTSharingTree *S, transition_t *t)
 	/* If the IST is not empty, we apply the effect of the function */
 	if (ist_is_empty(result) == false) {
 		for (i=0, L = result->FirstLayer; i < nbV; i++, L = L->Next) {
-			for(N = L->FirstNode;N != NULL;N=N->Next) 
+			for(N = L->FirstNode;N != NULL;N=N->Next)
 					ist_add_value_to_interval(N->Info,t->cmd_for_place[i].delta);
-		}	
-	} 
+		}
+	}
 	return result;
 }
 
@@ -1511,7 +1511,7 @@ ISTSharingTree *ist_symbolic_post(ISTSharingTree * S, transition_system_t *t) {
 
 	size_t i;
 	ISTSharingTree *result, *tmp, *tmp2;
-	
+
 	assert(ist_nb_layers(S)-1==t->limits.nbr_variables);
 	ist_new(&result);
 	for(i=0;i< t->limits.nbr_rules;i++) {

@@ -35,10 +35,10 @@ tbsymbol_init(T_PTR_tbsymbol* tbsymbol, size_t tb_size) {
 }
 
 
-void 
+void
 tbsymbol_destroy(T_PTR_tbsymbol* tbsymbol) {
 /*   size_t pos; */
-  
+
 /*   for (pos=0; pos < (*tbsymbol)->nbr_entries; pos++) */
 /*     if ((*tbsymbol)->table[pos].info != NULL)  */
 /*       free((*tbsymbol)->table[pos].info); */
@@ -65,9 +65,9 @@ tbsymbol_insert(T_PTR_tbsymbol tbsymbol, char* name) {
 T_PTR_tbsymbol_entry
 tbsymbol_select(T_PTR_tbsymbol tbsymbol, char* name) {
   size_t pos;
-  
+
   for (pos=0; pos < tbsymbol->nbr_entries; pos++)
-    if (strcmp(tbsymbol->table[pos].name, name) == 0) 
+    if (strcmp(tbsymbol->table[pos].name, name) == 0)
       break;
 
   return (pos >= tbsymbol->nbr_entries)?NULL:tbsymbol->table+pos;

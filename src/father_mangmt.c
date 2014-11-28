@@ -86,7 +86,7 @@ void ist_add_father(Father, Child)
 ISTNode *st_AddNodeF(layer, node)
 	ISTLayer *layer;
 	ISTNode *node;
-	/* The call to RemoveSonsF, it's the only diff with ist_add_node */ 
+	/* The call to RemoveSonsF, it's the only diff with ist_add_node */
 {
 	ISTNode  *nodep, *nodeq;
 	if (layer->FirstNode == NULL) {
@@ -118,7 +118,7 @@ ISTNode *st_AddNodeF(layer, node)
 		if (layer->LastNode->Next != NULL)
 			layer->LastNode = node;
 	}
-	return node; 
+	return node;
 }
 
 void ist_add_son_father(node, child)
@@ -232,7 +232,7 @@ void ist_remove_fathers_sons(node)
 		s = sn;
 	}
 	node->FirstFather = NULL;
-}  
+}
 
 
 void ist_remove_node_fathers_sons(layer, node)
@@ -488,7 +488,7 @@ void ist_adjust_second_condition_sons_fathers(S)
 
 
 	/*
-	 * Here CurLayer = S->FirstLayer. 
+	 * Here CurLayer = S->FirstLayer.
 	 * We process NextLayer but we don't have to
 	 * set the pointer of nodes in FirstLayer.
 	 * In fact, we assume that I condition holds:

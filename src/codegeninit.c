@@ -40,8 +40,8 @@ initcode_produce(T_PTR_tree entry, ISTSharingTree **initial) {
   *initial = _init;
 }
 
-static 
-void 
+static
+void
 init(T_PTR_tree entry) {
   size_t i;
   char* info;
@@ -64,8 +64,8 @@ init(T_PTR_tree entry) {
 }
 
 
-static 
-void 
+static
+void
 initor(T_PTR_tree entry) {
   size_t i;
 
@@ -76,8 +76,8 @@ initor(T_PTR_tree entry) {
 }
 
 
-static 
-void 
+static
+void
 initand(T_PTR_tree entry) {
 	T_PTR_tbsymbol_info infoid, infonb_left, infonb_right;
 	char *info;

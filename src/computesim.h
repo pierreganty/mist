@@ -30,7 +30,7 @@
 /*
  * This modules is in charge to build the simulation relation between nodes of two sharing trees
  * (it can be twice the same). Algorithms implememted in this modules are directly taken from :
- * Monika R. Henzinger, Thomas A. Henzinger, and Peter Kopke. 
+ * Monika R. Henzinger, Thomas A. Henzinger, and Peter Kopke.
  * Computing Simulations in Finite and Infinite Graphs.
  * Proceedings of the 36th Annual IEEE Symposium on Foundations of Computer Science (FOCS 1995), pp. 453-462.
  */

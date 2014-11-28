@@ -71,7 +71,7 @@ rules(T_PTR_tree entry) {
 			/* We allocate memory for each transfert */
 			sys->transition[i].transfers[k].origin = (integer16 *)xmalloc(nbr_var*sizeof(integer16));
 			/* We initialize the origin vector */
-			for (j = 0; j < nbr_var; j++) 
+			for (j = 0; j < nbr_var; j++)
 				sys->transition[i].transfers[k].origin[j] = 0;
 		}
 	}
@@ -96,7 +96,7 @@ rule(T_PTR_tree entry) {
 }
 
 static
-void 
+void
 guardedcmd(T_PTR_tree entry) {
 	size_t i;
 	char* info;
@@ -153,7 +153,7 @@ cmd(T_PTR_tree entry) {
   T_PTR_tree rhs;
 
   if (entry) {
-    infoid = tbsymbol_getinfo(tree_getinfo(tree_subtree(entry, 0))); 
+    infoid = tbsymbol_getinfo(tree_getinfo(tree_subtree(entry, 0)));
     rhs = tree_subtree(entry, 1);
 	/* We assume that cmd is not a transfer */
 	istransfer = false;
@@ -161,7 +161,7 @@ cmd(T_PTR_tree entry) {
 	messy_spec = true;
 	/* For instance X' = c s.t. c > 0 is a messy_spec
 	 * we must check for it. If we meet a var in RHS or RHS = 0
-	 * then messy_spec = false. 
+	 * then messy_spec = false.
 	 */
     cmdrhs(rhs, infoid);
 	if (messy_spec == true)
@@ -200,12 +200,12 @@ cmdrhs(T_PTR_tree entry, T_PTR_tbsymbol_info infoid) {
 		  } else if (strcmp(entry_info_char,"-") == 0) {
 			  cmdrhs(lhs, infoid);
 			  cmdrhs(rhs, infoid);
-			  /* By Grammar's definition, to the right we have a natural number 
+			  /* By Grammar's definition, to the right we have a natural number
 			  */
 			  sys->transition[nbrcmd].cmd_for_place[infoid->info.id.addr].delta
 				  = -
 				  sys->transition[nbrcmd].cmd_for_place[infoid->info.id.addr].delta;
-		  } 
+		  }
 	  } else { /* Leaf */
 		  entry_info = (T_PTR_tbsymbol_info)
 			  tbsymbol_getinfo(tree_getinfo(entry));
@@ -223,11 +223,11 @@ cmdrhs(T_PTR_tree entry, T_PTR_tbsymbol_info infoid) {
 				  sys->transition[nbrcmd].transfers[nbrtransfers].origin[entry_info->info.id.addr] = 1;
 			  }
 		  } else if (entry_info->tag == tbsymbol_INFO_NB) {
-			  sys->transition[nbrcmd].cmd_for_place[infoid->info.id.addr].delta = 
+			  sys->transition[nbrcmd].cmd_for_place[infoid->info.id.addr].delta =
 				  entry_info->info.nb.value;
-			  if (entry_info->info.nb.value == 0) 
+			  if (entry_info->info.nb.value == 0)
 				  messy_spec = false;
-		  } else 
+		  } else
 			  err_quit("Unrecognized tbsymbol entry\n");
 	  }
   }

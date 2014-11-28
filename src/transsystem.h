@@ -28,7 +28,7 @@
 #include "stdio.h"
 #include "tree.h"
 
-/* 
+/*
  * We bounded the size of the transition system. Now they are no more used.
  */
 #define MAXR            					60
@@ -63,13 +63,13 @@
  * |		| 		|-> *origin
  * |		|		|-> target
  * |		|-> nbr_transfers
- * |		  
+ * |
  * |-> *tree_of_transitions
  * |
  * |-> *invariants
  * 			|-> *weight_on_place
  * 			|-> m0_p
- * 
+ *
  */
 
 /* Definition of the data structure representing the transition relation */

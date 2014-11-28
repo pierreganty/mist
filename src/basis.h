@@ -36,7 +36,7 @@
  */
 
 
-/*  
+/*
  * Most of the time algorithms are recursive.  To keep the code readable,
  * instead of passing a plenty of parameters, we pass a data stucture of the
  * following kind where all the parameters are wrapped in.  This stucture is
@@ -74,4 +74,4 @@ void ist_fill_tree_from_file(FILE* file_spec, ISTSharingTree **S, size_t height,
 ISTInterval **ist_firstpath2array(ISTSharingTree *S) ;
 long ist_nb_tuples(ISTSharingTree *ST);
 
-#endif 
+#endif

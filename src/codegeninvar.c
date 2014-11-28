@@ -36,7 +36,7 @@ static transition_system_t *_system;
 static ISTInterval **_initM;
 
 void
-invariantscode_produce(T_PTR_tree entry, transition_system_t *system, ISTSharingTree *init) 
+invariantscode_produce(T_PTR_tree entry, transition_system_t *system, ISTSharingTree *init)
 {
   /* We need the initial marking to compute m0 times p */
   _initM = ist_firstpath2array(init);
@@ -44,8 +44,8 @@ invariantscode_produce(T_PTR_tree entry, transition_system_t *system, ISTSharing
   invariant(entry);
 }
 
-static 
-void 
+static
+void
 invariant(T_PTR_tree entry) {
 	size_t nbrinv;
 	char* info;
@@ -73,8 +73,8 @@ invariant(T_PTR_tree entry) {
 }
 
 
-static 
-void 
+static
+void
 invariantor(T_PTR_tree entry) {
 	size_t i;
 	boolean overwrite;
@@ -96,7 +96,7 @@ invariantor(T_PTR_tree entry) {
 		for (i = 0 ; i < tree_nbrsubtrees(entry) ; i++)
 			invariantand(tree_subtree(entry,i));
 		/* We check wether the invariant make sense or not: if _initM * p is defined then ++last */
-		Product = ist_new_info(); 
+		Product = ist_new_info();
 		overwrite = false;
 		/* A small memory leak here */
 		_system->invariants[last].m0_p = ist_new_info();
@@ -104,7 +104,7 @@ invariantor(T_PTR_tree entry) {
 		_system->invariants[last].m0_p->Right = 0;
 		for (i = 0; i < nbr_var; ++i) {
 			place = _system->invariants[last].weight_on_place[i];
-			/* 
+			/*
 			 * IST_m0_p[relevant] += _initM[j] * place;
 			 * We test that the weight is not null AND we skip if the initial marking is
 			 * PARAMETRIC for that place
@@ -120,15 +120,15 @@ invariantor(T_PTR_tree entry) {
 
 			}
 		}
-		if (overwrite == false) 
+		if (overwrite == false)
 			++last;
 	}
 	ist_dispose_info(Product);
 }
 
 
-static 
-void 
+static
+void
 invariantand(T_PTR_tree entry) {
 	T_PTR_tbsymbol_info infoid, infonb;
 	char *info;
