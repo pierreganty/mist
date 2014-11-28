@@ -16,7 +16,7 @@
    along with mist; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-   Copyright 2002-2007 Pierre Ganty, Laurent Van Begin
+   Copyright 2002-2007 Pierre Ganty, Laurent Van Begin, 2014 Pedro Valero
  */
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -31,13 +31,18 @@
 #include <sys/types.h>
 #include <sys/times.h>
 #include <assert.h>
+#include <signal.h>
 
 #include "laparser.h"
 #include "ist.h"
 
+/*To end the executing when timeout event occurs*/
+void timeout_func (int sgn) {
+	err_quit("Timeout");
+}
 
 /* For printing the error trace */
-void ist_print_error_trace(ISTSharingTree * initial_marking,THeadListIST * list_ist, transition_system_t * rules) 
+void ist_print_error_trace(ISTSharingTree * initial_marking,THeadListIST * list_ist, transition_system_t * rules)
 {
 	ISTSharingTree *S, *post, *Siter, *intersect;
 	size_t i;
@@ -54,20 +59,20 @@ void ist_print_error_trace(ISTSharingTree * initial_marking,THeadListIST * list_
 			post = ist_enumerative_post_transition(S,rules,i);
 			intersect = ist_intersection(post,Siter);
 			ist_dispose(post);
-			if (!ist_is_empty(intersect)) { 
+			if (!ist_is_empty(intersect)) {
 				printf("[%d> ",i);
 				ist_dispose(S);
 				S = intersect;
 				Continue = false;
-			} else { 
+			} else {
 				ist_dispose(intersect);
 				++i;
-			} 
-		} 
-		if (i == rules->limits.nbr_rules) { 
+			}
+		}
+		if (i == rules->limits.nbr_rules) {
 			err_msg("\nError: No Path Found!\n");
 			Siter = NULL;
-		} else 
+		} else
 			Siter = ist_next_element_list_ist(list_ist);
 	}
 	printf("\n");
@@ -79,7 +84,7 @@ int * compute_bound_from_ucs(ISTSharingTree * S) {
 	ISTLayer * layer;
 	int* result;
 	int i;
-	
+
 	for(layer = S->FirstLayer; layer->Next != NULL; nblayer++,layer = layer->Next);
 
 	result = (int *)xmalloc(nblayer * sizeof(int));
@@ -91,7 +96,7 @@ int * compute_bound_from_ucs(ISTSharingTree * S) {
 }
 
 
-ISTSharingTree *backward(system, initial_marking, frontier, bounds) 
+ISTSharingTree *backward(system, initial_marking, frontier, bounds)
 	transition_system_t *system;
 	ISTSharingTree *frontier, *initial_marking;
 	int *bounds;
@@ -102,7 +107,7 @@ ISTSharingTree *backward(system, initial_marking, frontier, bounds)
 	boolean reached;
 	THeadListIST List;
 	int *new_bounds, i;
-	
+
 	/* Now we declare variables to measure the time consumed by the function */
 	long int tick_sec=0 ;
 	struct tms before, after;
@@ -171,16 +176,16 @@ ISTSharingTree *backward(system, initial_marking, frontier, bounds)
 				puts("+-------------------------------------+");
 				Continue = false;
 				ist_insert_at_the_beginning_list_ist(&List,old_frontier);
-				/* 
-				 * Exact subsumption test is relevant ONLY FOR INTERVALS 
+				/*
+				 * Exact subsumption test is relevant ONLY FOR INTERVALS
 				 *			 else if (ist_exact_subsumption_test(frontier,reached_elem))
 				 *				printf("reached_elem subsumes frontier \n");
-				 *				Continue = false; 
+				 *				Continue = false;
 				 */
 			} else {
 				temp = ist_remove_subsumed_paths(reached_elem, frontier);
-				/* 
-				 * Here we prune trivial 1to1 inclusion 
+				/*
+				 * Here we prune trivial 1to1 inclusion
 				 * We don't use simulation relations, we compute it exactly !
 				 */
 				ist_dispose(reached_elem);
@@ -196,12 +201,12 @@ ISTSharingTree *backward(system, initial_marking, frontier, bounds)
 			/* We test if we must stop because we find new bounds*/
 			new_bounds = compute_bound_from_ucs(reached_elem);
 
-			for(i=0 ; (i< system->limits.nbr_variables) && (new_bounds[i] == bounds[i]) ; i++); 
+			for(i=0 ; (i< system->limits.nbr_variables) && (new_bounds[i] == bounds[i]) ; i++);
 
 			if (i!=system->limits.nbr_variables)
 				Continue = false;
 			else
-				xfree(new_bounds); 	
+				xfree(new_bounds);
 
 		} else  {
 			Continue = false;
@@ -230,12 +235,12 @@ ISTSharingTree *backward(system, initial_marking, frontier, bounds)
 	printf("                          (system) -> %6.3f sec.\n",comp_s);
 
 	//ist_dispose(reached_elem);
-	
+
 	/* Is the system safe ? */
 	return (reached_elem);
 }
 
-void backward_basic(system, initial_marking, frontier) 
+void backward_basic(system, initial_marking, frontier)
 	transition_system_t *system;
 	ISTSharingTree *frontier, *initial_marking;
 {
@@ -244,7 +249,7 @@ void backward_basic(system, initial_marking, frontier)
 	boolean Continue;
 	boolean reached;
 	THeadListIST List;
-	
+
 	/* Now we declare variables to measure the time consumed by the function */
 	long int tick_sec=0 ;
 	struct tms before, after;
@@ -289,16 +294,16 @@ void backward_basic(system, initial_marking, frontier)
 			if (reached == true) {
 				Continue = false;
 				ist_insert_at_the_beginning_list_ist(&List,old_frontier);
-				/* 
-				 * Exact subsumption test is relevant ONLY FOR INTERVALS 
+				/*
+				 * Exact subsumption test is relevant ONLY FOR INTERVALS
 				 *			 else if (ist_exact_subsumption_test(frontier,reached_elem))
 				 *				printf("reached_elem subsumes frontier \n");
-				 *				Continue = false; 
+				 *				Continue = false;
 				 */
 			} else {
 				temp = ist_remove_subsumed_paths(reached_elem, frontier);
-				/* 
-				 * Here we prune trivial 1to1 inclusion 
+				/*
+				 * Here we prune trivial 1to1 inclusion
 				 * We don't use simulation relations, we compute it exactly !
 				 */
 				ist_dispose(reached_elem);
@@ -313,7 +318,7 @@ void backward_basic(system, initial_marking, frontier)
 				old_frontier = frontier;
 			}
 
-		} else 
+		} else
 			Continue = false;
 		nbr_iteration++;
 	}
@@ -338,11 +343,11 @@ void backward_basic(system, initial_marking, frontier)
 	ist_dispose(reached_elem);
  	/* old_frontier should be disposed, when the loop is exited but it wasn't added to the error trace */
    	if(ist_is_empty(frontier)) ist_dispose(old_frontier);
-	
+
 	/* Is the system safe ? */
 	if (reached == true)
 		puts("backward algorithm concludes unsafe");
-	else 
+	else
 		puts("backward algorithm concludes safe");
 }
 
@@ -350,9 +355,9 @@ static void print_version() {
 	printf("Version %s\n", VERSION);
 }
 
-static void print_help() 
+static void print_help()
 {
-	puts("Usage: mist [options] filename\n");
+	puts("Usage: mist [options] filename <--timeout [timeout]>\n");
 	puts("Options:");
 	puts("     --help       this help");
 	puts("     --version    show version numbers");
@@ -360,6 +365,8 @@ static void print_help()
 	puts("     --ic4pn      the algorithm described in FI");
 	puts("     --tsi        the algorithm described in TSI");
 	puts("     --eec        the Expand, Enlarge and Check algorithm");
+	puts("Timeout:");
+	puts("     integer which represents the maximum time mist will spent");
 }
 
 static void head_msg()
@@ -374,14 +381,14 @@ static void head_msg()
  * apply the (0,...,k,INFINITY) abstraction.
  * POST: for each layer the list of nodes remains sorted.
  */
-void abstract_bound(ISTSharingTree *S, integer16 *bound) 
+void abstract_bound(ISTSharingTree *S, integer16 *bound)
 {
 	ISTLayer *L;
 	ISTNode *N;
 	size_t i;
 
-	for(L = S->FirstLayer, i = 0 ; L != S->LastLayer ; L = L->Next, i++) 
-		for(N = L->FirstNode ; N != NULL ; N = N->Next) 
+	for(L = S->FirstLayer, i = 0 ; L != S->LastLayer ; L = L->Next, i++)
+		for(N = L->FirstNode ; N != NULL ; N = N->Next)
 			if (!ist_less_or_equal_value(N->Info->Right,bound[i]))
 				N->Info->Right=INFINITY;
 }
@@ -391,7 +398,7 @@ void bound_values(ISTSharingTree *S, integer16 *bound)
 	ISTLayer *L;
 	ISTNode *N;
 	size_t i;
-	
+
 	for(i=0,L = S->FirstLayer;L != S->LastLayer;i++,L = L->Next)
 		for(N= L->FirstNode;N != NULL;N = N->Next)
 			ist_assign_values_to_interval(N->Info,min(N->Info->Left,bound[i]),min(N->Info->Right,bound[i]));
@@ -401,7 +408,7 @@ void bound_values(ISTSharingTree *S, integer16 *bound)
 
 
 /*
- * lfp is a out parameter which is 
+ * lfp is a out parameter which is
  * 1) an inductive invariant of the system
  * 2) a dc-set
  * WORKS FOR PETRI NET ONLY
@@ -415,22 +422,22 @@ boolean eec_fp(system, abs, initial_marking, bad, lfp)
 	ISTSharingTree *abs_post_star, *inter, *downward_closed_initial_marking, *bpost, *tmp, *_tmp;
 	boolean finished;
 	size_t i;
-	
-	float comp_u,comp_s; 
+
+	float comp_u,comp_s;
 	long int tick_sec=0 ;
 	struct tms before, after;
 
 	//int *new_bound;
-	
-	times(&before);	
+
+	times(&before);
 
 	/*initialisation des bornes */
-	//new_bound = compute_bound_from_ucs(bad); 
+	//new_bound = compute_bound_from_ucs(bad);
 	for(i = 0; i < system->limits.nbr_variables; i++)
 		abs->bound[i] = 1;
 	/* fin de l'initialisation des bornes */
 
-	
+
 	downward_closed_initial_marking = ist_downward_closure(initial_marking);
 	ist_normalize(downward_closed_initial_marking);
 	assert(ist_checkup(downward_closed_initial_marking)==true);
@@ -440,7 +447,7 @@ boolean eec_fp(system, abs, initial_marking, bad, lfp)
 		printf("eec: ENLARGE begin\t\n");
 		fflush(NULL);
 		/* To OVERapproximate we use abstract_bound */
-		/* Do not use ist_abstract_post_star_until_reach_bad it produces incorrect results/non termination.  
+		/* Do not use ist_abstract_post_star_until_reach_bad it produces incorrect results/non termination.
 		abs_post_star = ist_abstract_post_star_until_reach_bad(downward_closed_initial_marking,abstract_bound,abs->bound,system,bad);
 		*/
 		abs_post_star = ist_abstract_post_star(downward_closed_initial_marking,abstract_bound,abs->bound,system);
@@ -451,7 +458,7 @@ boolean eec_fp(system, abs, initial_marking, bad, lfp)
 		inter = ist_intersection(abs_post_star,bad);
 		finished=ist_is_empty(inter);
 		ist_dispose(inter);
-		if (finished==true) { 
+		if (finished==true) {
 			/* finished==true -> the system is safe */
 //			ist_write(*lfp);
 //			ist_write(bad);
@@ -475,7 +482,7 @@ boolean eec_fp(system, abs, initial_marking, bad, lfp)
 				//tmp = ist_abstract_post_transtree(bpost,bound_values,abs->bound,system);
 				_tmp =  ist_remove_subsumed_paths(tmp,bpost);
 				ist_dispose(tmp);
-				if (ist_is_empty(_tmp)==false) {		
+				if (ist_is_empty(_tmp)==false) {
 					inter=ist_intersection(_tmp,bad);
 					finished=ist_is_empty(inter) == true ? false : true;
 					ist_dispose(inter);
@@ -515,13 +522,13 @@ boolean eec_fp(system, abs, initial_marking, bad, lfp)
 	comp_u = ((float)after.tms_utime - (float)before.tms_utime)/(float)tick_sec ;
 	comp_s = ((float)after.tms_stime - (float)before.tms_stime)/(float)tick_sec ;
 	printf("EEC time of computation (user)   -> %6.3f sec.\n",comp_u);
-	printf("                          (system) -> %6.3f sec.\n",comp_s);	
-	
+	printf("                          (system) -> %6.3f sec.\n",comp_s);
+
 	return retval;
 }
 
 /*
- * List is a out parameter from which we 
+ * List is a out parameter from which we
  * will extract the counterexample
  * WORKS FOR PETRI NET ONLY
  */
@@ -536,11 +543,11 @@ boolean eec_cegar(system, abs, initial_marking, bad, List)
 	boolean finished;
 	size_t i;
 
-	float comp_u,comp_s; 
+	float comp_u,comp_s;
 	long int tick_sec=0 ;
 	struct tms before, after;
 
-	times(&before);	
+	times(&before);
 
 	downward_closed_initial_marking=ist_downward_closure(initial_marking);
 	ist_normalize(downward_closed_initial_marking);
@@ -560,7 +567,7 @@ boolean eec_cegar(system, abs, initial_marking, bad, List)
 		ist_dispose(abs_post_star);
 		finished=ist_is_empty(inter);
 		ist_dispose(inter);
-		if (finished==true) 
+		if (finished==true)
 			/* finished==true -> the system is safe */
 			retval = true;
 		else {
@@ -584,7 +591,7 @@ boolean eec_cegar(system, abs, initial_marking, bad, List)
 				tmp = ist_abstract_post(bpost,bound_values,abs->bound,system);
 				_tmp =  ist_remove_subsumed_paths(tmp,bpost);
 				ist_dispose(tmp);
-				if (ist_is_empty(_tmp)==false) {		
+				if (ist_is_empty(_tmp)==false) {
 					/* insert a copy of _tmp in the list */
 					ist_insert_at_the_beginning_list_ist(List,ist_copy(_tmp));
 					inter=ist_intersection(_tmp,bad);
@@ -609,7 +616,7 @@ boolean eec_cegar(system, abs, initial_marking, bad, List)
 				retval=false;
 			else {
 				/* One more iteration is needed because both bpost and
-				 * abs_post_star does not allow to conclude. 
+				 * abs_post_star does not allow to conclude.
 				 * Free the list of sharing tree (here info means st) */
 				ist_empty_list_ist_with_info(List);
 				printf("eec: BOUNDS\t");
@@ -625,12 +632,12 @@ boolean eec_cegar(system, abs, initial_marking, bad, List)
 	comp_u = ((float)after.tms_utime - (float)before.tms_utime)/(float)tick_sec ;
 	comp_s = ((float)after.tms_stime - (float)before.tms_stime)/(float)tick_sec ;
 	printf("Total time of computation (user)   -> %6.3f sec.\n",comp_u);
-	printf("                          (system) -> %6.3f sec.\n",comp_s);	
+	printf("                          (system) -> %6.3f sec.\n",comp_s);
 
 	return retval;
 }
 
-void cegar(system, initial_marking, bad) 
+void cegar(system, initial_marking, bad)
 	transition_system_t *system;
 	ISTSharingTree *bad, *initial_marking;
 {
@@ -649,7 +656,7 @@ void cegar(system, initial_marking, bad)
 	conclusive = (ist_is_empty(tmp)==true ? false : true);
 	ist_dispose(tmp);
 
-	// since new_abstraction works w/ dc-sets we compute \neg bad 
+	// since new_abstraction works w/ dc-sets we compute \neg bad
 	tmp=ist_copy(bad);
 	ist_complement(tmp,system->limits.nbr_variables);
 	// _tmp is a dc-set but we want each path to be dc-closed
@@ -663,13 +670,13 @@ void cegar(system, initial_marking, bad)
 	nb_iteration=0;
 	while(conclusive == false) {
 		puts("begin of iteration");
-		// We build the abstract system 
+		// We build the abstract system
 		sysabs=build_sys_using_abs(system,myabs);
 		puts("The current abstraction is :");
 		print_abstraction(myabs);
 		//puts("The current abstracted net is:");
 		//print_transition_system(sysabs);
-		//Set tmp=alpha(initial_marking), alpha_bad 
+		//Set tmp=alpha(initial_marking), alpha_bad
 		tmp = ist_abstraction(initial_marking,myabs);
 		alpha_bad = ist_abstraction(bad,myabs);
 
@@ -677,7 +684,7 @@ void cegar(system, initial_marking, bad)
 		ist_dispose(tmp);
 
 		if (eec_conclusive==true) {
-			// says "safe" because it is indeed safe 
+			// says "safe" because it is indeed safe
 			puts("EEC concludes safe with the abstraction");
 			print_abstraction(myabs);
 			conclusive = true;
@@ -691,7 +698,7 @@ void cegar(system, initial_marking, bad)
 			seed=ist_intersection(alpha_bad,tmp);
 			/* so we compute the uc_closure. This should not break the
 			 * invariant that nodes, sons, etc are ordered. */
-			layer=seed->FirstLayer;	
+			layer=seed->FirstLayer;
 			while(layer!=seed->LastLayer) {
 				node=layer->FirstNode;
 				while(node!=NULL){
@@ -722,14 +729,14 @@ void cegar(system, initial_marking, bad)
 					if (!ist_is_empty(predecessor))
 						ist_normalize(predecessor);
 					/* and intersect with the dc-set computed during expand */
-					inter=ist_intersection(cutter,predecessor);	
+					inter=ist_intersection(cutter,predecessor);
 					assert(ist_checkup(inter)==true);
 					ist_dispose(predecessor);
 					if (!ist_is_empty(inter)) {
 						/* Compute the uc-closure of inter. This should not
 						 * break the invariant that nodes, sons, etc are
 						 * ordered. */
-						layer=inter->FirstLayer;	
+						layer=inter->FirstLayer;
 						while(layer!=inter->LastLayer) {
 							node=layer->FirstNode;
 							while(node!=NULL){
@@ -753,7 +760,7 @@ void cegar(system, initial_marking, bad)
 			}
 			/* release the list of dc-sets from which the cex is extracted. this list is now useless */
 			ist_empty_list_ist_with_info(&cex);
-			puts("The counter example for the abstract net");		
+			puts("The counter example for the abstract net");
 			for(j=0;j<lg_cex;printf("<%d]",countex[j++]));
 			printf("\n");
 
@@ -770,7 +777,7 @@ void cegar(system, initial_marking, bad)
 				tmp=_tmp;
 			}
 			/* we take the minimal elements of the outcoming uc-set */
-			layer=tmp->FirstLayer;	
+			layer=tmp->FirstLayer;
 			while(layer!=tmp->LastLayer) {
 				node=layer->FirstNode;
 				while(node!=NULL){
@@ -806,7 +813,7 @@ void cegar(system, initial_marking, bad)
 					printf("\n");
 				} else
 					Z=ist_copy(predecessor);
-			} else 
+			} else
 				Z=ist_copy(tmp);
 			/* release predecessor, tmp */
 			ist_dispose(predecessor);
@@ -823,7 +830,7 @@ void cegar(system, initial_marking, bad)
 				puts("abs_tmp");
 				print_abstraction(abs_tmp);
 				newabs = glb(abs_tmp,myabs);
-				// release abs_tmp 
+				// release abs_tmp
 				dispose_abstraction(abs_tmp);
 				// release myabs
 				dispose_abstraction(myabs);
@@ -831,13 +838,13 @@ void cegar(system, initial_marking, bad)
 			}
 		}
 	}
-	// release sysabs 
+	// release sysabs
 	dispose_transition_system(sysabs);
 	printf("end of iteration %d\n",++nb_iteration);
 }
 
 //pre^*, we use the complement of the least fixpoint in pre^*, and we compute an abstract greatest fixpoint
-void ic4pn(system, initial_marking, bad) 
+void ic4pn(system, initial_marking, bad)
 	transition_system_t *system;
 	ISTSharingTree *bad, *initial_marking;
 {
@@ -849,7 +856,7 @@ void ic4pn(system, initial_marking, bad)
 	boolean *maskpre, *maskpost, conclusive, eec_conclusive;
 
 
-        // initialization of old_lfp used to ensure the properties of the checker 
+        // initialization of old_lfp used to ensure the properties of the checker
         old_lfp = NULL;
 
 	/* Set constant abstraction top (all places merged) */
@@ -885,16 +892,16 @@ void ic4pn(system, initial_marking, bad)
 	myabs=new_abstraction_lub(neg_Z,system->limits.nbr_variables,topabs);
 	puts("first abstraction");
 	print_abstraction(myabs);
-	dispose_abstraction(topabs);	
+	dispose_abstraction(topabs);
 
 	nb_iteration=0;
 	while(conclusive == false) {
 		puts("begin of iteration");
-		// We build the abstract system 
+		// We build the abstract system
 		sysabs=build_sys_using_abs(system,myabs);
 		/* mask for post (for EEC) */
 		maskpost=(boolean *)xrealloc(maskpost, sysabs->limits.nbr_rules*sizeof(boolean));
-		for(i=0;i<sysabs->limits.nbr_rules;++i) 
+		for(i=0;i<sysabs->limits.nbr_rules;++i)
 			maskpost[i]=true;
 		from_transitions_to_tree(sysabs, maskpost);
 //		ist_stat(sysabs->tree_of_transitions);
@@ -902,7 +909,7 @@ void ic4pn(system, initial_marking, bad)
 
 		puts("The current abstraction is :");
 		print_abstraction(myabs);
-		// Set a_neg_Z, alpha_initial_marking 
+		// Set a_neg_Z, alpha_initial_marking
 		a_neg_Z = ist_abstraction(neg_Z,myabs);
 		ist_dispose(neg_Z);
 		assert(ist_checkup(a_neg_Z)==true);
@@ -912,7 +919,7 @@ void ic4pn(system, initial_marking, bad)
 		eec_conclusive=eec_fp(sysabs, myabs, alpha_initial_marking, a_neg_Z, &lfp);
 
 		if (eec_conclusive==true) {
-			// says "safe" because it is indeed safe 
+			// says "safe" because it is indeed safe
 			puts("EEC concludes safe with the abstraction");
 			print_abstraction(myabs);
 			conclusive = true;
@@ -930,11 +937,11 @@ void ic4pn(system, initial_marking, bad)
 				lfp = tmp;
 				old_lfp = ist_concretisation(lfp,myabs);
 
-			} else 
+			} else
 				old_lfp = ist_concretisation(lfp,myabs);
 			////////////////////////////////////////////////////////////////////
 
-			tmp = adhoc_pre_star_pruned_unless_hit_m0(a_neg_Z, lfp, sysabs, alpha_initial_marking);	
+			tmp = adhoc_pre_star_pruned_unless_hit_m0(a_neg_Z, lfp, sysabs, alpha_initial_marking);
 
 			if (tmp == NULL) {
 				conclusive = true;
@@ -942,7 +949,7 @@ void ic4pn(system, initial_marking, bad)
 			} else {
 				frontier = ist_concretisation(tmp,myabs);
 				ist_dispose(tmp);
-	
+
 				tmp = ist_pre(frontier,system);
 				/* Should we prune it ist_concretisation(lfp,myabs) ? */
 
@@ -962,7 +969,7 @@ void ic4pn(system, initial_marking, bad)
 
 //					puts("myabs");
 //					print_abstraction(myabs);
-	
+
 				}
 				ist_dispose(inter);
 			}
@@ -971,7 +978,7 @@ void ic4pn(system, initial_marking, bad)
 		ist_dispose(alpha_initial_marking);
 		ist_dispose(a_neg_Z);
 		ist_dispose(lfp);
-		// release sysabs 
+		// release sysabs
 		dispose_transition_system(sysabs);
 		printf("end of iteration %d\n",++nb_iteration);
 	}
@@ -991,23 +998,23 @@ boolean eec_bound(system, abs, initial_marking, bad, lfp)
 	ISTSharingTree *abs_post_star, *inter, *downward_closed_initial_marking, *bpost, *tmp, *new_bad;
 	boolean finished;
 	size_t i;
-	
-	float comp_u,comp_s; 
+
+	float comp_u,comp_s;
 	long int tick_sec=0 ;
 	struct tms before, after;
 
 	int *new_bound;
-	
-	times(&before);	
+
+	times(&before);
 
 	/*initialisation des bornes */
-	new_bound = compute_bound_from_ucs(bad); 
+	new_bound = compute_bound_from_ucs(bad);
 	for(i = 0; i < system->limits.nbr_variables; i++)
 		abs->bound[i] = new_bound[i];
 	print_abstraction(abs);
 	/* fin de l'initialisation des bornes */
 
-	
+
 	downward_closed_initial_marking = ist_downward_closure(initial_marking);
 	ist_normalize(downward_closed_initial_marking);
 //	assert(ist_checkup(downward_closed_initial_marking)==true);
@@ -1025,7 +1032,7 @@ boolean eec_bound(system, abs, initial_marking, bad, lfp)
 		inter = ist_intersection(abs_post_star,bad);
 		finished=ist_is_empty(inter);
 		ist_dispose(inter);
-		if (finished==true) { 
+		if (finished==true) {
 			/* finished==true -> the system is safe */
 //			ist_write(*lfp);
 //			ist_write(bad);
@@ -1053,7 +1060,7 @@ boolean eec_bound(system, abs, initial_marking, bad, lfp)
 				ist_dispose(Frontier);
 				Frontier =  ist_remove_subsumed_paths(tmp,bpost);
 				ist_dispose(tmp);
-				if (ist_is_empty(Frontier)==false) {		
+				if (ist_is_empty(Frontier)==false) {
 					inter=ist_intersection(Frontier,bad);
 					finished=ist_is_empty(inter) == true ? false : true;
 					ist_dispose(inter);
@@ -1068,7 +1075,7 @@ boolean eec_bound(system, abs, initial_marking, bad, lfp)
 			assert(ist_checkup(bpost)==true);
 			ist_dispose(bpost);
 			puts("end");
-			if (finished==true) 
+			if (finished==true)
 				/* finished==true -> we hitted the bad states, the system is unsafe */
 				retval=false;
 			else {
@@ -1082,10 +1089,10 @@ boolean eec_bound(system, abs, initial_marking, bad, lfp)
 				ist_dispose(bad);
 				bad = new_bad;
 				xfree(new_bound);
-				new_bound = compute_bound_from_ucs(bad); 
+				new_bound = compute_bound_from_ucs(bad);
 				for(i = 0; i < system->limits.nbr_variables; i++)
 					abs->bound[i] = new_bound[i];
-			
+
 				printf("\n");
 				printf("New bounds");
 				print_abstraction(abs);
@@ -1099,13 +1106,13 @@ boolean eec_bound(system, abs, initial_marking, bad, lfp)
 	comp_u = ((float)after.tms_utime - (float)before.tms_utime)/(float)tick_sec ;
 	comp_s = ((float)after.tms_stime - (float)before.tms_stime)/(float)tick_sec ;
 	printf("TSI time of computation (user)   -> %6.3f sec.\n",comp_u);
-	printf("                          (system) -> %6.3f sec.\n",comp_s);	
-	
+	printf("                          (system) -> %6.3f sec.\n",comp_s);
+
 	return retval;
 }
 
 
-void eec(system, initial_marking, bad) 
+void eec(system, initial_marking, bad)
 	transition_system_t *system;
 	ISTSharingTree *bad, *initial_marking;
 {
@@ -1122,18 +1129,18 @@ void eec(system, initial_marking, bad)
 	for(i=0;i<bottomabs->nbV;++i) {
 		bottomabs->A[i]=(integer16 *)xmalloc(system->limits.nbr_variables*sizeof(integer16));
 		bottomabs->bound[i]=1;
-		for(j=0;j<system->limits.nbr_variables;++j) 
+		for(j=0;j<system->limits.nbr_variables;++j)
 			if (i==j)
 				bottomabs->A[i][j]=1;
 			else
-				bottomabs->A[i][j]=0;	
+				bottomabs->A[i][j]=0;
 	}
 
 	printf("EEC for the concrete system\n");
 	print_abstraction(bottomabs);
 
 	maskpost=(boolean *)xmalloc(system->limits.nbr_rules*sizeof(boolean));
-	for(i=0;i<system->limits.nbr_rules;++i) 
+	for(i=0;i<system->limits.nbr_rules;++i)
 		maskpost[i]=true;
 	printf("transition system\n");
 	from_transitions_to_tree(system, maskpost);
@@ -1147,7 +1154,7 @@ void eec(system, initial_marking, bad)
 		puts("EEC concludes unsafe");
 }
 
-void tsi(system, initial_marking, bad) 
+void tsi(system, initial_marking, bad)
 	transition_system_t *system;
 	ISTSharingTree *bad, *initial_marking;
 {
@@ -1164,16 +1171,16 @@ void tsi(system, initial_marking, bad)
 	for(i=0;i<bottomabs->nbV;++i) {
 		bottomabs->A[i]=(integer16 *)xmalloc(system->limits.nbr_variables*sizeof(integer16));
 		bottomabs->bound[i]=1;
-		for(j=0;j<system->limits.nbr_variables;++j) 
+		for(j=0;j<system->limits.nbr_variables;++j)
 			if (i==j)
 				bottomabs->A[i][j]=1;
 			else
-				bottomabs->A[i][j]=0;	
+				bottomabs->A[i][j]=0;
 	}
 	print_abstraction(bottomabs);
 
 	maskpost=(boolean *)xmalloc(system->limits.nbr_rules*sizeof(boolean));
-	for(i=0;i<system->limits.nbr_rules;++i) 
+	for(i=0;i<system->limits.nbr_rules;++i)
 		maskpost[i]=true;
 	printf("transition system\n");
 	from_transitions_to_tree(system, maskpost);
@@ -1188,10 +1195,10 @@ void tsi(system, initial_marking, bad)
 		puts("TSI concludes unsafe");
 }
 
-static void* mist_cmdline_options_handle(int argc, char *argv[ ]) 
+static void* mist_cmdline_options_handle(int argc, char *argv[ ], int *timeout, char **filename)
 {
 	int c;
-	void *retval=&ic4pn;
+	void *retval=NULL;
 
 	while (1) {
 		int option_index = 0;
@@ -1202,6 +1209,7 @@ static void* mist_cmdline_options_handle(int argc, char *argv[ ])
 			{"ic4pn", 0, 0, 'i'},
 			{"tsi", 0, 0, 't'},
 			{"eec", 0, 0, 'e'},
+			{"timeout", 0, 0, 'o'},
 			{0, 0, 0, 0}
 		};
 
@@ -1215,7 +1223,7 @@ static void* mist_cmdline_options_handle(int argc, char *argv[ ])
 				if (strcmp(long_options[option_index].name,"version") == 0) {
 					print_version();
 					exit(EXIT_SUCCESS);
-				} 
+				}
 				break;
 
 			case 'h':
@@ -1225,28 +1233,39 @@ static void* mist_cmdline_options_handle(int argc, char *argv[ ])
 
 			case 'b':
 				retval=&backward_basic;
+				*filename = argv[optind++];
 				break;
 
 			case 'i':
 				retval=&ic4pn;
+				*filename = argv[optind++];
 				break;
 
 			case 't':
 				retval=&tsi;
+				*filename = argv[optind++];
 				break;
 
 			case 'e':
 				retval=&eec;
+				printf("eec \t %d\n",optind);
+				*filename = argv[optind++];
+				printf("\n%s \n", filename);
 				break;
+
+			case 'o':
+				*timeout = atoi(argv[optind++]);
+				break;
+
 			default:
 				print_help();
 				err_quit("?? getopt returned character code 0%o ??\n", c);
 		}
 	}
 
-	if (optind >= argc) {
+	if (retval == NULL) {
 		print_help();
-		err_quit("Missing filename");
+		err_quit("Wrong input format");
 	}
 	return retval;
 }
@@ -1258,42 +1277,45 @@ int main(int argc, char *argv[ ])
 	transition_system_t *system;
 	ISTSharingTree *initial_marking, *bad;
 	void (*mc)(transition_system_t *sys, ISTSharingTree *init, ISTSharingTree *bad);
+	int timeout;
+	char *output_file;
 
 	head_msg();
-	mc=mist_cmdline_options_handle(argc, argv);
+	mc=mist_cmdline_options_handle(argc, argv, &timeout, &output_file);
 	assert(mc!=NULL);
+	printf("Timeout established to %d seconds\n", timeout);
 
 	linenumber = 1;
 	tbsymbol_init(&tbsymbol, 4096);
 
-	printf("\n\n"); 
+	printf("\n\n");
 	printf("Parsing the problem instance.\n");
-
-	my_yyparse(&atree, argv[optind++]);
+	printf("\n%s\n", output_file);
+	my_yyparse(&atree, output_file);
 
 	/* We initialize the memory management of the system (must do it before parsing) */
 	printf("Allocating memory for data structure.. ");
 	ist_init_system();
 	printf("DONE\n");
 
-#ifdef TBSYMB_DUMP 
+#ifdef TBSYMB_DUMP
 	printf("\n\n");
 	tbsymbol_dump(tbsymbol, &callback);
-#endif    
+#endif
 
-#ifdef TREE_DUMP 
+#ifdef TREE_DUMP
 	printf("\n\n");
 	tree_dump(atree, callback_tree_before, callback_tree_after, callback_leaf);
 #endif
 
-		
+
 	build_problem_instance(atree, &system, &initial_marking, &bad);
 	printf("System has %3d variables, %3d transitions and %2d actual invariants\n",system->limits.nbr_variables, system->limits.nbr_rules, system->limits.nbr_invariants);
 
-/* Our various coverability checker: 
+/* Our various coverability checker:
  * - backward is described in Laurent Van Begin Thesis and my master thesis (work for PN and extensions).
  * - ic4pn is described in ICATPN'07 paper and in fundamentae informatica'08.
- * - cegar development has been stalled for a couple of years, it is a counterexample based abstraction refinement coverability checker. 
+ * - cegar development has been stalled for a couple of years, it is a counterexample based abstraction refinement coverability checker.
  * - tsi is described in our TSI journal paper.
  * - eec implements the expand, enlarge and check algorithm described briefly in our ICATPN'07 and fundamentae informatica'08 papers
  *   and described in details in Gilles Geerearts' thesis.
@@ -1303,8 +1325,11 @@ int main(int argc, char *argv[ ])
 	//cegar(system,initial_marking,bad);
 	//eec(system,initial_marking,bad);
 	//tsi(system,initial_marking,bad);
+ 	signal(SIGALRM, timeout_func);
+ 	alarm(timeout);
 	if(mc)
 		mc(system,initial_marking,bad);
+	alarm(0);
 
 	ist_dispose(initial_marking);
 	ist_dispose(bad);
