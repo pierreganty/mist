@@ -1272,10 +1272,9 @@ int main(int argc, char *argv[ ])
 
 	my_yyparse(&atree, argv[optind++]);
 
-	if (!is_petri_net(atree->subtrees[0])){
+	if (!is_petri_net(atree){
 		if (mc == eec || mc == ic4pn || mc == tsi){
-			printf("We are not working with a petri net so we can't use this algorithm\n");
-			return -1;
+			err_quit("The algorithm you selected only accepts PEtri Net and the input net is no a Petri net\n");
 		}
 	}
 	/* We initialize the memory management of the system (must do it before parsing) */

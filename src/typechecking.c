@@ -51,5 +51,6 @@ boolean possible_petri_net(T_PTR_tree entry){
 }
 
 boolean is_petri_net(T_PTR_tree tree){
-  return tree_dump(tree, possible_petri_net, NULL, NULL);
+   // To check if we are working with a Petri Net we just have to look at the rules subtree
+  return tree_dump(tree->subtrees[0]), possible_petri_net, NULL, NULL);
 }
