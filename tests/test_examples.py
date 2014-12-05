@@ -1,4 +1,11 @@
 #! /usr/bin/python
+#
+# Author: Pedro Valero
+#
+# Description: Script used to check the correct functionallity of
+# installed mist. (See help for more details)
+#
+# Date: 5/12/14
 import os
 import sys
 import signal
@@ -183,7 +190,8 @@ def analyze_results(results_to_check_file):
 def show_help():
     print "This script allows you to run a set of tests storing the results and analyzing them. The script also show you a summary about the correctness of the results obtained"
     print ""
-    print "Usage: ./test_examples [--options] [folder] [file] [number of subprocess] [timeout per test]"
+    print "Usage: ./test_examples [--run|--all] [folder] [file] [number of subprocess]"
+    print "Usage: ./test_examples [--analyze] [file]"
     print ""
     print "Options:"
     print "\t\033[01m--help\033[00m Shows this output"
@@ -225,7 +233,7 @@ analyze = False
 if len(sys.argv) == 1 or sys.argv[1] == "--help":
     show_help()
 else:
-    if len(sys.argv) == 5:
+    if len(sys.argv) == 3:
         if sys.argv[1] == "--analyze":
             analyze = True
             output_file_name = sys.argv[2]
@@ -233,7 +241,7 @@ else:
             print "Invalid imput format:"
             show_help()
             sys.exit(0)
-    elif len(sys.argv) == 6:
+    elif len(sys.argv) == 5:
         if sys.argv[1] == "--run":
             run=True
             output_file_name = sys.argv[3]
@@ -266,7 +274,7 @@ if run:
             sys.exit(0)
 
     output_file = open(output_file_name, "w")
-    max_number_of_subprocess = int(sys.argv[len(sys.argv)-2])
+    max_number_of_subprocess = int(sys.argv[len(sys.argv)-1])
 
     print "This script runs the algorithms of mist on the files in [folder], output is collected in [file] and compared against expected outcomes. The script also outputs a summary of the results obtained. The max number of subprocess to be used is [number of subprocess]"
 
