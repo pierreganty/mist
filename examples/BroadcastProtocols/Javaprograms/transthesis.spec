@@ -1,3 +1,4 @@
+#expected result: safe
 ### example from the book Concurrent Programming in Java, Second Edition. -- Page 257
 
 vars
@@ -5,7 +6,7 @@ unlock lock notlockrefa lockrefa lockrefnull notlockrefnull b1 b2 b5 b6 d1 d2 d5
 
 
 
-rules 
+rules
 choiceA >= 1, unlock >= 1 ->
 	choiceA' = choiceA - 1,
 	b1' = b1 + 1,
@@ -35,7 +36,7 @@ choiceA >= 1, unlock >= 1 ->
         a1' = a1 + 1,
         unlock' = unlock - 1,
         lock' = lock + 1;
-		
+
 choiceA >= 1, unlock >= 1 ->
         choiceA' = choiceA - 1,
         c1' = c1 + 1,
@@ -83,7 +84,7 @@ b5 >= 1 ->
 	notlockrefnull' = notlockrefnull + lockrefnull + 0 ,
 	lockrefnull' = 0;
 
-b6 >= 1 , lock >= 1 -> 
+b6 >= 1 , lock >= 1 ->
 	b6' = b6 - 1 ,
 	choiceA' = choiceA + 1 ,
 	lock' = lock - 1 ,
@@ -123,7 +124,7 @@ d5 >= 1 ->
 	notlockrefnull' = notlockrefnull + lockrefnull + 0 ,
 	lockrefnull' = 0;
 
-d6 >= 1 , lock >= 1 -> 
+d6 >= 1 , lock >= 1 ->
 	d6' = d6 - 1 ,
 	choiceA' = choiceA + 1 ,
 	lock' = lock - 1 ,
@@ -164,7 +165,7 @@ w5 >= 1 ->
 	notlockrefnull' = notlockrefnull + lockrefnull + 0 ,
 	lockrefnull' = 0;
 
-w6 >= 1 , lock >= 1 -> 
+w6 >= 1 , lock >= 1 ->
 	w6' = w6 - 1 ,
 	choiceA' = choiceA + 1 ,
 	lock' = lock - 1 ,
@@ -204,7 +205,7 @@ j5 >= 1 ->
 	notlockrefnull' = notlockrefnull + lockrefnull + 0 ,
 	lockrefnull' = 0;
 
-j6 >= 1 , lock >= 1 -> 
+j6 >= 1 , lock >= 1 ->
 	j6' = j6 - 1 ,
 	choiceA' = choiceA + 1 ,
 	lock' = lock - 1 ,
@@ -218,16 +219,16 @@ o1 >= 1 , lock >= 1 ->
 
 #abort
 
-a1 >= 1 , lockrefa >= 1 -> 
+a1 >= 1 , lockrefa >= 1 ->
 	a1' = a1 - 1 ,
 	a2' = a2 + 1;
 
-a1 >= 1 , notlockrefa >= 1 -> 
+a1 >= 1 , notlockrefa >= 1 ->
 	a1' = a1 - 1 ,
 	a3' = a3 + 1;
 
 
-a2 >= 1 -> 
+a2 >= 1 ->
 	a2' = a2 - 1 ,
 	notifya' = notifya + 1 ,
 	notlockrefa' = notlockrefa + lockrefa + 0 ,
@@ -265,22 +266,22 @@ notifya >= 1 ->
 
 
 
-a3 >= 1 , lock >= 1 -> 
+a3 >= 1 , lock >= 1 ->
 	a3' = a3 - 1 ,
 	choiceA' = choiceA + 1 ,
 	lock' = lock - 1 ,
 	unlock' = unlock + 1;
 
-c1 >= 1 , lockrefa >= 1 -> 
+c1 >= 1 , lockrefa >= 1 ->
 	c1' = c1 - 1 ,
 	c2' = c2 + 1;
 
-c1 >= 1 , notlockrefa >= 1 -> 
+c1 >= 1 , notlockrefa >= 1 ->
 	c1' = c1 - 1 ,
 	c3' = c3 + 1;
 
 
-c2 >= 1 -> 
+c2 >= 1 ->
 	c2' = c2 - 1 ,
 	notifyc' = notifyc + 1 ,
 	notlockrefa' = notlockrefa + lockrefa + 0 ,
@@ -317,7 +318,7 @@ notifyc >= 1 ->
 
 
 
-c3 >= 1 , lock >= 1 -> 
+c3 >= 1 , lock >= 1 ->
 	c3' = c3 - 1 ,
 	choiceA' = choiceA + 1 ,
 	lock' = lock - 1 ,
@@ -326,45 +327,45 @@ c3 >= 1 , lock >= 1 ->
 
 #process O
 
-choiceO >= 1 , unlock >= 1 -> 
+choiceO >= 1 , unlock >= 1 ->
 	choiceO' = choiceO - 1 ,
 	ob1' = ob1 + 1 ,
 	unlock' = unlock - 1 ,
 	lock' = lock + 1;
 
 
-choiceO >= 1 , unlock >= 1 -> 
+choiceO >= 1 , unlock >= 1 ->
 	choiceO' = choiceO - 1 ,
 	od1' = od1 + 1 ,
 	unlock' = unlock - 1 ,
 	lock' = lock + 1;
 
 
-choiceO >= 1 , unlock >= 1 -> 
+choiceO >= 1 , unlock >= 1 ->
 	choiceO' = choiceO - 1 ,
 	ow1' = ow1 + 1 ,
 	unlock' = unlock - 1 ,
 	lock' = lock + 1;
 
-choiceO >= 1 , unlock >= 1 -> 
+choiceO >= 1 , unlock >= 1 ->
 	choiceO' = choiceO - 1 ,
 	oj1' = oj1 + 1 ,
 	unlock' = unlock - 1 ,
 	lock' = lock + 1;
 
-choiceO >= 1 , unlock >= 1 -> 
+choiceO >= 1 , unlock >= 1 ->
 	choiceO' = choiceO - 1 ,
 	oo1' = oo1 + 1 ,
 	unlock' = unlock - 1 ,
 	lock' = lock + 1;
 
-choiceO >= 1 , unlock >= 1 -> 
+choiceO >= 1 , unlock >= 1 ->
 	choiceO' = choiceO - 1 ,
 	oc1' = oc1 + 1 ,
 	unlock' = unlock - 1 ,
 	lock' = lock + 1;
 
-choiceO >= 1 , unlock >= 1 -> 
+choiceO >= 1 , unlock >= 1 ->
 	choiceO' = choiceO - 1 ,
 	oa1' = oa1 + 1 ,
 	unlock' = unlock - 1 ,
@@ -388,7 +389,7 @@ ob2 >= 1 , notlockrefnull >= 1 , lock >= 1 ->
 	lock' = lock - 1 ,
 	unlock' = unlock + 1;
 
-oafterwaitb1 >= 1 , unlock >= 1 -> 
+oafterwaitb1 >= 1 , unlock >= 1 ->
 	oafterwaitb1' = oafterwaitb1 - 1 ,
 	ob1' = ob1 + 1 ,
 	unlock' = unlock - 1 ,
@@ -420,7 +421,7 @@ ob6 >= 1 , notlockrefnull >= 1 , lock >= 1 ->
 	lock' = lock - 1 ,
 	unlock' = unlock + 1;
 
-oafterwaitb2 >= 1 , unlock >= 1 -> 
+oafterwaitb2 >= 1 , unlock >= 1 ->
 	oafterwaitb2' = oafterwaitb2 - 1 ,
 	ob6' = ob6 + 1 ,
 	unlock' = unlock - 1 ,
@@ -463,7 +464,7 @@ od2 >= 1 , notlockrefnull >= 1 , lock >= 1 ->
 	lock' = lock - 1 ,
 	unlock' = unlock + 1;
 
-oafterwaitb1 >= 1 , unlock >= 1 -> 
+oafterwaitb1 >= 1 , unlock >= 1 ->
 	oafterwaitd1' = oafterwaitd1 - 1 ,
 	od1' = od1 + 1 ,
 	unlock' = unlock - 1 ,
@@ -495,7 +496,7 @@ od6 >= 1 , notlockrefnull >= 1 , lock >= 1 ->
 	lock' = lock - 1 ,
 	unlock' = unlock + 1;
 
-oafterwaitd2 >= 1 , unlock >= 1 -> 
+oafterwaitd2 >= 1 , unlock >= 1 ->
 	oafterwaitd2' = oafterwaitd2 - 1 ,
 	od6' = od6 + 1 ,
 	unlock' = unlock - 1 ,
@@ -539,7 +540,7 @@ ow2 >= 1 , notlockrefnull >= 1 , lock >= 1 ->
 	lock' = lock - 1 ,
 	unlock' = unlock + 1;
 
-oafterwaitb1 >= 1 , unlock >= 1 -> 
+oafterwaitb1 >= 1 , unlock >= 1 ->
 	oafterwaitw1' = oafterwaitw1 - 1 ,
 	ow1' = ow1 + 1 ,
 	unlock' = unlock - 1 ,
@@ -571,7 +572,7 @@ ow6 >= 1 , notlockrefnull >= 1 , lock >= 1 ->
 	lock' = lock - 1 ,
 	unlock' = unlock + 1;
 
-oafterwaitd2 >= 1 , unlock >= 1 -> 
+oafterwaitd2 >= 1 , unlock >= 1 ->
 	oafterwaitw2' = oafterwaitw2 - 1 ,
 	ow6' = ow6 + 1 ,
 	unlock' = unlock - 1 ,

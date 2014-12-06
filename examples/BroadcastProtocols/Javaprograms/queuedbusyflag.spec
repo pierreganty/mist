@@ -1,3 +1,4 @@
+#expected result: safe
 ### example from the book Java threads. -- Pages 213 ###
 
 vars
@@ -7,7 +8,7 @@ Jwhile Jgetbusyflag Jchoice1 Jif1 Jchoice2 Jgoto1 Jchoice3 Jwhile2 Jwait Jafterw
 Owhile Ogetbusyflag Ochoice1 Oif1 Ochoice2 Ogoto1 Ochoice3 Owhile2 Owait Oafterwait Oafterwhile Obeforeendget Oendget Owork Oif2 Oif3 Ochoice4 Onotifyall Oassign Ochoice5 Oendfree
 Oerror
 
-rules 
+rules
 
 #process I
 
@@ -45,7 +46,7 @@ Ichoice2 >= 1 , busycounteq0 >= 1 ->
 	Ichoice2' = Ichoice2 - 1,
 	Igoto1' = Igoto1 + 1,
 	notbusycounteq0' = notbusycounteq0 + 1,
-	busycounteq0' = busycounteq0 - 1; 
+	busycounteq0' = busycounteq0 - 1;
 
 Ichoice2 >= 1 , notbusycounteq0 >= 1 ->
 	Ichoice2' = Ichoice2 - 1,
@@ -96,7 +97,7 @@ Iafterwait >= 1 , unlock >= 1 ->
 	Iwhile2' = Iwhile2 + 1,
 	unlock' = unlock - 1,
 	lock' = lock + 1;
-	
+
 Iafterwhile >= 1 ->
 	Iafterwhile' = Iafterwhile - 1,
 	Ibeforeendget' = Ibeforeendget + 1,
@@ -159,7 +160,7 @@ Ichoice4 >= 1 ->
         waitersi' = notwaitersi + waitersi + 0,
         notwaitersi' = 0,
         notwaitersj' = notwaitersj + waitersj + 0,
-        waitersj' = 0;	
+        waitersj' = 0;
 
 Ichoice4 >= 1 ->
         Ichoice4' = Ichoice4 - 1,
@@ -207,7 +208,7 @@ Ichoice5 >= 1 , notbusycounteq0 >= 1 ->
 	busycounteq0' = busycounteq0 + 1,
         notbusycounteq0' = notbusycounteq0 - 1;
 
-Iendfree >= 1, lock >= 1 -> 
+Iendfree >= 1, lock >= 1 ->
 	Iendfree' = Iendfree  -1,
 	Iwhile' = Iwhile + 1,
 	lock' = lock - 1,
@@ -251,7 +252,7 @@ Jchoice2 >= 1 , busycounteq0 >= 1 ->
 	Jchoice2' = Jchoice2 - 1,
 	Jgoto1' = Jgoto1 + 1,
 	notbusycounteq0' = notbusycounteq0 + 1,
-	busycounteq0' = busycounteq0 - 1; 
+	busycounteq0' = busycounteq0 - 1;
 
 Jchoice2 >= 1 , notbusycounteq0 >= 1 ->
 	Jchoice2' = Jchoice2 - 1,
@@ -302,7 +303,7 @@ Jafterwait >= 1 , unlock >= 1 ->
 	Jwhile2' = Jwhile2 + 1,
 	unlock' = unlock - 1,
 	lock' = lock + 1;
-	
+
 Jafterwhile >= 1 ->
 	Jafterwhile' = Jafterwhile - 1,
 	Jbeforeendget' = Jbeforeendget + 1,
@@ -365,7 +366,7 @@ Jchoice4 >= 1 ->
         waitersi' = notwaitersi + waitersi + 0,
         notwaitersi' = 0,
         notwaitersj' = notwaitersj + waitersj + 0,
-        waitersj' = 0;	
+        waitersj' = 0;
 
 Jchoice4 >= 1 ->
         Jchoice4' = Jchoice4 - 1,
@@ -413,7 +414,7 @@ Jchoice5 >= 1 , notbusycounteq0 >= 1 ->
 	busycounteq0' = busycounteq0 + 1,
         notbusycounteq0' = notbusycounteq0 - 1;
 
-Jendfree >= 1, lock >= 1 -> 
+Jendfree >= 1, lock >= 1 ->
 	Jendfree' = Jendfree  -1,
 	Jwhile' = Jwhile + 1,
 	lock' = lock - 1,
@@ -453,7 +454,7 @@ Ochoice2 >= 1 , busycounteq0 >= 1 ->
 	Ochoice2' = Ochoice2 - 1,
 	Ogoto1' = Ogoto1 + 1,
 	notbusycounteq0' = notbusycounteq0 + 1,
-	busycounteq0' = busycounteq0 - 1; 
+	busycounteq0' = busycounteq0 - 1;
 
 Ochoice2 >= 1 , notbusycounteq0 >= 1 ->
 	Ochoice2' = Ochoice2 - 1,
@@ -508,7 +509,7 @@ Oafterwait >= 1 , unlock >= 1 ->
 	Owhile2' = Owhile2 + 1,
 	unlock' = unlock - 1,
 	lock' = lock + 1;
-	
+
 Oafterwhile >= 1 ->
 	Oafterwhile' = Oafterwhile - 1,
 	Obeforeendget' = Obeforeendget + 1,
@@ -583,7 +584,7 @@ Ochoice4 >= 1 ->
         waitersi' = notwaitersi + waitersi + 0,
         notwaitersi' = 0,
         notwaitersj' = notwaitersj + waitersj + 0,
-        waitersj' = 0;	
+        waitersj' = 0;
 
 Ochoice4 >= 1 ->
         Ochoice4' = Ochoice4 - 1,
@@ -631,7 +632,7 @@ Ochoice5 >= 1 , notbusycounteq0 >= 1 ->
 	busycounteq0' = busycounteq0 + 1,
         notbusycounteq0' = notbusycounteq0 - 1;
 
-Oendfree >= 1, lock >= 1 -> 
+Oendfree >= 1, lock >= 1 ->
 	Oendfree' = Oendfree  -1,
 	Owhile' = Owhile + 1,
 	lock' = lock - 1,

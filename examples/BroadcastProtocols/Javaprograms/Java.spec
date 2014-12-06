@@ -1,3 +1,4 @@
+#expected result: safune
 #variable definition
 vars
   c2while1 c2getwa c2while2 c2wait1 c2afterwait1 c2return c2putack c2while3 c2wait2 c2afterwait2 c2end p2while1 p2putwa p2while2 p2wait1 p2afterwait1 p2return p2getack p2while3 p2wait2 p2afterwait2 p2end cwhile1 get cwhile2 cwait cafterwait creturn pwhile1 put pwhile2 pwait pafterwait pend unlock lock available notavailable askforack notaskforack needack notneedack isack notisack
@@ -178,7 +179,7 @@ p2while1 >= 1 ->
 	p2putwa' = p2putwa + 1;
 
 p2putwa >= 1 , unlock >= 1 ->
-	p2putwa' = p2putwa - 1 
+	p2putwa' = p2putwa - 1
 	,
 	p2while2' = p2while2 + 1
 	,
@@ -310,18 +311,18 @@ p2while3 >= 1 , isack >= 1 ->
         p2afterwait1' = p2afterwait1 + p2wait1 + 0
         ,
 	p2wait1' = 0
-	, 
+	,
         p2afterwait2' = p2afterwait2 + p2wait2 + 0
         ,
 	p2wait2' = 0
 	,
-        cafterwait' = cafterwait + cwait + 0 
+        cafterwait' = cafterwait + cwait + 0
         ,
 	cwait' = 0
 	,
         pafterwait' = pafterwait+ pwait + 0
 	,
-	pwait' = 0; 
+	pwait' = 0;
 
 
 p2return >= 1 , lock >= 1 ->
@@ -340,7 +341,7 @@ cwhile1 >= 1 ->
 	,
 	get' = get + 1;
 
-get >= 1 , unlock >= 1 -> 
+get >= 1 , unlock >= 1 ->
 	get' = get - 1
 	,
 	cwhile2' = cwhile2 + 1
@@ -373,7 +374,7 @@ cafterwait >= 1 , unlock >= 1 ->
 	cwhile2' = cwhile2 + 1
 	,
 	unlock' = unlock - 1
-	, 
+	,
 	lock' = lock + 1;
 
 cwhile2 >= 1 , available >= 1 , notaskforack >= 1 ->
@@ -505,8 +506,8 @@ target
   notavailable >= 1 , isack >= 1
 
 invariants
- 
-unlock = 1, lock =1 
+
+unlock = 1, lock =1
 available = 1, notavailable = 1
 askforack = 1, notaskforack = 1
 needack = 1, notneedack = 1
