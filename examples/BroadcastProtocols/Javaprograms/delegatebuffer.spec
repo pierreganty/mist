@@ -1,13 +1,14 @@
+#expected result: safe
 ### example from the book Concurrent Programming in Java, Second Edition. -- Pages 271-272 ###
 ### ATTENTION, IL FAUT NORMALEMENT REMPLACER LES NOTIFYALL PAR DES NOTIFY ###
 ### Sinon l'algorithme semble avoir des difficultés à terminer ###
 
 vars
-unlockT lockT unlockP lockP notslotTeq0 slotTeq0 notslotTeq1 slotTeq1 notslotTeq2  slotTeq2 notslotPeq0 slotPeq0 notslotPeq1 slotPeq1 notslotPeq2  slotPeq2 notptrTeq0 ptrTeq0 notptrTeq1 ptrTeq1 notptrPeq0 ptrPeq0 notptrPeq1 ptrPeq1  
+unlockT lockT unlockP lockP notslotTeq0 slotTeq0 notslotTeq1 slotTeq1 notslotTeq2  slotTeq2 notslotPeq0 slotPeq0 notslotPeq1 slotPeq1 notslotPeq2  slotPeq2 notptrTeq0 ptrTeq0 notptrTeq1 ptrTeq1 notptrPeq0 ptrPeq0 notptrPeq1 ptrPeq1
 put Pwhile P1 Pwait Pafterwait Pdecslot Pincptr Passign Pnotify Pslotinc Pbeforenotify Pafternotify Pend take Twhile T1 Twait Tafterwait Tdecslot Tincptr Tassign Tnotify Tslotinc Tbeforenotify Tafternotify Tend
 
 
-#putter 
+#putter
 rules
 
 put >= 1, unlockP >= 1 ->
@@ -145,13 +146,13 @@ Pslotinc >= 1, slotTeq2 >= 1 ->
 Pslotinc >= 1, notslotTeq0 >= 1, notslotTeq1 >= 1, notslotTeq2 >= 1 ->
         Pslotinc' = Pslotinc - 1,
         Pbeforenotify' = Pbeforenotify + 1;
-	
+
 Pslotinc >= 1, notslotTeq0 >= 1, notslotTeq1 >= 1, notslotTeq2 >= 1 ->
         Pslotinc' = Pslotinc - 1,
         Pbeforenotify' = Pbeforenotify + 1,
         slotTeq0' = slotTeq0 + 1,
         notslotTeq0' = notslotTeq0 - 1;
-	
+
 #attention, c'est un notify normalement!
 
 Pbeforenotify >= 1 ->
@@ -172,7 +173,7 @@ Pend >= 1 ->
 	Pend' = Pend - 1,
 	put' = put + 1;
 
-#taker 
+#taker
 
 take >= 1, unlockT >= 1 ->
 	take' = take - 1,
@@ -309,13 +310,13 @@ Tslotinc >= 1, slotPeq2 >= 1 ->
 Tslotinc >= 1, notslotPeq0 >= 1, notslotPeq1 >= 1, notslotPeq2 >= 1 ->
         Tslotinc' = Tslotinc - 1,
         Tbeforenotify' = Tbeforenotify + 1;
-	
+
 Tslotinc >= 1, notslotPeq0 >= 1, notslotPeq1 >= 1, notslotPeq2 >= 1 ->
         Tslotinc' = Tslotinc - 1,
         Tbeforenotify' = Tbeforenotify + 1,
         slotPeq0' = slotPeq0 + 1,
         notslotPeq0' = notslotPeq0 - 1;
-	
+
 #attention, c'est un notify normalement!
 
 Tbeforenotify >= 1 ->
@@ -338,7 +339,7 @@ Tend >= 1 ->
 
 init
 
-unlockT = 1 , lockT = 0 , unlockP = 1 , lockP = 0 , notslotTeq0 = 0 , slotTeq0 = 1 , notslotTeq1 = 1 , slotTeq1 = 0 , notslotTeq2  = 1 , slotTeq2 = 0 , notslotPeq0 = 1 , slotPeq0 = 0 , notslotPeq1 = 1 , slotPeq1 = 0 , notslotPeq2 = 0 , slotPeq2 = 1 ,  notptrTeq0 = 0 , ptrTeq0 = 1 , notptrTeq1 = 1 , ptrTeq1 = 0 , notptrPeq0 = 0 , ptrPeq0 = 1 , notptrPeq1 = 1 , ptrPeq1 = 0 , 
+unlockT = 1 , lockT = 0 , unlockP = 1 , lockP = 0 , notslotTeq0 = 0 , slotTeq0 = 1 , notslotTeq1 = 1 , slotTeq1 = 0 , notslotTeq2  = 1 , slotTeq2 = 0 , notslotPeq0 = 1 , slotPeq0 = 0 , notslotPeq1 = 1 , slotPeq1 = 0 , notslotPeq2 = 0 , slotPeq2 = 1 ,  notptrTeq0 = 0 , ptrTeq0 = 1 , notptrTeq1 = 1 , ptrTeq1 = 0 , notptrPeq0 = 0 , ptrPeq0 = 1 , notptrPeq1 = 1 , ptrPeq1 = 0 ,
 put >= 1 , Pwhile = 0 , P1 = 0 , Pwait = 0 , Pafterwait = 0 , Pdecslot = 0 , Pincptr = 0 , Passign = 0 , Pnotify = 0 , Pslotinc = 0 , Pbeforenotify = 0 , Pend = 0 , take >= 1 , Twhile = 0 , T1 = 0 , Twait = 0 , Tafterwait = 0 , Tdecslot = 0 , Tincptr = 0 , Tassign = 0 , Tnotify = 0 , Tslotinc = 0 , Tbeforenotify = 0 , Tend = 0 , Pafternotify = 0 , Tafternotify = 0
 
 target
@@ -346,8 +347,8 @@ target
 # Each line corresponds to a different set of bad states
 Passign >= 1 , ptrPeq0 >= 1 , Tassign >= 1 ,  ptrTeq0 >= 1
 #Passign >= 1 , ptrPeq1 >= 1 , Tassign >= 1 ,  ptrTeq1 >= 1
-#notslotTeq0 >= 1 , notslotTeq1 >= 1 , notslotTeq2 >= 1 
-#notslotPeq0 >= 1 , notslotPeq1 >= 1 , notslotPeq2 >= 1		
+#notslotTeq0 >= 1 , notslotTeq1 >= 1 , notslotTeq2 >= 1
+#notslotPeq0 >= 1 , notslotPeq1 >= 1 , notslotPeq2 >= 1
 
 
 invariants

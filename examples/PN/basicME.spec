@@ -1,3 +1,4 @@
+#expected result: safe
 vars
     x0 x1 x2 x3 x4
 

@@ -1,6 +1,7 @@
+#expected result: safe
 #variable definition
 vars
-  initc whilec whileget waitget competec notifyc endc initp whilep whileput waitput competep notifyp returnp available notavailable lock notlock 
+  initc whilec whileget waitget competec notifyc endc initp whilep whileput waitput competep notifyp returnp available notavailable lock notlock
 
 
 
@@ -46,7 +47,7 @@ whileget >= 1 , available >= 1 ->
 	,
 	notifyc' = notifyc + 1
 	,
-	notavailable' = notavailable + 1 
+	notavailable' = notavailable + 1
 	,
 	available' = available - 1;
 
@@ -74,12 +75,12 @@ endc >= 1 , lock >= 1 ->
 
 # producer
 
-initp >= 1 -> 
+initp >= 1 ->
 	initp' =initp - 1
 	,
 	whilep' = whilep + 1;
 
-whilep >= 1 , notlock >= 1 -> 
+whilep >= 1 , notlock >= 1 ->
 	whilep' = whilep - 1
 	,
 	whileput' = whileput + 1
@@ -96,7 +97,7 @@ whileput >= 1 , lock >= 1 , available >= 1 ->
 	lock' = lock - 1
 	,
 	notlock' = notlock + 1;
-	
+
 competep >= 1 , notlock >= 1 ->
 	competep' = competep - 1
 	,
@@ -105,13 +106,13 @@ competep >= 1 , notlock >= 1 ->
 	notlock' = notlock - 1
 	,
 	lock' = lock + 1;
-	
+
 whileput >= 1 , notavailable >= 1 ->
 	whileput' = whileput - 1
 	,
 	notifyp' = notifyp + 1
 	,
-	available' = available + 1 
+	available' = available + 1
 	,
 	notavailable' = notavailable - 1;
 
@@ -139,11 +140,11 @@ returnp >= 1 , lock >= 1 ->
 
 #init section
 init
-  initc >= 1, initp >= 1, whilec = 0, whileget = 0, waitget = 0, competec = 0, notifyc = 0, endc = 0,  whilep = 0, whileput = 0, waitput = 0, competep = 0, notifyp = 0, returnp = 0, available = 0, notavailable = 1, lock = 0, notlock = 1 
+  initc >= 1, initp >= 1, whilec = 0, whileget = 0, waitget = 0, competec = 0, notifyc = 0, endc = 0,  whilep = 0, whileput = 0, waitput = 0, competep = 0, notifyp = 0, returnp = 0, available = 0, notavailable = 1, lock = 0, notlock = 1
 
 #Goals section
 target
-  waitput >= 2 , waitget >= 2 
+  waitput >= 2 , waitget >= 2
 
 invariants
 

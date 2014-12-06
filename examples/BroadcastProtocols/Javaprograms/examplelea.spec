@@ -1,3 +1,4 @@
+#expected result: safe
 ### example from the book Concurrent Programming in Java, Second Edition. -- Pages 242-243
 
 
@@ -11,7 +12,7 @@ rules
 #process manipulationg the checking account
 
 Cwhile1 >= 1, unlockC >= 1 ->
-	Cwhile1' = Cwhile1 - 1,	
+	Cwhile1' = Cwhile1 - 1,
 	C1' = C1 + 1,
 	unlockC' = unlockC - 1,
 	lockC' = lockC + 1;
@@ -74,11 +75,11 @@ C6 >= 1 , lockTC >= 1 ->
 
 Cchoice >= 1 ->
 	Cchoice' = Cchoice - 1,
-	C13' = C13 + 1;	
+	C13' = C13 + 1;
 
 Cchoice >= 1 ->
 	Cchoice' = Cchoice - 1,
-	Cbad' = Cbad + 1;	
+	Cbad' = Cbad + 1;
 
 C13 >= 1, unlockTC >= 1 ->
 	C13' = C13 - 1,
@@ -86,7 +87,7 @@ C13 >= 1, unlockTC >= 1 ->
 	unlockTC' = unlockTC - 1,
 	lockTC' = lockTC + 1;
 
-C7 >= 1 ->	
+C7 >= 1 ->
 	C7' = C7 - 1,
 	C8' = C8 + 1,
 	notvalue' = notvalue + value + 0,
@@ -114,7 +115,7 @@ C9 >= 1, lockC >= 1 ->
 	Cwhile1' = Cwhile1 + 1,
 	lockC' = lockC - 1,
 	unlockC' = unlockC + 1;
-	
+
 Cbad >= 1, unlockS >= 1 ->
 	Cbad' = Cbad - 1,
 	C10' = C10 + 1,
@@ -137,7 +138,7 @@ C11 >= 1, unlockTC >= 1 ->
 #process manipulationg the saving account
 
 Swhile1 >= 1, unlockS >= 1 ->
-	Swhile1' = Swhile1 - 1,	
+	Swhile1' = Swhile1 - 1,
 	S1' = S1 + 1,
 	unlockS' = unlockS - 1,
 	lockS' = lockS + 1;
@@ -208,7 +209,7 @@ S13 >= 1, unlockTC >= 1 ->
 	unlockTC' = unlockTC - 1,
 	lockTC' = lockTC + 1;
 
-S7 >= 1 ->	
+S7 >= 1 ->
 	S7' = S7 - 1,
 	S8' = S8 + 1,
 	notvalue' = notvalue + value + 0,

@@ -1,6 +1,7 @@
+#expected result: safe
 #variable definition
 vars
-  i1 i2 lock unlock invalid modified shared owned exclusive 
+  i1 i2 lock unlock invalid modified shared owned exclusive
 
 
 #Rules section
@@ -57,7 +58,7 @@ i1 >= 1 , lock >= 1 ->
 	,
 	unlock' = unlock + 1;
 
-invalid >= 1 , unlock >= 1 -> 
+invalid >= 1 , unlock >= 1 ->
 	invalid' = invalid - 1
 	,
 	i2' = i2 + 1
@@ -112,7 +113,7 @@ owned = 0, exclusive = 0
 
 #Goals section
 target
-  exclusive >= 2 
+  exclusive >= 2
 
 invariants
 lock = 1, unlock = 1

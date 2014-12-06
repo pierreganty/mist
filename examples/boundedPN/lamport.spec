@@ -1,3 +1,4 @@
+#expected result: safe
 vars
      p1 p2 p3 x_eq_0 x_eq_1 y_eq_1 q1 q2 q3 q4 q5
 

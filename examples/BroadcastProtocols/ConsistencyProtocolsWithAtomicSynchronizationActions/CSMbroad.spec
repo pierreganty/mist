@@ -1,4 +1,5 @@
-vars 
+#expected result: safe
+vars
 Think WaitC UseC Stopped WaitD UseD IdleD BusyD IdleC BusyC Pbusy Noint Int
 
 
