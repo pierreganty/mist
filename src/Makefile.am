@@ -65,5 +65,7 @@ mist_SOURCES = \
 	transsystem.h \
 	tree.c \
 	tree.h \
+	typechecking.h \
+	typechecking.c \
 	xmalloc.c \
 	xmalloc.h

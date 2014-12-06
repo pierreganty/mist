@@ -24,6 +24,7 @@
 
 #include <sys/types.h>
 #include <stdarg.h>
+#include "def.h"
 
 typedef enum{CONT, BRK, BRK_BRANCH} T_tree_state;
 
@@ -55,10 +56,10 @@ void* tree_getinfo(T_PTR_tree tree);
 
 T_PTR_tree tree_merge(void* info, T_PTR_tree t1, T_PTR_tree t2);
 void tree_destroy(T_PTR_tree* tree);
-void tree_dump(T_PTR_tree tree,
-               void (*callback_node_before)(T_PTR_tree entry),
-               void (*callback_node_after)(T_PTR_tree entry),
-               void (*callback_leaf)(T_PTR_tree entry));
+boolean tree_dump(T_PTR_tree tree,
+               boolean (*callback_node_before)(T_PTR_tree entry),
+               boolean (*callback_node_after)(T_PTR_tree entry),
+               boolean (*callback_leaf)(T_PTR_tree entry));
 
 
 

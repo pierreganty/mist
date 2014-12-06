@@ -39,7 +39,7 @@ static ISTSharingTree *_unsafe;
 
 
 static
-void
+boolean
 callback_tree_before(T_PTR_tree entry) {
   char* info;
 
@@ -61,6 +61,8 @@ callback_tree_before(T_PTR_tree entry) {
     /* system and init are IN/OUT parameters */
     invariantscode_produce(tree_subtree(entry,0), _system, _init);
   }
+
+  return true;
 }
 
 void

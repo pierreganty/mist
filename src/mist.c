@@ -36,6 +36,7 @@
 
 #include "laparser.h"
 #include "ist.h"
+#include "typechecking.h"
 
 /*To end the executing when timeout event occurs*/
 void timeout_func (int sgn) {
@@ -1290,6 +1291,12 @@ int main(int argc, char *argv[ ])
 	printf("Parsing the problem instance.\n");
 	printf("\n%s\n", input_file);
 	my_yyparse(&atree, input_file);
+
+	if (!is_petri_net(atree)){
+		if (mc == eec || mc == ic4pn || mc == tsi){
+			err_quit("The algorithm you selected only accepts Petri Net and the input net is no a Petri net\n");
+		}
+	}
 
 	/* We initialize the memory management of the system (must do it before parsing) */
 	printf("Allocating memory for data structure.. ");
