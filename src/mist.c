@@ -16,7 +16,7 @@
    along with mist; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-   Copyright 2002-2007 Pierre Ganty, Laurent Van Begin
+   Copyright 2002-2007 Pierre Ganty, Laurent Van Begin, 2014 Pedro Valero
  */
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -29,12 +29,18 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/time.h>
 #include <sys/times.h>
 #include <assert.h>
+#include <signal.h>
 
 #include "laparser.h"
 #include "ist.h"
 
+/*To end the executing when timeout event occurs*/
+void timeout_func (int sgn) {
+	err_quit("Timeout");
+}
 
 /* For printing the error trace */
 void ist_print_error_trace(ISTSharingTree * initial_marking,THeadListIST * list_ist, transition_system_t * rules)
@@ -352,7 +358,7 @@ static void print_version() {
 
 static void print_help()
 {
-	puts("Usage: mist [options] filename\n");
+	puts("Usage: mist [options] filename \n");
 	puts("Options:");
 	puts("     --help       this help");
 	puts("     --version    show version numbers");
@@ -360,6 +366,7 @@ static void print_help()
 	puts("     --ic4pn      the algorithm described in FI");
 	puts("     --tsi        the algorithm described in TSI");
 	puts("     --eec        the Expand, Enlarge and Check algorithm");
+	puts("     --timeout=T  establish an execution timeout of T seconds");
 }
 
 static void head_msg()
@@ -1188,10 +1195,10 @@ void tsi(system, initial_marking, bad)
 		puts("TSI concludes unsafe");
 }
 
-static void* mist_cmdline_options_handle(int argc, char *argv[ ])
+static void* mist_cmdline_options_handle(int argc, char *argv[ ], int *timeout, char **filename)
 {
 	int c;
-	void *retval=&ic4pn;
+	void *retval=NULL;
 
 	while (1) {
 		int option_index = 0;
@@ -1202,6 +1209,7 @@ static void* mist_cmdline_options_handle(int argc, char *argv[ ])
 			{"ic4pn", 0, 0, 'i'},
 			{"tsi", 0, 0, 't'},
 			{"eec", 0, 0, 'e'},
+			{"timeout", 0, 0, 'o'},
 			{0, 0, 0, 0}
 		};
 
@@ -1225,28 +1233,37 @@ static void* mist_cmdline_options_handle(int argc, char *argv[ ])
 
 			case 'b':
 				retval=&backward_basic;
+				*filename = argv[optind++];
 				break;
 
 			case 'i':
 				retval=&ic4pn;
+				*filename = argv[optind++];
 				break;
 
 			case 't':
 				retval=&tsi;
+				*filename = argv[optind++];
 				break;
 
 			case 'e':
 				retval=&eec;
+				*filename = argv[optind++];
 				break;
+
+			case 'o':
+				*timeout = atoi(argv[optind++]);
+				break;
+
 			default:
 				print_help();
 				err_quit("?? getopt returned character code 0%o ??\n", c);
 		}
 	}
 
-	if (optind >= argc) {
+	if (retval == NULL) {
 		print_help();
-		err_quit("Missing filename");
+		err_quit("Wrong command invocation");
 	}
 	return retval;
 }
@@ -1258,18 +1275,21 @@ int main(int argc, char *argv[ ])
 	transition_system_t *system;
 	ISTSharingTree *initial_marking, *bad;
 	void (*mc)(transition_system_t *sys, ISTSharingTree *init, ISTSharingTree *bad);
+	int timeout=0;
+	char *input_file;
 
 	head_msg();
-	mc=mist_cmdline_options_handle(argc, argv);
+	mc=mist_cmdline_options_handle(argc, argv, &timeout, &input_file);
 	assert(mc!=NULL);
+	printf("Timeout established to %d seconds\n", timeout);
 
 	linenumber = 1;
 	tbsymbol_init(&tbsymbol, 4096);
 
 	printf("\n\n");
 	printf("Parsing the problem instance.\n");
-
-	my_yyparse(&atree, argv[optind++]);
+	printf("\n%s\n", input_file);
+	my_yyparse(&atree, input_file);
 
 	/* We initialize the memory management of the system (must do it before parsing) */
 	printf("Allocating memory for data structure.. ");
@@ -1303,8 +1323,27 @@ int main(int argc, char *argv[ ])
 	//cegar(system,initial_marking,bad);
 	//eec(system,initial_marking,bad);
 	//tsi(system,initial_marking,bad);
+
+	struct itimerval timer;
+	struct sigaction sa;
+
+	/* Configure the timer to expire after timeout sec... */
+	timer.it_value.tv_sec = timeout;
+	timer.it_value.tv_usec = 0;
+	timer.it_interval.tv_sec = 0;
+    timer.it_interval.tv_usec = 0;
+
+	/* Install timer_handler as the signal handler for SIGVTALRM. */
+	memset (&sa, 0, sizeof (sa));
+	sa.sa_handler = &timeout_func;
+	sigaction (SIGVTALRM, &sa, NULL);
+
+	/* Start a virtual timer. It counts down whenever this process is
+	   executing. */
+	setitimer(ITIMER_VIRTUAL, &timer, NULL);
 	if(mc)
 		mc(system,initial_marking,bad);
+	setitimer(ITIMER_VIRTUAL, NULL, NULL);
 
 	ist_dispose(initial_marking);
 	ist_dispose(bad);
