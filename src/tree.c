@@ -43,7 +43,7 @@ tree_new(void* info, size_t size, ...) {
   } else {
     tree->subtrees = NULL;
   }
-  
+
   va_end(ap);
 
   return tree;
@@ -70,9 +70,9 @@ tree_merge(void* info, T_PTR_tree t1, T_PTR_tree t2) {
 
   if (size) {
     tree->subtrees = (T_PTR_tree*) xmalloc(sizeof(T_PTR_tree) * size);
-    for (i = 0; i < t1size; i++) 
+    for (i = 0; i < t1size; i++)
       tree->subtrees[i] = t1->subtrees[i];
-    for (i = 0; i < t2size; i++) 
+    for (i = 0; i < t2size; i++)
       tree->subtrees[t1size + i] = t2->subtrees[i];
   } else {
     tree->subtrees = NULL;
@@ -88,26 +88,26 @@ tree_destroy(T_PTR_tree* tree) {
 
 
 
-void 
+boolean
 tree_dump(T_PTR_tree tree,
-	  void (*callback_node_before)(T_PTR_tree entry),
-	  void (*callback_node_after)(T_PTR_tree entry),
-	  void (*callback_leaf)(T_PTR_tree entry)) {
+	  boolean (*callback_node_before)(T_PTR_tree entry),
+	  boolean (*callback_node_after)(T_PTR_tree entry),
+	  boolean (*callback_leaf)(T_PTR_tree entry)) {
   size_t i;
 
   if (tree) {
 	  if (tree->nbrsubtrees) {
 		  tree->state = CONT;
 		  if (callback_node_before)
-			  callback_node_before(tree);
+			  if (!callback_node_before(tree)) return false;
 		  switch (tree->state)
-		  {	
+		  {
 			  case CONT:
-				  for (i = 0; i < tree->nbrsubtrees && tree->state != BRK; i++) 
+				  for (i = 0; i < tree->nbrsubtrees && tree->state != BRK; i++)
 					  if (tree->subtrees[i]) {
-						  tree_dump(tree->subtrees[i],
+						  if(!tree_dump(tree->subtrees[i],
 								  callback_node_before,
-								  callback_node_after, callback_leaf);
+								  callback_node_after, callback_leaf)) return false;
 						  if (tree->subtrees[i]->state == BRK)
 							  tree_brk_branch(tree);
 					  }
@@ -121,10 +121,11 @@ tree_dump(T_PTR_tree tree,
 				  err_quit ("Unknown state in tree_dump\n");
 		  }
 		  if (callback_node_after)
-			  callback_node_after(tree);
+			  if(!callback_node_after(tree)) return false;
 	  } else {
 		  if (callback_leaf)
-			  callback_leaf(tree);
+			  if(!callback_leaf(tree)) return false;
 	  }
   }
+  return true;
 }
