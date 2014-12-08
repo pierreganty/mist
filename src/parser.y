@@ -40,7 +40,7 @@ int yyerror(char *);
 
 %token INIT
 %token RULES
-%token TARGET 
+%token TARGET
 %token INVARIANTS
 %token VARS
 %token <string> ID
@@ -69,7 +69,7 @@ int yyerror(char *);
 %type <tree> targetssection
 %type <tree> initsection
 %type <tree> invsection
-%type <tree> equal 
+%type <tree> equal
 %type <tree> equallistor
 %type <tree> equallistand
 %type <tree> prog
@@ -78,7 +78,7 @@ int yyerror(char *);
 
 %%
 
-prog: varsection rulessection initsection targetssection invsection{ 
+prog: varsection rulessection initsection targetssection invsection{
   tmp_tree = tree_new4("program", $2, $3, $4, $5);
 }
 ;
@@ -107,7 +107,7 @@ varlist: varlist ID {
 initsection: INIT constrlistand {
   $$ = tree_new1("init", $2);
 }
-; 
+;
 
 targetssection: TARGET constrlistor {
   $$ = tree_new1("target", $2);
@@ -170,7 +170,7 @@ rulessection: RULES guardedcmdlist {
 ;
 
 guardedcmdlist: guardedcmd guardedcmdlist {
-  $$ = tree_merge("rules", 
+  $$ = tree_merge("rules",
 		  tree_new1("firstrule", $1), $2);
 }
 | { $$ = NULL;}
@@ -182,7 +182,7 @@ guardedcmd: guardlist ARROW statementlist TERMINATOR {
 	 * we only consider unbounded transfers
 	 */
   $$ = tree_new2("guardedcmd", $1, $3);
-} 
+}
 ;
 
 guardlist: guard COMMA guardlist {
@@ -227,7 +227,7 @@ statementlist:  statement statementfollow {
   $$ = tree_merge("statement", tree_new1("statement",$1), $2);
 }
 |  {
-  $$ = NULL; 
+  $$ = NULL;
 }
 ;
 
@@ -341,7 +341,7 @@ equal: ID EQUAL NB {
 // T_PTR_tree yyparse(void);
 
 int
-yyerror(char* s){ 
+yyerror(char* s){
   err_quit("%s : line %d on '%s'",s, linenumber, yytext);
   return -1;
 }
@@ -357,7 +357,7 @@ my_yyparse(T_PTR_tree* tree, char* filename)
   yyin = fopen(filename,"r");
   if (yyin == NULL)
     err_sys("fopen error");
-  
+
   nbr_var = 0;
 
   retval = yyparse();
@@ -365,6 +365,6 @@ my_yyparse(T_PTR_tree* tree, char* filename)
 
   if (fclose(yyin) != 0)
     err_sys("fclose error");
- 
+
   return retval;
 }

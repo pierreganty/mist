@@ -76,7 +76,7 @@ id {alpha}{alphanum}*
 
                return NB;
              }
-.            {/* ECHO; */return yytext[0];}    
+.            {/* ECHO; */return yytext[0];}
 %%
 /*int main()
 {

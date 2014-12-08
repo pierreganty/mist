@@ -38,8 +38,8 @@ static boolean UseInvariant(NuInvar, NuRule, system)
 	Sol = false;
 	i = 0;
 	while (i < system->limits.nbr_variables && !Sol) {
-		if (( system->transition[NuRule].cmd_for_place[i].delta != 0 
-					|| ist_not_equal_interval(&system->transition[NuRule].cmd_for_place[i].guard,tau)) 
+		if (( system->transition[NuRule].cmd_for_place[i].delta != 0
+					|| ist_not_equal_interval(&system->transition[NuRule].cmd_for_place[i].guard,tau))
 				&& system->invariants[NuInvar].weight_on_place[i] != 0)
 			Sol = true;
 		else
@@ -152,7 +152,7 @@ static  void ComputeMaxUp(S, invariant)
 	while (CurrentLayer < LastLayer) {
 		Node = Layer->FirstNode;
 		while (Node != NULL) {
-			if (Node->Info->Right != INFINITY) 
+			if (Node->Info->Right != INFINITY)
 				Node->MaxUp += invariant->weight_on_place[CurrentLayer] * Node->Info->Right;
 			else
 				Node->MaxUp = INFINITY;
@@ -173,7 +173,7 @@ static  void ComputeMaxUp(S, invariant)
 
 	Node = Layer->FirstNode;
 	while (Node != NULL) {
-		if (Node->Info->Right != INFINITY) 
+		if (Node->Info->Right != INFINITY)
 			Node->MaxUp += invariant->weight_on_place[LastLayer] * Node->Info->Right;
 		else
 			Node->MaxUp = INFINITY;
@@ -269,7 +269,7 @@ static void ComputeMaxDown(S, invariant)
 
 	Node = Layer->FirstNode;
 	while (Node != NULL) {
-		if (Node->Info->Right != INFINITY) 
+		if (Node->Info->Right != INFINITY)
 			Node->MaxDown = invariant->weight_on_place[CurrentLayer] * Node->Info->Right;
 		else
 			Node->MaxDown = INFINITY;
@@ -282,7 +282,7 @@ static void ComputeMaxDown(S, invariant)
 	while (CurrentLayer >= FirstLayer) {
 		Node = Layer->FirstNode;
 		while (Node != NULL) {
-			if (Node->Info->Right != INFINITY) 
+			if (Node->Info->Right != INFINITY)
 				Node->MaxDown = (invariant->weight_on_place[CurrentLayer] * Node->Info->Right) + ComputeMaxMaxDownSon(Node);
 			else
 				Node->MaxDown = INFINITY;
@@ -325,13 +325,13 @@ static boolean ist_reduce_with_invar_heuristic(S, invariant)
 						|| (ist_less_value(ist_add_value(Node->MaxUp , Son->Son->MaxDown) , invariant->m0_p->Left))){
 					/*
 					 * If one of these two conditions holds
-					 * min_<(e) + min_>(e) > p^T . m_o 
+					 * min_<(e) + min_>(e) > p^T . m_o
 					 * max_<(e) + max_>(e) < p^T . m_o
 					 * We can remove the edge
 					 */
 					Reduce = true;
 					NextSon = Son->Next;
-					ist_remove_son(Node, Son->Son);   
+					ist_remove_son(Node, Son->Son);
 					Son = NextSon;
 				} else
 					Son = Son->Next;
@@ -379,7 +379,7 @@ void ist_remove_with_invar_heuristic(S, NuRule, system)
 			ist_minimize_invar_heuristic(S, &system->invariants[NuInv]);
 			if (ist_is_empty(S) == false)
 				NuInv++;
-			else 
+			else
 				NuInv = system->limits.nbr_invariants;
 		} else
 			NuInv++;

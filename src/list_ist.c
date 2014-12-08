@@ -72,7 +72,7 @@ void ist_empty_list_ist_with_info(THeadListIST * list){
     list->FirstElem = elem_list->Next;
     ist_dispose(elem_list->Info);
     xfree(elem_list);
-  } 
+  }
 }
 
 //empty the list of sharing trees
@@ -130,7 +130,7 @@ ISTSharingTree *ist_next_element_list_ist(THeadListIST * list) {
     next_elem = list->NextElem->Info;
     list->NextElem = list->NextElem->Next;
   }
-  return next_elem;  
+  return next_elem;
 }
 
 

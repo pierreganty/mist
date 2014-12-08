@@ -66,12 +66,12 @@ static ISTNode *IntersectionWithInvar(node, invariant, height, NuLayer, LINK)
 				ist_multiply_left_and_right_bound_by_value(Product,invariant->weight_on_place[NuLayer]);
 				ist_add_interval_to_interval(LINK->intersect,Product);
 				/*
-				 * We can only stop iff we are over the value and there is no intersection 
-				 */ 
+				 * We can only stop iff we are over the value and there is no intersection
+				 */
 				if (ist_greater_value(LINK->intersect->Left,invariant->m0_p->Right)) {
 					stop = true;
 				} else {
-					/* 
+					/*
 					 * We store the interval, in a univoque way inside a 32 bit field.
 					 * We take as asumption that -> Left and ->Right < 2^16.
 					 */
@@ -79,19 +79,19 @@ static ISTNode *IntersectionWithInvar(node, invariant, height, NuLayer, LINK)
 					temp =  (LINK->intersect->Right == INFINITY ?
 							0x0000ffff : 0x0000ffff & LINK->intersect->Right) | (temp << 16);
 					LINK->memo = ist_get_memoization1(s1->Son, (ISTNode*)temp);
-					/* 
-					 * Here, we play with fire ... I explain. We take as asumption that our values 
+					/*
+					 * Here, we play with fire ... I explain. We take as asumption that our values
 					 * won´t be over 2^16 - 2 (2 because infinite is encoded as 2^16 - 1)
 					 * which is a reasonable asumption.
 					 * In the case of infinity we encode 0xffff as value. We take also as asumption
-					 * that long is over 32 bit 
+					 * that long is over 32 bit
 					 */
 					if (LINK->memo != NULL)
 						rchild = LINK->memo->r;
 					else
 
 						rchild = IntersectionWithInvar(s1->Son, invariant, height, NuLayer + 1 , LINK);
-					if (rchild != NULL) 
+					if (rchild != NULL)
 						ist_add_son(rnode, rchild);
 				}
 				ist_sub_interval_to_interval(LINK->intersect,Product);
@@ -151,10 +151,10 @@ ISTSharingTree *ist_intersection_with_invar(ST1, invariant, height)
 			ist_multiply_left_and_right_bound_by_value(Product,invariant->weight_on_place[0]);
 			ist_add_interval_to_interval(V.intersect,Product);
 			/*
-			 * We can only stop iff we are over  the value in this case there is no intersection 
+			 * We can only stop iff we are over  the value in this case there is no intersection
 			 * In that case we know that it will be impossible to have an intersection afterwards
 			 * because the list on sons is sorted !
-			 */ 
+			 */
 			if (ist_greater_value(V.intersect->Left,invariant->m0_p->Right)) {
 				stop = true;
 

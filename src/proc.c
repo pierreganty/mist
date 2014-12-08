@@ -90,7 +90,7 @@ inline void ist_dispose_son(son)
 		if (ptr == son)
 			err_msg("Error: son already disposed\n");
 		ptr = ptr->Next;
-	} 
+	}
 */
 
 	son->Next = st_SonsMemory;
@@ -409,7 +409,7 @@ void ist_init_system()
 	st_MagicNumber = -MaxInt32;
 	st_Memo1Number = -MaxInt8;
 	st_Memo2Number = -MaxInt8;
-}  
+}
 
 inline void ist_dispose(ST)
 	ISTSharingTree *ST;
@@ -686,18 +686,18 @@ void ist_add_son(node, child)
 		node->FirstSon = s;
 		return;
 	}
-	/* We can place 's' before  node->FirstSon because it is logically before (w.r.t. the order that we defined on nodes) */ 
-	if (ist_greater_or_equal_interval(node->FirstSon->Son->Info,s->Son->Info)){   
+	/* We can place 's' before  node->FirstSon because it is logically before (w.r.t. the order that we defined on nodes) */
+	if (ist_greater_or_equal_interval(node->FirstSon->Son->Info,s->Son->Info)){
 		s->Next = node->FirstSon;
 		node->FirstSon = s;
 		return;
 	}
 	/* Otherwise we are in the genreral case. Moreover we know that our list contains at list one element */
 	sp = node->FirstSon;
-	sq = NULL; 
+	sq = NULL;
 	/* We look for the right place */
 	while (sp != NULL && ist_less_interval(sp->Son->Info,s->Son->Info)) {
-		/* We browse the list until we find an element  ist_greater_or_equal_interval or sp = NULL (if they are all lesser than 's') */	
+		/* We browse the list until we find an element  ist_greater_or_equal_interval or sp = NULL (if they are all lesser than 's') */
 		sq = sp;
 		sp = sp->Next;
 	}
@@ -827,14 +827,14 @@ boolean ist_same_sons(node1, node2)
 	s2 = node2->FirstSon;
 	stop = false;
 	while ( s1 != NULL && s2 != NULL && !stop ) {
-		if (s1-> Son == s2->Son ) {  	
-			s1 = s1->Next;	
+		if (s1-> Son == s2->Son ) {
+			s1 = s1->Next;
 			s2 = s2->Next;
 		} else
 			stop = true;
 	}
-	if ( s1 != NULL || s2 != NULL) 
-		Result = false; 
+	if ( s1 != NULL || s2 != NULL)
+		Result = false;
 	return Result;
 }
 
@@ -897,7 +897,7 @@ ISTNode *ist_create_node(value)
 	ISTNode *node;
 
 	node = ist_new_node();
-	if (ist_not_equal_interval(value,&IST_end_of_list) && ist_not_equal_interval(value,&IST_beg_of_list)) 
+	if (ist_not_equal_interval(value,&IST_end_of_list) && ist_not_equal_interval(value,&IST_beg_of_list))
 		node->Info = ist_copy_interval(value);
 	else
 		node->Info = value;
@@ -963,10 +963,10 @@ ISTNode *ist_exists_node(layer, node)
 
 	nodep = layer->FirstNode;
 	while ( nodep != NULL && Result == NULL ) {
-		if (ist_greater_interval(nodep->Info,node->Info)) 
+		if (ist_greater_interval(nodep->Info,node->Info))
 			nodep = NULL;
-		else if (ist_less_interval(nodep->Info,node->Info))  
-			nodep = nodep->Next;	
+		else if (ist_less_interval(nodep->Info,node->Info))
+			nodep = nodep->Next;
 		else {
 			if (nodep == node)
 				nodep = nodep->Next;
@@ -1016,12 +1016,12 @@ inline ISTNode *ist_add_node(layer, node)
 		if (layer->LastNode->Next != NULL)
 			layer->LastNode = node;
 	}
-	return node; 
+	return node;
 }
 
 void ist_add_node_star(layer, node)
 	ISTLayer *layer;
-	/* 
+	/*
 	 * Same as ist_add_node but do not care at respecting
 	 * the rules imposed by the definition of an IST.
 	 */

@@ -34,7 +34,7 @@ void
 err_ret(const char *fmt, ...)
 {
   va_list ap;
-  
+
   va_start(ap, fmt);
   err_doit(1, fmt, ap);
   va_end(ap);
@@ -88,7 +88,7 @@ void
 err_quit(const char *fmt, ...)
 {
   va_list ap;
-  
+
   va_start(ap, fmt);
   err_doit(0, fmt, ap);
   va_end(ap);
@@ -102,7 +102,7 @@ err_doit(int errnoflag, const char *fmt, va_list ap)
 {
   int errno_save;
   char buf[MAXLINE];
-  
+
   errno_save = errno;		/* value caller might want printed */
   vsprintf(buf, fmt, ap);
   if (errnoflag)

@@ -29,7 +29,7 @@
 
 /*
  * Attention the uppercase version is used by the parser and have a different
- * value 
+ * value
  */
 #ifndef true
 # define true    1

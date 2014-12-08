@@ -88,7 +88,7 @@ static boolean first_cond_is_violated(S)
 	}
     }
     return violated;
-} 
+}
 
 
 static boolean second_cond_is_violated(S)
@@ -138,7 +138,7 @@ static boolean same_pointer(S)
 	S = S->Next;
     }
     return stop;
-} 
+}
 
 
 static boolean exists_irrellevant_info(S)
@@ -153,8 +153,8 @@ static boolean exists_irrellevant_info(S)
     while (Layer != S->LastLayer && !stop) {
 	Node = Layer->FirstNode;
 	while (Node != NULL && !stop) {
-	    if (Node->Info->Left < 0 
-			|| (Node->Info->Right != INFINITY && Node->Info->Right < 0) 
+	    if (Node->Info->Left < 0
+			|| (Node->Info->Right != INFINITY && Node->Info->Right < 0)
 			|| (Node->Info->Right != INFINITY && Node->Info->Left > Node->Info->Right)){
 		stop = true;
 		printf("[%3ld,%3ld]",Node->Info->Left,Node->Info->Right);
@@ -190,7 +190,7 @@ static boolean exists_layers_not_ordered(S)
 	Layer = Layer->Next;
     }
     return stop;
-}  
+}
 
 
 static boolean exists_sons_not_ordered(S)
@@ -246,7 +246,7 @@ static boolean has_father(N, Layer)
 	Q = Q->Next;
     }
     return found;
-}  
+}
 
 
 static boolean exists_node_without_father_in_layer(Layer)
@@ -264,7 +264,7 @@ static boolean exists_node_without_father_in_layer(Layer)
 	    Node = Node->Next;
     }
     return stop;
-}  
+}
 
 static boolean exists_node_without_father(S)
     ISTSharingTree *S;
@@ -381,52 +381,52 @@ static boolean mismatch_in_counting_fathers(S)
 	}
     }
     return stop;
-}  
+}
 
 
-boolean ist_checkup(S) 
-    ISTSharingTree *S; 
-{ 
+boolean ist_checkup(S)
+    ISTSharingTree *S;
+{
 	boolean retval=true;
 	if(ist_is_empty(S)==false) {
 		if(S->Root->Info!=&IST_beg_of_list && S->LastLayer->FirstNode->Info!=&IST_end_of_list){
-			err_msg("Error: Root or Sink node mislabelled!\n"); 
+			err_msg("Error: Root or Sink node mislabelled!\n");
 			retval=false;
 		}
 		if (first_cond_is_violated(S)) {
-			err_msg("Error: First Cond violated!\n"); 
+			err_msg("Error: First Cond violated!\n");
 			retval=false;
 		}
 		if (second_cond_is_violated(S)) {
-			err_msg("Error: Second Cond violated!\n"); 
+			err_msg("Error: Second Cond violated!\n");
 			retval=false;
 		}
 		if (exists_layers_not_ordered(S)) {
-			err_msg("Error: Non-ordered nodes in a layer!\n"); 
+			err_msg("Error: Non-ordered nodes in a layer!\n");
 			retval=false;
 		}
 		if (exists_irrellevant_info(S)) {
-			err_msg("Error: Irrelevant info in node!\n"); 
+			err_msg("Error: Irrelevant info in node!\n");
 			retval=false;
 		}
 		if (exists_sons_not_ordered(S)) {
-			err_msg("Error: Non-ordered sons!\n"); 
+			err_msg("Error: Non-ordered sons!\n");
 			retval=false;
 		}
 		if (exists_node_without_son(S)) {
-			err_msg("Error: Node without sons!\n"); 
+			err_msg("Error: Node without sons!\n");
 			retval=false;
 		}
 		if (exists_node_without_father(S)) {
-			err_msg("Error: Son without father!\n"); 
+			err_msg("Error: Son without father!\n");
 			retval=false;
 		}
 		if (exists_son_twice(S)) {
-			err_msg("Error: A node with two pointers to the same node!\n"); 
+			err_msg("Error: A node with two pointers to the same node!\n");
 			retval=false;
 		}
 		if (mismatch_in_counting_fathers(S)) {
-			err_msg("Error: NbFathers not handled properly!\n"); 
+			err_msg("Error: NbFathers not handled properly!\n");
 			retval=false;
 		}
 	}

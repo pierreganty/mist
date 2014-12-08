@@ -45,7 +45,7 @@ inline boolean ist_greater_value(Value1, Value2)
 		}
 	} else if (Value2 != INFINITY && Value1 > Value2) {
 		result = true;
-	}  
+	}
 	return result;
 }
 
@@ -58,7 +58,7 @@ inline boolean ist_greater_or_equal_value(Value1, Value2)
 		result = true;
 	} else if (Value2 != INFINITY && Value1 >= Value2) {
 		result = true;
-	}  
+	}
 	return result;
 }
 
@@ -72,7 +72,7 @@ inline boolean ist_less_value(Value1, Value2)
 		}
 	} else if (Value1 != INFINITY && Value1 < Value2) {
 		result = true;
-	}  
+	}
 	return result;
 }
 
@@ -85,7 +85,7 @@ inline boolean ist_less_or_equal_value(Value1, Value2)
 	} else if (Value1 != INFINITY  && Value1 <= Value2) {
 		result = true;
 	}
-	return result;  
+	return result;
 }
 
 
@@ -98,7 +98,7 @@ inline integer32 ist_add_value(Value1, Value2)
 	} else {
 		result = (Value1 + Value2);
 	}
-	return result;  
+	return result;
 }
 
 
@@ -120,7 +120,7 @@ inline integer32 ist_sub_value(Value1, Value2)
 	} else {
 		result = (Value1 - Value2);
 	}
-	return result;  
+	return result;
 }
 
 inline integer32 max(Value1, Value2)
@@ -149,7 +149,7 @@ inline boolean ist_greater_interval(Value1, Value2)
 		if (Value1->Left > Value2->Left) {
 			result = true;
 		} else if (Value1->Left == Value2->Left && ist_greater_value(Value1->Right,Value2->Right)) {
-			result = true;   
+			result = true;
 		}
 	}
 	return result;
@@ -165,7 +165,7 @@ inline boolean ist_greater_or_equal_interval(Value1, Value2)
 		if (Value1->Left > Value2->Left) {
 			result = true;
 		} else if (Value1->Left == Value2->Left && ist_greater_or_equal_value(Value1->Right,Value2->Right)) {
-			result = true;   
+			result = true;
 		}
 	}
 	return result;
@@ -177,11 +177,11 @@ inline boolean ist_less_interval(Value1, Value2)
 {
 	boolean result = false;
 	if (Value1 != NULL && Value2 != NULL) {
-		if (Value1->Left < Value2->Left) 
+		if (Value1->Left < Value2->Left)
 			result = true;
 		else {
 			if (Value1->Left == Value2->Left && ist_less_value(Value1->Right,Value2->Right))
-				result = true;   
+				result = true;
 		}
 	}
 	return result;
@@ -195,8 +195,8 @@ inline boolean ist_less_or_equal_interval(Value1, Value2)
 		if (Value1->Left < Value2->Left) {
 			result = true;
 		} else if (Value1->Left == Value2->Left && ist_less_or_equal_value(Value1->Right,Value2->Right)){
-			result = true;   
-		}	
+			result = true;
+		}
 	}
 	return result;
 }
@@ -243,7 +243,7 @@ inline boolean ist_is_unbounded(Value)
 	return result;
 }
 
-inline void ist_assign_interval_to_interval(receiver,sender) 
+inline void ist_assign_interval_to_interval(receiver,sender)
 	ISTInterval *receiver, *sender;
 {
 	if (receiver != NULL && sender != NULL) {
@@ -263,7 +263,7 @@ inline void ist_assign_values_to_interval(receiver, leftbound, rightbound)
 }
 
 
-inline ISTInterval* ist_build_interval(leftbound, rightbound) 
+inline ISTInterval* ist_build_interval(leftbound, rightbound)
 	integer32 leftbound, rightbound;
 {
 	ISTInterval* Result;
@@ -294,7 +294,7 @@ inline boolean ist_include_interval(Value1, Value2)
 		if ((Value1->Left <= Value2->Left) && ist_greater_or_equal_value(Value1->Right, Value2->Right))
 			result = true;
 	}
-	return result;  
+	return result;
 }
 
 ISTInterval* ist_intersect_intervals(interv1, interv2)
@@ -376,7 +376,7 @@ boolean ist_convex_union(interv1,interv2)
 	if (ist_include_interval(interv1,interv2)){
 		res = true;
 	} else if (interv1->Right == INFINITY && interv2->Right == INFINITY) {
-		interv1->Left = (interv1->Left > interv2->Left) ? interv2->Left : interv1->Left; 
+		interv1->Left = (interv1->Left > interv2->Left) ? interv2->Left : interv1->Left;
 		res = true;
 	} else if (interv1->Right != INFINITY && interv2->Right == INFINITY ){
 		if (interv1->Right >= (interv2->Left-1)){

@@ -16,7 +16,7 @@
    along with mist; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-   Copyright 2003, Pierre Ganty. Copyright 2006,2007 Laurent Van Begin 
+   Copyright 2003, Pierre Ganty. Copyright 2006,2007 Laurent Van Begin
  */
 
 #include "minimize.h"
@@ -24,7 +24,7 @@
 #include "father_mangmt.h"
 #include "computesim.h"
 #include "normalize.h"
-#include "basis.h" 
+#include "basis.h"
 #include "determinize.h"
 #include "complement.h"
 #include "abstraction.h"
@@ -338,7 +338,7 @@ ISTSharingTree *ist_compute_subsumed_paths_within_tree(S)
 		s2 = S->Root->FirstSon;
 		while (s2 != NULL) {
 			if (ist_include_interval(s2->Son->Info,s1->Son->Info)) {
-				/* s1 \subset s2 */ 
+				/* s1 \subset s2 */
 				if (s1->Son != s2->Son)
 					rchild = SubsumedPathsWithinTree(s1->Son, s2->Son, true, &V);
 				else
@@ -415,7 +415,7 @@ static void replace_node_correctly_in_layer(Layer,N)
 	}
 	/* Now N is extracted from the list, we reinsert it */
 	ist_add_node_star(Layer,N);
-	/* 
+	/*
 	 * We use ist_add_node_star and not ist_add_node because
 	 * it's possible to obtain 2 nodes on the same layer with
 	 * the same value and the same sons. However we will readjust
@@ -630,7 +630,7 @@ static ISTNode *BuildListOfInterestingNodesS(ISTNode *N,ISTLayer *L){
 	p = NULL;
 	q = L->FirstNode;
 	while (q != NULL) {
-		if (q->AuxI == ist_get_magic_number() 
+		if (q->AuxI == ist_get_magic_number()
 				&& q->Mark == N->NbSons && q != N){
 			q->AuxP = p;
 			p = q;
@@ -646,7 +646,7 @@ static ISTNode *BuildListOfInterestingNodesF(ISTNode *N,ISTLayer *L){
 	p = NULL;
 	q = L->FirstNode;
 	while (q != NULL) {
-		if (q->AuxI == ist_get_magic_number() 
+		if (q->AuxI == ist_get_magic_number()
 				&& q->Mark == N->NbFathers && q != N){
 			q->AuxP = p;
 			p = q;
@@ -677,7 +677,7 @@ static boolean IsIncluded(ISTNode* N,ISTNode *p){
 
 	if (inclusion != NULL){
 		/*
-		 * We have at least one element of the list that intersect N->Info 
+		 * We have at least one element of the list that intersect N->Info
 		 * We saved his position in r.
 		 */
 		ist_assign_interval_to_interval(inclusion,r->Info);
@@ -704,7 +704,7 @@ static boolean IsIncluded(ISTNode* N,ISTNode *p){
 			res = true;
 		ist_dispose_info(inclusion);
 	}
-	return res;	
+	return res;
 }
 
 static ISTInterval* ComputeExtendedInfo(ISTNode *N,ISTNode *p){
@@ -730,7 +730,7 @@ static ISTInterval* ComputeExtendedInfo(ISTNode *N,ISTNode *p){
 				 * and that fathers simulates all the fathers of N
 				 */
 				if (ist_convex_union(extendedvalue,q->Info)){
-					/* 
+					/*
 					 * This node is now inside the convex union
 					 * in the future, we don't have to consider it anymore
 					 * we flag it to 0 ... 0 is ok because if q->AuxI == ist_get_magic_number()
@@ -748,10 +748,10 @@ static ISTInterval* ComputeExtendedInfo(ISTNode *N,ISTNode *p){
 		ist_dispose_info(extendedvalue);
 		extendedvalue =  NULL;
 	}
-	return extendedvalue;	
+	return extendedvalue;
 }
 
-/* 
+/*
  * This function is the conclusion after our long list of static function. So that function
  * prune our IST, following the information provided by the simulation relation.
  * I encourage the developper to take a look at [Gan02] to understand deeply how we exploit the simulation relation.
@@ -770,9 +770,9 @@ boolean ist_prune_within_tree_sim_based(S)
 	Layer = S->LastLayer->Previous;
 	while (Layer != NULL){
 		if (LocalEdgeRemovalSonSide(Layer))
-			HasPruned = true; 
-		if (LocalEdgeRemovalFatherSide(Layer)) 
-			HasPruned = true; 
+			HasPruned = true;
+		if (LocalEdgeRemovalFatherSide(Layer))
+			HasPruned = true;
 
 		N = Layer->FirstNode;
 		while (N != NULL){
@@ -788,14 +788,14 @@ boolean ist_prune_within_tree_sim_based(S)
 					while (NodeInIntersect != NULL ){
 						NodeInIntersect->Son->AuxI = ist_get_magic_number();
 						NodeInIntersect->Son->Mark = 0;
-						NodeInIntersect = NodeInIntersect->Next; 
+						NodeInIntersect = NodeInIntersect->Next;
 					}
 					SimOf_ParOf_N = SimOf_ParOf_N->Next;
 				}
 				if (IsIncluded(N,p)){
 					ist_remove_son_father(ParOf_N->Son,N);
 					HasPruned = true;
-				}		  
+				}
 				ParOf_N = ParOf_N_Next;
 			}
 
@@ -811,14 +811,14 @@ boolean ist_prune_within_tree_sim_based(S)
 					while (NodeInIntersect != NULL ){
 						NodeInIntersect->Son->AuxI = ist_get_magic_number();
 						NodeInIntersect->Son->Mark = 0;
-						NodeInIntersect = NodeInIntersect->Next; 
+						NodeInIntersect = NodeInIntersect->Next;
 					}
 					SimOf_ParOf_N = SimOf_ParOf_N->Next;
 				}
 				if (IsIncluded(N,p)){
 					ist_remove_son_father(N,ParOf_N->Son);
 					HasPruned = true;
-				}		  
+				}
 				ParOf_N = ParOf_N_Next;
 			}
 			MarkInterestingNodesBySonWay(N,Layer);
@@ -828,7 +828,7 @@ boolean ist_prune_within_tree_sim_based(S)
 			res = ComputeExtendedInfo(N,p);
 			if (res != NULL ){
 				/*
-				 * Here, we will change the information inside the node. 
+				 * Here, we will change the information inside the node.
 				 * After modifying, we have to reinsert N at its right place
 				 * in the list of node its layer, in the list of sons of its fathers
 				 * in the list of fathers of its sons ...
@@ -869,8 +869,8 @@ void ist_minimal_form_sim_based(S)
 		ComputeBackwardSimulation(S);
 		ComputeForwardSimulation(S);
 		Modified = ist_prune_within_tree_sim_based(S);
-		/* 
-		 * We have to normalize. Why ? e.g. : 
+		/*
+		 * We have to normalize. Why ? e.g. :
 		 * We have two nodes n and n' issued from the root node
 		 * there is no forward simulation relation between each other
 		 * We extend the information such that n->Info == n'->Info.
@@ -893,7 +893,7 @@ boolean ist_exact_subsumption_test(T,S)
 	ISTSharingTree *S_bis, *intersec, *temp;
 
 	if (ist_is_empty(T) == false) {
-		S_bis = ist_copy(S);	
+		S_bis = ist_copy(S);
 		ist_complement(S_bis,ist_nb_layers(T)-1);
 		//-------FOR Debugging{----------
 		temp = ist_intersection(S_bis,S);
@@ -904,7 +904,7 @@ boolean ist_exact_subsumption_test(T,S)
 		res = ist_is_empty(intersec);
 		ist_dispose(S_bis);
 		ist_dispose(intersec);
-	} else 
+	} else
 		res = true;
 
 	return res;
@@ -917,14 +917,14 @@ ISTNode *merge_intervals(ISTNode * N,ISTLayer * current_layer,ISTSharingTree * S
 	ISTNode * rnode, * new_sons, * tmp_N;
 	TMemo1 *memo;
 	ISTLayer * rlayer;
-	
+
 	if (ist_equal_interval(N->Info,&IST_end_of_list)) {
 		rnode = ist_add_node(current_layer, ist_create_node(&IST_end_of_list));
 	} else {
 		rlayer = current_layer->Next;
 		if (rlayer == NULL)
 			rlayer = ist_add_last_layer(S);
-		
+
 		//computation of sons
 		rnode = ist_create_node(N->Info);
 		S1 = N->FirstSon;
@@ -947,27 +947,27 @@ ISTNode *merge_intervals(ISTNode * N,ISTLayer * current_layer,ISTSharingTree * S
 			if(S1->Son->AuxI != val) {
 				tmp_N = ist_create_node(S1->Son->Info);
 				ist_copy_sons(S1->Son,tmp_N);
-				S2 = S1->Next; 
+				S2 = S1->Next;
 				while (S2 != NULL) {
 					//Assumption: sons are sorted by intervals lexicographically
 					//if the son is already marked, it has been already merged, otherwise if the intervals
 					//can be fusioned and sons has same successors
 					if (S2->Son->AuxI != val)
-						if (((ist_greater_or_equal_value(tmp_N->Info->Right,S2->Son->Info->Left)==true) || 
-						 (tmp_N->Info->Right == S2->Son->Info->Left-1)) 
+						if (((ist_greater_or_equal_value(tmp_N->Info->Right,S2->Son->Info->Left)==true) ||
+						 (tmp_N->Info->Right == S2->Son->Info->Left-1))
 						&& (ist_same_sons(tmp_N,S2->Son) == true)) {
 							tmp_N->Info->Right = max(tmp_N->Info->Right,S2->Son->Info->Right);
 							S2->Son->AuxI = val;
-					} 						
+					}
 					S2= S2->Next;
 				}
 				tmp_N = ist_add_node(rlayer,tmp_N);
 				ist_add_son(new_sons,tmp_N);
 			}
-			S1 = S1->Next;		
+			S1 = S1->Next;
 		}
 		ist_remove_sons(rnode);
-		ist_dispose_node(rnode);	
+		ist_dispose_node(rnode);
 		rnode = ist_add_node(current_layer,new_sons);
 	}
 	ist_put_memoization1(N,N,rnode);
@@ -1000,24 +1000,24 @@ ISTSharingTree * ist_merge_intervals(ISTSharingTree *ST) {
 		if(S1->Son->AuxI != val) {
 			tmp_N = ist_create_node(S1->Son->Info);
 			ist_copy_sons(S1->Son,tmp_N);
-			S2 = S1->Next; 
+			S2 = S1->Next;
 			while (S2 != NULL) {
 				//Assumption: sons are sorted by intervals lexicographically
 				//if the son is already marked, it has been already merged, otherwise if the intervals
 				//can be fusioned and sons has same successors
 				if (S2->Son->AuxI != val)
-					if (((ist_greater_or_equal_value(tmp_N->Info->Right,S2->Son->Info->Left)==true) || 
-					 (tmp_N->Info->Right == S2->Son->Info->Left-1)) 
+					if (((ist_greater_or_equal_value(tmp_N->Info->Right,S2->Son->Info->Left)==true) ||
+					 (tmp_N->Info->Right == S2->Son->Info->Left-1))
 					&& (ist_same_sons(tmp_N,S2->Son) == true)) {
 						tmp_N->Info->Right = max(tmp_N->Info->Right,S2->Son->Info->Right);
 						S2->Son->AuxI = val;
-				} 						
+				}
 				S2= S2->Next;
 			}
 			tmp_N = ist_add_node(rlayer,tmp_N);
 			ist_add_son(new_sons,tmp_N);
 		}
-		S1 = S1->Next;		
+		S1 = S1->Next;
 	}
 	//we put the new sons of N
 	ist_remove_sons(Sol->Root);
@@ -1058,7 +1058,7 @@ static ISTNode *compute__paths_UCS_included_into_DCS(node1, node2, LINK)
 					if (rchild != NULL)
 						ist_add_son(rnode, rchild);
 				}
-				s2 = s2->Next; 
+				s2 = s2->Next;
 			}
 			s1 = s1->Next;
 		}

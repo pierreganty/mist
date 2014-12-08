@@ -91,7 +91,7 @@ void ist_adjust_first_condition(S)
 		} else
 			CurN = CurN->Next;
 	}
-}  
+}
 
 
 void ist_adjust_second_condition(S)
@@ -191,7 +191,7 @@ void ist_adjust_second_condition(S)
 			CurN = CurN->Next;
 	}
 
-}  
+}
 
 
 void ist_normalize(S)
@@ -218,4 +218,4 @@ void ist_normalize(S)
 		(end_time.tv_usec-start_time.tv_usec);
 	printf("%d Sec.\n", total_usecs);
 #endif
-} 
+}

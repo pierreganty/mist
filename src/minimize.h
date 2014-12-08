@@ -34,7 +34,7 @@
  */
 
 /* Exact minimization of the tree, i.e. we use necessary and sufficient
- * condition to prune paths 
+ * condition to prune paths
  */
 ISTSharingTree *ist_compute_subsumed_paths(ISTSharingTree *ST1, ISTSharingTree *ST2) ;
 ISTSharingTree *ist_remove_subsumed_paths(ISTSharingTree *S, ISTSharingTree *T) ;
@@ -46,7 +46,7 @@ ISTSharingTree *ist_minimal_form(ISTSharingTree *S) ;
 /* Minimization approximated with the simulation relation */
 void ist_minimal_form_sim_based(ISTSharingTree *S);
 boolean ist_prune_within_tree_sim_based(ISTSharingTree *S);
-void ist_prune_tree_sim_based( ISTSharingTree *S, ISTSharingTree *T); 
+void ist_prune_tree_sim_based( ISTSharingTree *S, ISTSharingTree *T);
 
 boolean ist_exact_subsumption_test(ISTSharingTree *T,ISTSharingTree *S);
 

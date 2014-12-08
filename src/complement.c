@@ -31,14 +31,14 @@
 #include <stdlib.h>
 
 
-/* 
- * As assumption we know that the IST passed in argument is determinized 
+/*
+ * As assumption we know that the IST passed in argument is determinized
  */
 static ISTHeadListNode* complete_list_of_sons(ISTNode *Node){
 
 	ISTSon *son;
 	ISTNode *new_node;
-	ISTHeadListNode *list_node; 
+	ISTHeadListNode *list_node;
 	long current_value;
 
 	son = Node->FirstSon;
@@ -72,10 +72,10 @@ void ist_complement(ISTSharingTree *S, size_t dim)
 	ISTNode *Node, *new_node, *rnode;
 	ISTHeadListNode *list_node;
     ISTInterval **tuple;
-	int i;	
+	int i;
 
 	if (ist_is_empty(S) == false) {
-		/*First step: determinisation */	
+		/*First step: determinisation */
 		ist_determinize(S);
 		/* Special case where we have only one variable */
 		if(dim<=1) {
@@ -86,7 +86,7 @@ void ist_complement(ISTSharingTree *S, size_t dim)
 			ist_remove_node_without_father_layer(S->FirstLayer);
 			while (new_node != NULL){
 				/*
-				 * Caution, ist_add_node don't necesseraly return new_node ... 
+				 * Caution, ist_add_node don't necesseraly return new_node ...
 				 * e.g. imagine one node without son in layer and you want insert a same node without sons
 				 */
 				rnode=ist_add_node(S->FirstLayer,new_node);
@@ -103,7 +103,7 @@ void ist_complement(ISTSharingTree *S, size_t dim)
 			new_node = ist_remove_first_elem_list_node(list_node);
 			while (new_node != NULL){
 				/*
-				 * Caution, ist_add_node don't necesseraly return new_node ... 
+				 * Caution, ist_add_node don't necesseraly return new_node ...
 				 * e.g. imagine one node without son in layer and you want insert a same node without sons
 				 */
 				ist_add_son(S->Root,ist_add_node(S->FirstLayer,new_node));
@@ -143,7 +143,7 @@ void ist_complement(ISTSharingTree *S, size_t dim)
 				while (S->LastLayer != NULL) {
 					ist_remove_last_layer(S);
 				}
-			} else 
+			} else
 				/* if you ist_remove_sons and that after your list_node is empty, this is the case */
 				ist_adjust_second_condition(S);
 		}
@@ -152,12 +152,12 @@ void ist_complement(ISTSharingTree *S, size_t dim)
 
 		/*First: construction of a tuple corresponding to N^{dim} */
 		tuple = (ISTInterval **) xmalloc(dim * sizeof(ISTInterval *));
-		for(i = 0;i < dim; i++) 
+		for(i = 0;i < dim; i++)
 			tuple[i] = ist_build_interval(0,INFINITY);
 
-		/*adding tuple to S (which is empty) gives us an IST that contains any tuple over positive 
+		/*adding tuple to S (which is empty) gives us an IST that contains any tuple over positive
 		 * integer of dimension dim*/
-		
+
 		ist_add(S,tuple,dim);
 
 		/*free of the tuple */
