@@ -18,12 +18,12 @@ import Queue
 def worker(input, output):
     for test in iter(input.get, 'STOP'):
         worker_result = test + "*+*+"
-        subprocesses = []
         for argument in ["--eec", "--backward", "--tsi", "--ic4pn"]:
-            subprocesses.append(subprocess.Popen(['mist', argument, test], stdout=subprocess.PIPE, shell = False))
+            sp = subprocess.Popen(['mist', argument, test, '--timeout', str(timeout)], stdout=subprocess.PIPE, shell = False, stderr=subprocess.PIPE)
+            communication = sp.communicate()
+            worker_result += communication[0]
+            worker_result += communication[1]
 
-        for sp in subprocesses:
-            worker_result += sp.communicate()[0]
         output.put(worker_result)
 
 
@@ -67,14 +67,16 @@ def get_next_result(input_file):
 
     new_line = input_file.readline()
 
+    not_petri_net = False
+
     while "----------" not in new_line:
+        if "Not Petri Net" in new_line:
+            not_petri_net = True
         if "Timeout" in new_line:
             num_timeouts += 1
         if "EEC" in new_line:
             unknown.remove("eec")
-            if new_line.split()[2] == "*":
-                not_executed.append("eec")
-            elif expected_result == new_line.split()[2]:
+            if expected_result == new_line.split()[2]:
                 match.append("eec")
             else:
                 mismatch.append("eec")
@@ -88,18 +90,14 @@ def get_next_result(input_file):
 
         if "TSI" in new_line:
             unknown.remove("tsi")
-            if new_line.split()[2] == "*":
-                not_executed.append("tsi")
-            elif  expected_result == new_line.split()[2]:
+            if  expected_result == new_line.split()[2]:
                 match.append("tsi")
             else:
                 mismatch.append("tsi")
 
         if "ic4pn" in new_line:
             unknown.remove("ic4pn")
-            if new_line.split()[2] == "*":
-                not_executed.append("ic4pn")
-            elif expected_result == new_line.split()[2]:
+            if expected_result == new_line.split()[2]:
                 match.append("ic4pn")
             else:
                 mismatch.append("ic4pn")
@@ -108,6 +106,13 @@ def get_next_result(input_file):
         new_line = input_file.readline()
 
     input_file.readline()
+    if not_petri_net:
+        unknown.remove("tsi")
+        not_executed.append("tsi")
+        unknown.remove("ic4pn")
+        not_executed.append("ic4pn")
+        unknown.remove("eec")
+        not_executed.append("eec")
     ret.append(match)
     ret.append(mismatch)
     ret.append(unknown)
@@ -168,6 +173,7 @@ def analyze_results(results_to_check_file):
 
             if len(match) + len(not_executed) == 4:
                 print "Test ", result_to_check[0], "\033[32;01m OK\033[00m"
+                print "It was not a Petri Net so algorithms 'eec', 'tsi' and 'ic4pn' has not been executed"
             else:
                 if len(match) + len(unknown) == 4:
                     print "Test ", result_to_check[0], "\033[33;01m INCOMPLETE\033[00m"
@@ -183,14 +189,14 @@ def analyze_results(results_to_check_file):
                 if len(not_executed) != 0:
                     print "\033[01m Not executed: \033[00m", ", ".join(not_executed)
                 print ""
-    print "If there are more unknown results than timeouts then some example has crashed"
+    print "If there are more unknown results than timeouts then some algorithm some example has crashed"
 
 
  # Function tu show help menu
 def show_help():
     print "This script allows you to run a set of tests storing the results and analyzing them. The script also show you a summary about the correctness of the results obtained"
     print ""
-    print "Usage: ./test_examples [--run|--all] [folder] [file] [number of subprocess]"
+    print "Usage: ./test_examples [--run|--all] [folder] [file] [number of subprocess] [timeout]"
     print "Usage: ./test_examples [--analyze] [file]"
     print ""
     print "Options:"
@@ -198,7 +204,7 @@ def show_help():
     print "\t\033[01m--run\033[00m Runs mist on the examples in [folder] and writes the results to [file]"
     print "\t\033[01m--analyze\033[00m Compares the results stored in [file] against expected outcomes"
     print "\t\033[01m--all\033[00m Runs mist on the example in [folder], writes the results in [file] and compares against expected outcomes"
-    print "This script will use [number of subprocess] process"
+    print "This script will use [number of subprocess] process and establish a timeout of [timeout] sec for each execution of mist (-1 to set off timeout)"
 
 
 
@@ -241,7 +247,7 @@ else:
             print "Invalid imput format:"
             show_help()
             sys.exit(0)
-    elif len(sys.argv) == 5:
+    elif len(sys.argv) == 6:
         if sys.argv[1] == "--run":
             run=True
             output_file_name = sys.argv[3]
@@ -274,7 +280,8 @@ if run:
             sys.exit(0)
 
     output_file = open(output_file_name, "w")
-    max_number_of_subprocess = int(sys.argv[len(sys.argv)-1])
+    max_number_of_subprocess = int(sys.argv[len(sys.argv)-2])
+    timeout = int(sys.argv[len(sys.argv)-1])
 
     print "This script runs the algorithms of mist on the files in [folder], output is collected in [file] and compared against expected outcomes. The script also outputs a summary of the results obtained. The max number of subprocess to be used is [number of subprocess]"
 
@@ -307,6 +314,8 @@ if run:
             conclusion = ""
             reachable = False
             process_output = done_queue.get()
+            not_petri = False
+            ic4pn_unsafe = False
             output_file.write("test: " + process_output.split('*+*+')[0] + "\n")
             for line in process_output.split('*+*+')[1].split("\n"):
                 if "IC4PN" in line:
@@ -318,14 +327,22 @@ if run:
                         output_file.write(line + "\n")
                 if "Reachable " in line and ic4pn:
                     reachable = True
-                if "Timeout" in line:
-                    output_file.write(line + "\n")
 
                 if conclusion != "":
                     output_file.write("ic4pn concludes" + conclusion.split("concludes")[1] + "\n") # Write the conclusion of ic4pn
                     conclusion = ""
+
+                if "Timeout" in line and not "established" in line:
+                    output_file.write(line + "\n")
                 if reachable:
-                    output_file.write("ic4pn concludes unsafe \n") # Write the conclusion of ic4pn
+                    ic4pn_unsafe = True
+                if "The algorithm you selected only accepts Petri Net" in line:
+                    not_petri = True
+
+            if not_petri:
+                output_file.write("Not Petri Net\n")
+            if ic4pn_unsafe:
+                output_file.write("ic4pn concludes unsafe \n") # Write the conclusion of ic4pn
             output_file.write("-------------------------------------------------\n\n")
             end += 1
         except Queue.Empty:
@@ -340,4 +357,3 @@ if run:
 
 if analyze:
     analyze_results(output_file_name)
-
