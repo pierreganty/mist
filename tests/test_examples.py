@@ -173,7 +173,7 @@ def analyze_results(results_to_check_file):
 
             if len(match) + len(not_executed) == 4:
                 print "Test ", result_to_check[0], "\033[32;01m OK\033[00m"
-                print "It was not a Petri Net so algorithms 'eec', 'tsi' and 'ic4pn' has not been executed"
+                print "Not a Petri Net, skipping eec, tsi and ic4pn"
             else:
                 if len(match) + len(unknown) == 4:
                     print "Test ", result_to_check[0], "\033[33;01m INCOMPLETE\033[00m"
@@ -189,7 +189,6 @@ def analyze_results(results_to_check_file):
                 if len(not_executed) != 0:
                     print "\033[01m Not executed: \033[00m", ", ".join(not_executed)
                 print ""
-    print "If there are more unknown results than timeouts then some algorithm some example has crashed"
 
 
  # Function tu show help menu
@@ -271,9 +270,9 @@ if run:
     # Preparing the output file
     if os.path.isfile(output_file_name):
         print "The file ", output_file_name, " already exists. It will be overwritten."
-        print "Do you want to continue anyways? [Y/N]"
+        print "Do you want to continue anyways? [y/n]"
         line = sys.stdin.readline()
-        if line == "Y\n":
+        if line == "y\n" or line =="Y\n":
             print "The file will be overwritten"
         else:
             print "Exit"
@@ -283,8 +282,13 @@ if run:
     max_number_of_subprocess = int(sys.argv[len(sys.argv)-2])
     timeout = int(sys.argv[len(sys.argv)-1])
 
-    print "This script runs the algorithms of mist on the files in [folder], output is collected in [file] and compared against expected outcomes. The script also outputs a summary of the results obtained. The max number of subprocess to be used is [number of subprocess]"
-
+    print "Running the algorithms of mist on the files in", folder
+    print "Output will be collected in", output_file_name
+    print "The max number of subprocess to be used is ",max_number_of_subprocess
+    if timeout == -1:
+        print "Timeout disabled\n"
+    else:
+        print "Timeout set up to ", timeout, "secs\n"
 
     #Empty list to store in it all the test files
     list_spec_files = []
@@ -356,4 +360,5 @@ if run:
     print "Tests completed"
 
 if analyze:
+    print "Analyzing results from ", output_file
     analyze_results(output_file_name)
