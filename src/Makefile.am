@@ -22,6 +22,8 @@ mist_SOURCES = \
 	complement.h \
 	computesim.c \
 	computesim.h \
+	debug.c \
+	debug.h \
 	def.h \
 	determinize.c \
 	determinize.h \

@@ -37,6 +37,9 @@
 #include "laparser.h"
 #include "ist.h"
 #include "typechecking.h"
+#include "debug.h"
+
+int verbose = 0;
 
 /*To end the executing when timeout event occurs*/
 void timeout_func (int sgn) {
@@ -165,9 +168,7 @@ ISTSharingTree *backward(system, initial_marking, frontier, bounds)
 
 			printf("The new frontier counts :\n");
 			ist_checkup(frontier);
-#ifdef VERBOSE
-			ist_write(frontier);
-#endif
+			PRINT_IST(frontier);
 //			temp=ist_intersection(initial_marking,frontier);
 //			reached = (ist_is_empty(temp) == true ? false : true);
 //			ist_dispose(temp);
@@ -222,9 +223,7 @@ ISTSharingTree *backward(system, initial_marking, frontier, bounds)
 	if (nbr_iteration != 0){
 		puts("The reached symbolic state space is:");
 		ist_stat(reached_elem);
-#ifdef VERBOSE
-		ist_write(reached_elem);
-#endif
+		PRINT_IST(reached_elem);
 	}
 	if (reached == true)
 		ist_print_error_trace(initial_marking,&List,system);
@@ -287,9 +286,7 @@ void backward_basic(system, initial_marking, frontier)
 
 			printf("The new frontier counts :\n");
 			ist_checkup(frontier);
-#ifdef VERBOSE
-			ist_write(frontier);
-#endif
+			PRINT_IST(frontier);
 			temp=ist_intersection(initial_marking,frontier);
 			reached = (ist_is_empty(temp) == true ? false : true);
 			ist_dispose(temp);
@@ -328,9 +325,7 @@ void backward_basic(system, initial_marking, frontier)
 	if (nbr_iteration != 0){
 		puts("The reached symbolic state space is:");
 		ist_stat(reached_elem);
-#ifdef VERBOSE
-		ist_write(reached_elem);
-#endif
+		PRINT_IST(reached_elem);
 	}
 	if (reached == true)
 		ist_print_error_trace(initial_marking,&List,system);
@@ -368,6 +363,7 @@ static void print_help()
 	puts("     --tsi        the algorithm described in TSI");
 	puts("     --eec        the Expand, Enlarge and Check algorithm");
 	puts("     --timeout=T  establish an execution timeout of T seconds");
+	puts("     --verbose=V  establish an verbose level V");
 }
 
 static void head_msg()
@@ -1211,6 +1207,7 @@ static void* mist_cmdline_options_handle(int argc, char *argv[ ], int *timeout, 
 			{"tsi", 0, 0, 't'},
 			{"eec", 0, 0, 'e'},
 			{"timeout", 0, 0, 'o'},
+			{"verbose", 0, 0, 'v'},
 			{0, 0, 0, 0}
 		};
 
@@ -1256,6 +1253,10 @@ static void* mist_cmdline_options_handle(int argc, char *argv[ ], int *timeout, 
 				*timeout = atoi(argv[optind++]);
 				break;
 
+			case 'v':
+				verbose = atoi(argv[optind++]);
+				break;
+
 			default:
 				print_help();
 				err_quit("?? getopt returned character code 0%o ??\n", c);
@@ -1282,7 +1283,7 @@ int main(int argc, char *argv[ ])
 	head_msg();
 	mc=mist_cmdline_options_handle(argc, argv, &timeout, &input_file);
 	assert(mc!=NULL);
-	printf("Timeout established to %d seconds\n", timeout);
+	PRINTF("Timeout established to %d seconds\n", timeout);
 
 	linenumber = 1;
 	tbsymbol_init(&tbsymbol, 4096);
