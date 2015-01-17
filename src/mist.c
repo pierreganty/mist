@@ -367,6 +367,7 @@ static void print_help()
 	puts("     --ic4pn      the algorithm described in FI");
 	puts("     --tsi        the algorithm described in TSI");
 	puts("     --eec        the Expand, Enlarge and Check algorithm");
+	puts("     --cegar      the eec-cegar algorithm");
 	puts("     --timeout=T  establish an execution timeout of T seconds");
 }
 
@@ -1210,6 +1211,7 @@ static void* mist_cmdline_options_handle(int argc, char *argv[ ], int *timeout, 
 			{"ic4pn", 0, 0, 'i'},
 			{"tsi", 0, 0, 't'},
 			{"eec", 0, 0, 'e'},
+			{"cegar", 0, 0, 'c'},
 			{"timeout", 0, 0, 'o'},
 			{0, 0, 0, 0}
 		};
@@ -1249,6 +1251,11 @@ static void* mist_cmdline_options_handle(int argc, char *argv[ ], int *timeout, 
 
 			case 'e':
 				retval=&eec;
+				*filename = argv[optind++];
+				break;
+
+			case 'c':
+				retval=&cegar;
 				*filename = argv[optind++];
 				break;
 
@@ -1293,7 +1300,7 @@ int main(int argc, char *argv[ ])
 	my_yyparse(&atree, input_file);
 
 	if (!is_petri_net(atree)){
-		if (mc == eec || mc == ic4pn || mc == tsi){
+		if (mc == eec || mc == ic4pn || mc == tsi || mc == cegar){
 			err_quit("The algorithm you selected only accepts Petri Net and the input net is no a Petri net\n");
 		}
 	}
