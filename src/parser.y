@@ -156,7 +156,7 @@ constr: ID EQUAL NB {
   info = tbsymbol_getinfo(entry);
   if (info->info.nb.read != -1)
     err_quit("\nhey fieu symbol %s has been limited twice in the same state, last time in line %d", $1, linenumber);
-  info->info.nb.read = atoi($3->name);
+  info->info.nb.read = atoi($3->name); // Store the min value that the variable could have before applying this transition.
 
 }
 | ID GTE NB {
@@ -173,7 +173,7 @@ constr: ID EQUAL NB {
   info = tbsymbol_getinfo(entry);
   if (info->info.nb.read != -1)
     err_quit("\nhey fieu symbol %s has been limited twice in the same state, last time in line %d", $1, linenumber);
-  info->info.nb.read = atoi($3->name);
+  info->info.nb.read = atoi($3->name); // Store the min value that the variable could have before applying this transition.
 
 }
 | ID IN '[' NB COMMA NB ']' {
@@ -191,7 +191,7 @@ constr: ID EQUAL NB {
   info = tbsymbol_getinfo(entry);
   if (info->info.nb.read != -1)
     err_quit("\nhey fieu symbol %s has been limited twice in the same state, last time in line %d", $1, linenumber);
-  info->info.nb.read = atoi($4->name);
+  info->info.nb.read = atoi($4->name); // Store the min value that the variable could have before applying this transition.
 
 }
 ;
@@ -292,6 +292,7 @@ statement : ID '\'' EQUAL exprarith {
 
   if (strcmp($4->info, "-") == 0) { //If we have a substraction
     info = tbsymbol_getinfo(entry);
+    // Checking that the variable we are going to substract is lower or equal than the minimum value reached by the variable before the transition began so we can ensure that the variable never goes below 0.
     if(atoi($4->subtrees[1]->info) > info->info.nb.read && info->info.nb.read >= 0){
        err_quit("\nhey fieu invalid operation in line %d. %d must be lower than %d", linenumber, atoi($4->subtrees[1]->info), info->info.nb.read);
     }
@@ -385,7 +386,8 @@ equal: ID EQUAL NB {
   if (info->info.nb.read != -1)
     err_quit("\nhey fieu symbol %s has been defined has invariant twice in line %d", $1, linenumber);
 
-  info->info.nb.read = 0;
+  info->info.nb.read = 0; // For the invariants the minimum value doesn't care
+                          // We just have to distinguish two possible states
 }
 ;
 
@@ -423,12 +425,19 @@ my_yyparse(T_PTR_tree* tree, char* filename)
 
   return retval;
 }
+// The field 'read' let us control if the variable has already been constrained
+// in a block where this can happend just once or not.
+
+// If we are working on a transition we also want to store the minimum value possible
+// for the variable.
+
+// To reset the symbol table before continue analyzing a different block we have to
+// reset the field to the same value with which we initialize it.
 
 void reset(T_PTR_tbsymbol_entry entry){
   T_PTR_tbsymbol_info info;
 
   info = tbsymbol_getinfo(entry);
-  //printf("entry: %s\t tag=%d\n", entry->name, info->tag);
   if(info->tag == tbsymbol_INFO_ID)
     info->info.nb.read = -1;
 }
