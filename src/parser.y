@@ -101,7 +101,7 @@ varlist: varlist ID {
   info = tbsymbol_info_new();
   info->tag = tbsymbol_INFO_ID;
   info->info.id.addr = nbr_var++;
-  info->info.nb.readed = -1; // Initialize with an invalid value
+  info->info.nb.read = -1; // Initialize with an invalid value
   tbsymbol_setinfo(entry, info, sizeof(T_tbsymbol_info));
 }
 | { }
@@ -154,9 +154,9 @@ constr: ID EQUAL NB {
   $$ = tree_new2("=", tree_new0(entry), tree_new0($3));
 
   info = tbsymbol_getinfo(entry);
-  if (info->info.nb.readed != -1)
+  if (info->info.nb.read != -1)
     err_quit("\nhey fieu symbol %s has been limited twice in the same state, last time in line %d", $1, linenumber);
-  info->info.nb.readed = atoi($3->name);
+  info->info.nb.read = atoi($3->name);
 
 }
 | ID GTE NB {
@@ -171,9 +171,9 @@ constr: ID EQUAL NB {
   $$ = tree_new2(">=", tree_new0(entry), tree_new0($3));
 
   info = tbsymbol_getinfo(entry);
-  if (info->info.nb.readed != -1)
+  if (info->info.nb.read != -1)
     err_quit("\nhey fieu symbol %s has been limited twice in the same state, last time in line %d", $1, linenumber);
-  info->info.nb.readed = atoi($3->name);
+  info->info.nb.read = atoi($3->name);
 
 }
 | ID IN '[' NB COMMA NB ']' {
@@ -189,9 +189,9 @@ constr: ID EQUAL NB {
   $$ = tree_new3("in", tree_new0(entry), tree_new0($4),tree_new0($6));
 
   info = tbsymbol_getinfo(entry);
-  if (info->info.nb.readed != -1)
+  if (info->info.nb.read != -1)
     err_quit("\nhey fieu symbol %s has been limited twice in the same state, last time in line %d", $1, linenumber);
-  info->info.nb.readed = atoi($4->name);
+  info->info.nb.read = atoi($4->name);
 
 }
 ;
@@ -292,8 +292,8 @@ statement : ID '\'' EQUAL exprarith {
 
   if (strcmp($4->info, "-") == 0) { //If we have a substraction
     info = tbsymbol_getinfo(entry);
-    if(atoi($4->subtrees[1]->info) > info->info.nb.readed && info->info.nb.readed >= 0){
-       err_quit("\nhey fieu invalid operation in line %d. %d must be lower than %d", linenumber, atoi($4->subtrees[1]->info), info->info.nb.readed);
+    if(atoi($4->subtrees[1]->info) > info->info.nb.read && info->info.nb.read >= 0){
+       err_quit("\nhey fieu invalid operation in line %d. %d must be lower than %d", linenumber, atoi($4->subtrees[1]->info), info->info.nb.read);
     }
   }
 }
@@ -382,10 +382,10 @@ equal: ID EQUAL NB {
   $$ = tree_new2("=", tree_new0(entry), tree_new0($3));
 
   info = tbsymbol_getinfo(entry);
-  if (info->info.nb.readed != -1)
+  if (info->info.nb.read != -1)
     err_quit("\nhey fieu symbol %s has been defined has invariant twice in line %d", $1, linenumber);
 
-  info->info.nb.readed = 0;
+  info->info.nb.read = 0;
 }
 ;
 
@@ -430,5 +430,5 @@ void reset(T_PTR_tbsymbol_entry entry){
   info = tbsymbol_getinfo(entry);
   //printf("entry: %s\t tag=%d\n", entry->name, info->tag);
   if(info->tag == tbsymbol_INFO_ID)
-    info->info.nb.readed = -1;
+    info->info.nb.read = -1;
 }

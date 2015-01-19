@@ -34,7 +34,7 @@ typedef struct {
 
 typedef struct {
   int value;
-  int readed;
+  int read;
 } T_tbsymbol_nbr;
 
 
