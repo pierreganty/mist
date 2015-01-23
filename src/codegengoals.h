@@ -26,6 +26,6 @@
 #include "tree.h"
 #include "ist.h"
 
-void goalscode_produce(T_PTR_tree entry, ISTSharingTree **unsafe);
+void goalscode_produce(T_PTR_tree entry, ISTSharingTree *unsafe);
 
 #endif
