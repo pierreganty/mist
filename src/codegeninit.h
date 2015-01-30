@@ -26,6 +26,6 @@
 #include "tree.h"
 #include "ist.h"
 
-void initcode_produce(T_PTR_tree entry, ISTSharingTree **_init);
+void initcode_produce(T_PTR_tree entry, ISTSharingTree *initial);
 
 #endif

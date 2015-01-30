@@ -16,7 +16,7 @@
    along with mist; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-   Copyright 2003, 2004, Pierre Ganty, Anthony Piron
+   Copyright 2003, 2004, Pierre Ganty, Anthony Piron, 2015, Pedro Valero
  */
 
 #include "codegeninit.h"
@@ -26,23 +26,21 @@
 #include "interval.h"
 #include "ist.h"
 
-static void init(T_PTR_tree entry);
+static void init(T_PTR_tree entry, ISTSharingTree *initial);
 static void initor(T_PTR_tree entry);
 static void initand(T_PTR_tree entry);
 
-static ISTSharingTree* _init ;
 static ISTInterval **tokensinit;
 static size_t nbrinitcmd;
 
 void
-initcode_produce(T_PTR_tree entry, ISTSharingTree **initial) {
-  init(entry);
-  *initial = _init;
+initcode_produce(T_PTR_tree entry, ISTSharingTree *initial) {
+  init(entry, initial);
 }
 
 static
 void
-init(T_PTR_tree entry) {
+init(T_PTR_tree entry, ISTSharingTree *initial) {
   size_t i;
   char* info;
 
@@ -57,8 +55,7 @@ init(T_PTR_tree entry) {
 
       initor(entry);
       nbrinitcmd = 1;
-	  ist_new(&_init);
-	  ist_add(_init,tokensinit, nbr_var);
+	  ist_add(initial,tokensinit, nbr_var);
     }
   }
 }

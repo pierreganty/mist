@@ -16,7 +16,7 @@
    along with mist; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-   Copyright 2003, 2004, Pierre Ganty, Anthony Piron
+   Copyright 2003, 2004, Pierre Ganty, Anthony Piron, 2015, Pedro Valero
  */
 
 #include <sys/types.h>
@@ -45,18 +45,22 @@ callback_tree_before(T_PTR_tree entry) {
 
   info = (char*) tree_getinfo(entry);
   if (strcmp(info,"rules") == 0) {
+  	PRINTF("Entering rules section\n");
     tree_brk_branch(entry);
-    /* nbr_rules will be fill at this point */
-    rulescode_produce(entry, &_system);
+    /* nbr_rules will be filled at this point */
+    rulescode_produce(entry, _system);
   } else if (strcmp(info,"init") == 0) {
+  	PRINTF("Entering init section\n");
     tree_brk_branch(entry);
     /* system is a OUT parameter */
-    initcode_produce(tree_subtree(entry,0), &_init);
+    initcode_produce(tree_subtree(entry,0), _init);
   } else if (strcmp(info,"target") == 0) {
+  	PRINTF("Entering target section\n");
     tree_brk_branch(entry);
     /* system is a OUT parameter */
-    goalscode_produce(tree_subtree(entry,0), &_unsafe);
+    goalscode_produce(tree_subtree(entry,0), _unsafe);
   } else if (strcmp(info,"invariants") == 0) {
+  	PRINTF("Entering invariants section\n");
     tree_brk_branch(entry);
     /* system and init are IN/OUT parameters */
     invariantscode_produce(tree_subtree(entry,0), _system, _init);
@@ -71,7 +75,16 @@ build_problem_instance(tree, system, init, unsafe)
 	transition_system_t **system;
 	ISTSharingTree **init, **unsafe;
 {
+  _system = (transition_system_t *)xmalloc(sizeof(transition_system_t));
+  _system->transition = NULL;
+  _system->tree_of_transitions = NULL;
+  _system->invariants = NULL;
+  _system->limits.nbr_variables = 0;
+  _system->limits.nbr_rules = 0;
+  _system->limits.nbr_invariants = 0;
 
+  ist_new(&_init);
+  ist_new(&_unsafe);
 
   tree_dump(tree, callback_tree_before, NULL, NULL);
   *system = _system;

@@ -16,7 +16,7 @@
    along with mist; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-   Copyright 2003, 2004, Pierre Ganty, Anthony Piron
+   Copyright 2003, 2004, Pierre Ganty, Anthony Piron, 2015, Pedro Valero
  */
 
 #include "codegengoals.h"
@@ -25,24 +25,22 @@
 #include "laparser.h"
 #include "interval.h"
 
-static void goals(T_PTR_tree entry);
+static void goals(T_PTR_tree entry, ISTSharingTree *unsafe);
 static void goalsor(T_PTR_tree entry);
 static void goalsand(T_PTR_tree entry);
 
-static ISTSharingTree* _unsafe ;
 static ISTInterval **tokensgoals ;
 static size_t nbrgoalscmd;
 
 
 void
-goalscode_produce(T_PTR_tree entry, ISTSharingTree **unsafe) {
-  goals(entry);
-  *unsafe = _unsafe;
+goalscode_produce(T_PTR_tree entry, ISTSharingTree *unsafe) {
+  goals(entry, unsafe);
 }
 
 static
 void
-goals(T_PTR_tree entry) {
+goals(T_PTR_tree entry, ISTSharingTree *unsafe) {
 	size_t i;
 	char* info;
 
@@ -67,9 +65,8 @@ goals(T_PTR_tree entry) {
 
 			nbrgoalscmd = 1;
 		}
-		ist_new(&_unsafe);
 		for (i = 0; i < nbrgoalscmd; ++i) {
-			if (ist_add(_unsafe, &tokensgoals[i * nbr_var], nbr_var) == false)
+			if (ist_add(unsafe, &tokensgoals[i * nbr_var], nbr_var) == false)
 				err_msg("codegengoals.c: redundant unsafe cones\n");
 		}
 		for (i=0;i<nbr_var*nbrgoalscmd;++i)
