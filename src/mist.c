@@ -367,7 +367,7 @@ static void print_help()
 	puts("     --ic4pn      the algorithm described in FI");
 	puts("     --tsi        the algorithm described in TSI");
 	puts("     --eec        the Expand, Enlarge and Check algorithm");
-	puts("     --cegar      the eec-cegar algorithm");
+	puts("     --cegar      the Expand, Enlarge and Check algorithm with counterexample guided refinement");
 	puts("     --timeout=T  establish an execution timeout of T seconds");
 }
 

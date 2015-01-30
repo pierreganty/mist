@@ -7,9 +7,9 @@ To install (last step of optional):
      $ ./autogen.sh
      $ ./configure
      $ make
-     $ make install 
+     $ make install
 
-To uninstall:     
+To uninstall:
 
      $ make uninstall
 
@@ -35,6 +35,9 @@ To uninstall:
  Journal of Computer and System Sciences, 72(1), 2005</td>
   </tr>
   <tr>
+    <td>eec-cegar</td><td> </td>
+  </tr>
+  <tr>
     <td>help</td><td>this help</td>
   </tr>
   <tr>
@@ -44,12 +47,12 @@ To uninstall:
 
 ## Input file format and further details
 
-Further information can be found on the [wiki][mistpage]. 
+Further information can be found on the [wiki][mistpage].
 
-## Reporting Problems 
+## Reporting Problems
 
 Please report issues on [GitHub][issueslist].
- 
+
 ## Further Questions
 
 Contact the author, [Pierre Ganty][email].
