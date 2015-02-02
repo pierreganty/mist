@@ -18,7 +18,7 @@ import Queue
 def worker(input, output):
     for test in iter(input.get, 'STOP'):
         worker_result = test + "*+*+"
-        for argument in ["--eec", "--backward", "--tsi", "--ic4pn"]:
+        for argument in ["--eec", "--backward", "--tsi", "--ic4pn", "--cegar"]:
             sp = subprocess.Popen(['mist', argument, test, '--timeout', str(timeout)], stdout=subprocess.PIPE, shell = False, stderr=subprocess.PIPE)
             communication = sp.communicate()
             worker_result += communication[0]
@@ -59,7 +59,7 @@ def get_next_result(input_file):
     # List of tests whose output mismatch the expected one
     mismatch = []
     # List of tests whose output is unknown. At the begining all results are unknown
-    unknown = ["eec", "backward", "tsi", "ic4pn"]
+    unknown = ["eec", "backward", "tsi", "ic4pn", "cegar"]
 
     not_executed = []
 
@@ -102,6 +102,13 @@ def get_next_result(input_file):
             else:
                 mismatch.append("ic4pn")
 
+        if "cegar" in new_line:
+            unknown.remove("cegar")
+            if expected_result == new_line.split()[2]:
+                match.append("cegar")
+            else:
+                mismatch.append("cegar")
+
 
         new_line = input_file.readline()
 
@@ -111,6 +118,8 @@ def get_next_result(input_file):
         not_executed.append("tsi")
         unknown.remove("ic4pn")
         not_executed.append("ic4pn")
+        unknown.remove("cegar")
+        not_executed.append("cegar")
         unknown.remove("eec")
         not_executed.append("eec")
     ret.append(match)
@@ -171,11 +180,11 @@ def analyze_results(results_to_check_file):
             not_executed = result_to_check[4]
             num_timeouts = result_to_check[5]
 
-            if len(match) + len(not_executed) == 4:
+            if len(match) + len(not_executed) == 5:
                 print "Test ", result_to_check[0], "\033[32;01m OK\033[00m"
                 print "Not a Petri Net, skipping eec, tsi and ic4pn"
             else:
-                if len(match) + len(unknown) == 4:
+                if len(match) + len(unknown) == 5:
                     print "Test ", result_to_check[0], "\033[33;01m INCOMPLETE\033[00m"
                 else:
                     print "Test ", result_to_check[0], "\033[31;01m ERR\033[00m"
@@ -315,6 +324,7 @@ if run:
     while end != len(list_spec_files):
         try:
             ic4pn = False
+            cegar = False
             conclusion = ""
             reachable = False
             process_output = done_queue.get()
@@ -323,9 +333,11 @@ if run:
             output_file.write("test: " + process_output.split('*+*+')[0] + "\n")
             for line in process_output.split('*+*+')[1].split("\n"):
                 if "IC4PN" in line:
-                    ic4pn = True # As Ic4pn will send so many information, we must know when we are analyzing its output
+                    ic4pn = True # As Ic4pn will send so much information, we must know when we are analyzing its output
+                if "CEGAR" in line:
+                    cegar = True # As Cegar will send so much information, we must know when we are analyzing its output
                 if "concludes " in line:
-                    if ic4pn:
+                    if ic4pn or cegar:
                         conclusion = line #We must store the conclusion and take the last one
                     else:
                         output_file.write(line + "\n")
@@ -333,7 +345,12 @@ if run:
                     reachable = True
 
                 if conclusion != "":
-                    output_file.write("ic4pn concludes" + conclusion.split("concludes")[1] + "\n") # Write the conclusion of ic4pn
+                    if ic4pn:
+                        output_file.write("ic4pn concludes" + conclusion.split("concludes")[1] + "\n") # Write the conclusion of ic4pn
+                        ic4pn = False;
+                    else:
+                        output_file.write("cegar concludes" + conclusion.split("concludes")[1] + "\n") # Write the conclusion of cegar
+                        cegar = False;
                     conclusion = ""
 
                 if "Timeout" in line and not "established" in line:
