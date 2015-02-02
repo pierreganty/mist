@@ -31,6 +31,7 @@
 #include "codegengoals.h"
 #include "codegenrules.h"
 #include "codegeninvar.h"
+#include "debug.h"
 
 
 static transition_system_t *_system;
