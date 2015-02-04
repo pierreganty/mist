@@ -40,6 +40,8 @@
 #include "debug.h"
 
 int verbose = 0;
+FILE *file;
+int iterations = 1;
 
 /*To end the executing when timeout event occurs*/
 void timeout_func (int sgn) {
@@ -275,6 +277,9 @@ void backward_basic(system, initial_marking, frontier)
 	}
 	ist_init_list_ist(&List);
 	nbr_iteration = 1;
+	if (file != NULL){
+		fprintf(file, "Iterations,Frontier,Total elems\n");
+	}
 	while (Continue == true) {
 		printf("\n\nIteration\t%3d\n", nbr_iteration);
 		puts("Computation of the symbolic predecessors states ...");
@@ -286,6 +291,11 @@ void backward_basic(system, initial_marking, frontier)
 
 			printf("The new frontier counts :\n");
 			ist_checkup(frontier);
+			if (file != NULL){
+				fprintf(file, "%d,", nbr_iteration);
+				ist_stat_plot(frontier, file);
+				fprintf(file, ",");
+			}
 			PRINT_IST(frontier);
 			temp=ist_intersection(initial_marking,frontier);
 			reached = (ist_is_empty(temp) == true ? false : true);
@@ -313,6 +323,10 @@ void backward_basic(system, initial_marking, frontier)
 				 */
 				puts("After union, the reached symbolic state space is:");
 				ist_checkup(reached_elem);
+				if (file != NULL){
+					ist_stat_plot(reached_elem, file);
+					fprintf(file, "\n");
+				}
 				ist_insert_at_the_beginning_list_ist(&List,old_frontier);
 				old_frontier = frontier;
 			}
@@ -364,7 +378,7 @@ static void print_help()
 	puts("     --eec        the Expand, Enlarge and Check algorithm");
 	puts("     --cegar      the Expand, Enlarge and Check algorithm with counterexample guided refinement");
 	puts("     --timeout=T  establish an execution timeout of T seconds");
-	puts("     --verbose=V  establish an verbose level V");
+	puts("     --verbose=V  establish a verbose level V");
 }
 
 static void head_msg()
@@ -893,6 +907,7 @@ void ic4pn(system, initial_marking, bad)
 	dispose_abstraction(topabs);
 
 	nb_iteration=0;
+	if (file != NULL) fprintf(file, "Iterations, Total elems\n");
 	while(conclusive == false) {
 		puts("begin of iteration");
 		// We build the abstract system
@@ -1144,7 +1159,7 @@ void eec(system, initial_marking, bad)
 	from_transitions_to_tree(system, maskpost);
 	ist_stat(system->tree_of_transitions);
 	ist_write(system->tree_of_transitions);
-
+	if (file != NULL) fprintf(file, "Iterations, Total elems\n");
         eec_conclusive=eec_fp(system,bottomabs,initial_marking,bad,&lfp_eec);
 	if (eec_conclusive == true)
 		puts("EEC concludes safe");
@@ -1176,7 +1191,6 @@ void tsi(system, initial_marking, bad)
 				bottomabs->A[i][j]=0;
 	}
 	print_abstraction(bottomabs);
-
 	maskpost=(boolean *)xmalloc(system->limits.nbr_rules*sizeof(boolean));
 	for(i=0;i<system->limits.nbr_rules;++i)
 		maskpost[i]=true;
@@ -1186,6 +1200,7 @@ void tsi(system, initial_marking, bad)
 	ist_write(system->tree_of_transitions);
 
 	/* the TSI algorithm is built as a modification of the EEC algorithm */
+	if (file != NULL) fprintf(file, "Iterations, Total elems\n");
         eec_conclusive=eec_bound(system,bottomabs,initial_marking,bad,&lfp_eec);
 	if (eec_conclusive == true)
 		puts("TSI concludes safe");
@@ -1292,6 +1307,11 @@ int main(int argc, char *argv[ ])
 	assert(mc!=NULL);
 	PRINTF("Timeout established to %d seconds\n", timeout);
 
+	file = fopen("print.csv", "w");
+	if (file == NULL){
+		printf("Can't open file 'print.csv' so there won't be data for the graphics\n");
+	}
+
 	linenumber = 1;
 	tbsymbol_init(&tbsymbol, 4096);
 
@@ -1365,6 +1385,7 @@ int main(int argc, char *argv[ ])
 	dispose_transition_system(system);
 
 	tbsymbol_destroy(&tbsymbol);
+	fclose(file);
 	puts("Thanks for using this tool");
 	return 0;
 }
