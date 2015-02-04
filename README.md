@@ -20,30 +20,15 @@ To uninstall:
 
 ### options
 
-<table>
-  <tr>
-    <td>backward</td><td>the backward algorithm with invariant pruning described in Laurent Van Begin PhD thesis</td>
-  </tr>
-  <tr>
-    <td>ic4pn</td><td>the abstraction refinement algorithm described in Fundamenta Informaticae, 88(3), 2008</td>
-  </tr>
-  <tr>
-    <td>tsi</td><td>the abstraction refinement algorithm described in Technique et Sciences Informatiques, 28(9), 2009</td>
-  </tr>
-  <tr>
-    <td>eec</td><td> Expand, Enlarge and Check algorithm described in the
- Journal of Computer and System Sciences, 72(1), 2005</td>
-  </tr>
-  <tr>
-    <td>eec-cegar</td><td> </td>
-  </tr>
-  <tr>
-    <td>help</td><td>this help</td>
-  </tr>
-  <tr>
-    <td>version</td><td>show version number</td>
-  </tr>
-</table>
+| option      | Description of the algorithm                                                                              |
+|-------------|-----------------------------------------------------------------------------------------------------------|
+| backward    | the backward algorithm with invariant pruning described in Laurent Van Begin PhD thesis                   |
+| ic4pn	    | the abstraction refinement algorithm described in Fundamenta Informaticae, 88(3), 2008                    |
+| tsi	    | the abstraction refinement algorithm described in Technique et Sciences Informatiques, 28(9), 2009        |
+| eec	    | Expand, Enlarge and Check algorithm described in the Journal of Computer and System Sciences, 72(1), 2005 |
+| eec-cegar   | Expand, Enlarge and Check with a counter-example based refinement (not described anywhere)                |	
+| help        | this help                                                                                                 |
+| version     | show version number                                                                                       |
 
 ## Input file format and further details
 
