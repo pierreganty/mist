@@ -490,7 +490,9 @@ boolean eec_fp(system, abs, initial_marking, bad, lfp)
 			finished= ist_is_empty(inter) == true ? false : true;
 			ist_dispose(inter);
 			while (finished==false) {
+				fprintf(file, "%d,",iterations++);
 				tmp = ist_abstract_post(bpost,bound_values,abs->bound,system);
+				fprintf(file, "\n");
 				//tmp = ist_abstract_post_transtree(bpost,bound_values,abs->bound,system);
 				_tmp =  ist_remove_subsumed_paths(tmp,bpost);
 				ist_dispose(tmp);
@@ -565,6 +567,7 @@ boolean eec_cegar(system, abs, initial_marking, bad, List)
 	ist_normalize(downward_closed_initial_marking);
 	assert(ist_checkup(downward_closed_initial_marking)==true);
 
+
 	finished=false;
 	while (finished == false) {
 		printf("eec: ENLARGE begin\t");
@@ -600,7 +603,9 @@ boolean eec_cegar(system, abs, initial_marking, bad, List)
 			/* insert a copy of initial_marking in the list */
 			ist_insert_at_the_beginning_list_ist(List,ist_copy(initial_marking));
 			while (finished==false) {
+				fprintf(file, "%d,",iterations++);
 				tmp = ist_abstract_post(bpost,bound_values,abs->bound,system);
+				fprintf(file, "\n");
 				_tmp =  ist_remove_subsumed_paths(tmp,bpost);
 				ist_dispose(tmp);
 				if (ist_is_empty(_tmp)==false) {
@@ -662,6 +667,8 @@ void cegar(system, initial_marking, bad)
 	size_t i, nb_iteration, lg_cex;
 	int *countex, j;
 	boolean out, conclusive, eec_conclusive;
+
+	if (file != NULL) fprintf(file, "Iterations, Total elems\n");
 
 	printf("CEGAR..\n");
 	tmp=ist_intersection(initial_marking,bad);
@@ -1068,7 +1075,9 @@ boolean eec_bound(system, abs, initial_marking, bad, lfp)
 			ISTSharingTree * Frontier = ist_copy(bpost);
 
 			while (finished==false) {
+				fprintf(file, "%d,",iterations++);
 				tmp = ist_abstract_post(Frontier,bound_values,abs->bound,system);
+				fprintf(file, "\n");
 				//tmp = ist_abstract_post_transtree(bpost,bound_values,abs->bound,system);
 				ist_dispose(Frontier);
 				Frontier =  ist_remove_subsumed_paths(tmp,bpost);
