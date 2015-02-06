@@ -1217,7 +1217,7 @@ void tsi(system, initial_marking, bad)
 		puts("TSI concludes unsafe");
 }
 
-static void* mist_cmdline_options_handle(int argc, char *argv[ ], int *timeout, char **filename)
+static void* mist_cmdline_options_handle(int argc, char *argv[ ], int *timeout, char **filename, char **imgname)
 {
 	int c;
 	void *retval=NULL;
@@ -1234,6 +1234,7 @@ static void* mist_cmdline_options_handle(int argc, char *argv[ ], int *timeout, 
 			{"cegar", 0, 0, 'c'},
 			{"timeout", 0, 0, 'o'},
 			{"verbose", 0, 0, 'v'},
+			{"plot", 0, 0, 'p'},
 			{0, 0, 0, 0}
 		};
 
@@ -1284,6 +1285,10 @@ static void* mist_cmdline_options_handle(int argc, char *argv[ ], int *timeout, 
 				*timeout = atoi(argv[optind++]);
 				break;
 
+			case 'p':
+				*imgname = argv[optind++];
+				break;
+
 			case 'v':
 				verbose = atoi(argv[optind++]);
 				break;
@@ -1309,10 +1314,13 @@ int main(int argc, char *argv[ ])
 	ISTSharingTree *initial_marking, *bad;
 	void (*mc)(transition_system_t *sys, ISTSharingTree *init, ISTSharingTree *bad);
 	int timeout=0;
-	char *input_file;
+	char *input_file=NULL, *output_file=NULL;
+	// To drwa graphs with gnuplot
+	FILE *gnuplotPipe;
+	char * commandsForGnuplot[] = {"plot 'print.csv' every ::1 using 1:2 with lines, 'print.csv' every ::1 using 1:3 with lines;", "plot 'print.csv' every ::1 using 1:2 with lines"};
 
 	head_msg();
-	mc=mist_cmdline_options_handle(argc, argv, &timeout, &input_file);
+	mc=mist_cmdline_options_handle(argc, argv, &timeout, &input_file, &output_file);
 	assert(mc!=NULL);
 	PRINTF("Timeout established to %d seconds\n", timeout);
 
@@ -1392,9 +1400,28 @@ int main(int argc, char *argv[ ])
 	ist_dispose(initial_marking);
 	ist_dispose(bad);
 	dispose_transition_system(system);
+	fclose(file);
+
+	if(output_file != NULL){
+		printf("Displaying graph into img/%s \n", output_file);
+
+		gnuplotPipe = popen ("gnuplot", "w");
+
+	   	fprintf(gnuplotPipe, "set term png\n");
+	    fprintf(gnuplotPipe, "set output 'img/%s'\n", output_file);
+		fprintf(gnuplotPipe, "set xlabel \"Iterations\"\n");
+		fprintf(gnuplotPipe, "set ylabel \"Num Elems\"\n");
+		fprintf(gnuplotPipe, "set yrange [ 0 : ]\n");
+		fprintf(gnuplotPipe, "unset key\n");
+	    fprintf(gnuplotPipe, "set title \"Memory usage\"\n");
+	    fprintf(gnuplotPipe,"%s\n", commandsForGnuplot[(mc == backward_basic)? 0:1]);
+
+	    fflush(gnuplotPipe);
+	    fclose(gnuplotPipe);
+	}
 
 	tbsymbol_destroy(&tbsymbol);
-	fclose(file);
+
 	puts("Thanks for using this tool");
 	return 0;
 }
