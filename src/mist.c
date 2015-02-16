@@ -292,9 +292,9 @@ void backward_basic(system, initial_marking, frontier)
 			printf("The new frontier counts :\n");
 			ist_checkup(frontier);
 			if (file != NULL){
-				fprintf(file, "%d,", nbr_iteration);
+				if (file != NULL) fprintf(file, "%d,", nbr_iteration);
 				ist_stat_plot(frontier, file);
-				fprintf(file, ",");
+				if (file != NULL) fprintf(file, ",");
 			}
 			PRINT_IST(frontier);
 			temp=ist_intersection(initial_marking,frontier);
@@ -457,6 +457,7 @@ boolean eec_fp(system, abs, initial_marking, bad, lfp)
 	finished=false;
 	while (finished == false) {
 		printf("eec: ENLARGE begin\t\n");
+		if (file != NULL) fprintf(file, "ENLARGE\n");
 		fflush(NULL);
 		/* To OVERapproximate we use abstract_bound */
 		/* Do not use ist_abstract_post_star_until_reach_bad it produces incorrect results/non termination.
@@ -477,6 +478,7 @@ boolean eec_fp(system, abs, initial_marking, bad, lfp)
 			retval = true;
 		} else {
 			printf("eec: EXPAND begin\t");
+			if (file != NULL) fprintf(file, "EXPAND\n");
 			fflush(NULL);
 			/* use bpost = ist_abstract_post_star(downward_closed_initial_marking,bound_values,abs->bound,system)
 			 * if you want to compute the lfp. Instead we make something more
@@ -1042,6 +1044,7 @@ boolean eec_bound(system, abs, initial_marking, bad, lfp)
 	finished=false;
 	while (finished == false) {
 		printf("eec: ENLARGE begin\t\n");
+		if (file != NULL) fprintf(file, "ENLARGE\n");
 		fflush(NULL);
 		/* To OVERapproximate we use abstract_bound */
 		//abs_post_star = ist_abstract_post_star(downward_closed_initial_marking,abstract_bound,abs->bound,system);
@@ -1059,6 +1062,7 @@ boolean eec_bound(system, abs, initial_marking, bad, lfp)
 			retval = true;
 		} else {
 			printf("eec: EXPAND begin\t");
+			if (file != NULL) fprintf(file, "EXPAND\n");
 			fflush(NULL);
 			/* use bpost = ist_abstract_post_star(downward_closed_initial_marking,bound_values,abs->bound,system)
 			 * if you want to compute the lfp. Instead we make something more

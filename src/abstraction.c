@@ -1070,7 +1070,7 @@ ISTSharingTree
 		ist_dispose(_tmp);
 	}
 	ist_stat(res);
-	ist_stat_plot(res, file);
+	if (file != NULL) ist_stat_plot(res, file);
 
 	return res;
 }
@@ -1112,9 +1112,9 @@ ISTSharingTree *ist_abstract_post_star(ISTSharingTree *initial_marking, void
 	Frontier = ist_copy(S);
 	while (true) {
 		//printf("iteration dans abstract post star\n");
-		fprintf(file, "%d,",iterations++);
+		if (file != NULL) fprintf(file, "%d,",iterations++);
 		tmp = ist_abstract_post(Frontier,approx,bound,t);
-		fprintf(file, "\n");
+		if (file != NULL) fprintf(file, "\n");
 		//tmp = ist_abstract_post_transtree(S,approx,bound,t);
 		ist_dispose(Frontier);
 		Frontier = ist_remove_subsumed_paths(tmp,S);

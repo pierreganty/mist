@@ -30,6 +30,9 @@ var margin = {top: 20, right: 20, bottom: 30, left: 40},
     width = 1160 - margin.left - margin.right,
     height = 500 - margin.top - margin.bottom;
 
+var change_color = 0;
+var max_colors = 7;
+
 var x0 = d3.scale.ordinal()
     .rangeBands([0, width], 0);
 
@@ -95,7 +98,7 @@ d3.csv("print.csv", function(error, data) {
       .attr("x", function(d) { return x1(d.name); })
       .attr("y", function(d) { return y(d.value); })
       .attr("height", function(d) { return height - y(d.value); })
-      .style("fill", function(d) { return color(d.name); });
+      .style("fill", function(d) { if (isNaN(d.value)) { change_color = change_color + 1; if (change_color == max_colors) {change_color = 0}} return color(d.name + change_color); });
 
   var legend = svg.selectAll(".legend")
       .data(iterationNames.slice().reverse())
