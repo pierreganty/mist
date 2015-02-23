@@ -1,0 +1,28 @@
+<script>
+var margin = {top: 20, right: 20, bottom: 30, left: 40},
+    width = 1160 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
+
+var change_color = 0;
+var max_colors = 7;
+
+var x0 = d3.scale.ordinal()
+    .rangeBands([0, width], 0);
+
+var x1 = d3.scale.ordinal();
+
+var y = d3.scale.linear()
+    .range([height, 0]);
+
+var color = d3.scale.ordinal()
+    .range(["#98abc5", "#d0743c", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#ff8c00"]);
+
+var xAxis = d3.svg.axis()
+    .scale(x0)
+    .orient("bottom");
+
+var yAxis = d3.svg.axis()
+    .scale(y)
+    .orient("left")
+    .tickFormat(d3.format(".2s"));
+</script>

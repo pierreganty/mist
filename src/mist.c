@@ -33,6 +33,7 @@
 #include <sys/times.h>
 #include <assert.h>
 #include <signal.h>
+#include <stdlib.h>
 
 #include "laparser.h"
 #include "ist.h"
@@ -370,15 +371,17 @@ static void print_help()
 {
 	puts("Usage: mist [options] filename \n");
 	puts("Options:");
-	puts("     --help       this help");
-	puts("     --version    show version numbers");
-	puts("     --backward   the backward algorithm with invariant pruning");
-	puts("     --ic4pn      the algorithm described in FI");
-	puts("     --tsi        the algorithm described in TSI");
-	puts("     --eec        the Expand, Enlarge and Check algorithm");
-	puts("     --cegar      the Expand, Enlarge and Check algorithm with counterexample guided refinement");
-	puts("     --timeout=T  establish an execution timeout of T seconds");
-	puts("     --verbose=V  establish a verbose level V");
+	puts("     --help           this help");
+	puts("     --version        show version numbers");
+	puts("     --backward       the backward algorithm with invariant pruning");
+	puts("     --ic4pn          the algorithm described in FI");
+	puts("     --tsi            the algorithm described in TSI");
+	puts("     --eec            the Expand, Enlarge and Check algorithm");
+	puts("     --cegar          the Expand, Enlarge and Check algorithm with counterexample guided refinement");
+	puts("     --timeout=T      establish an execution timeout of T seconds");
+	puts("     --verbose=V      establish a verbose level V");
+	puts("     --graph=filename generate filename.html which shows the graphic representation of the memory usage of the tool");
+	puts("     --plot=filename  generate a .png with the graph of the memory usage");
 }
 
 static void head_msg()
@@ -1221,7 +1224,7 @@ void tsi(system, initial_marking, bad)
 		puts("TSI concludes unsafe");
 }
 
-static void* mist_cmdline_options_handle(int argc, char *argv[ ], int *timeout, char **filename, char **imgname)
+static void* mist_cmdline_options_handle(int argc, char *argv[ ], int *timeout, char **filename, char **imgname, char **graph)
 {
 	int c;
 	void *retval=NULL;
@@ -1239,6 +1242,7 @@ static void* mist_cmdline_options_handle(int argc, char *argv[ ], int *timeout, 
 			{"timeout", 0, 0, 'o'},
 			{"verbose", 0, 0, 'v'},
 			{"plot", 0, 0, 'p'},
+			{"graph", 0, 0, 'g'},
 			{0, 0, 0, 0}
 		};
 
@@ -1293,6 +1297,10 @@ static void* mist_cmdline_options_handle(int argc, char *argv[ ], int *timeout, 
 				*imgname = argv[optind++];
 				break;
 
+			case 'g':
+				*graph = argv[optind++];
+				break;
+
 			case 'v':
 				verbose = atoi(argv[optind++]);
 				break;
@@ -1318,17 +1326,19 @@ int main(int argc, char *argv[ ])
 	ISTSharingTree *initial_marking, *bad;
 	void (*mc)(transition_system_t *sys, ISTSharingTree *init, ISTSharingTree *bad);
 	int timeout=0;
-	char *input_file=NULL, *output_file=NULL;
-	// To drwa graphs with gnuplot
+	char *input_file=NULL, *output_file=NULL, *graph=NULL;
+
+	// To draw graphs with gnuplot
 	FILE *gnuplotPipe;
 	char * commandsForGnuplot[] = {"plot 'print.csv' every ::1 using 1:2 with lines, 'print.csv' every ::1 using 1:3 with lines;", "plot 'print.csv' every ::1 using 1:2 with lines"};
 
 	head_msg();
-	mc=mist_cmdline_options_handle(argc, argv, &timeout, &input_file, &output_file);
+	mc=mist_cmdline_options_handle(argc, argv, &timeout, &input_file, &output_file, &graph);
 	assert(mc!=NULL);
 	PRINTF("Timeout established to %d seconds\n", timeout);
 
-	file = fopen("print.csv", "w");
+	file = NULL;
+	if (graph != NULL) file = fopen("print.csv", "w");
 	if (file == NULL){
 		printf("Can't open file 'print.csv' so there won't be data for the graphics\n");
 	}
