@@ -4,7 +4,6 @@
 # Imdea
 # 2015-02-23
 TMP="tmp.yml"
-FULL_TEMPLATE="full_template.html"
 BODY="body_template"
 BEGIN="begin"
 VARS="d3_vars"
@@ -21,25 +20,40 @@ OUTPUT=$1
 FILES=${@:2}
 i=1
 
-echo "Starting template..."
-cat $BEGIN $VARS > $FULL_TEMPLATE
-echo "" >> $FULL_TEMPLATE
+cat $BEGIN  > $OUTPUT
 
-echo "Preparing temporal yml file..."
 for file in $FILES
 do
-	echo "---" >> $TMP
-	echo "graph: graph$i" >> $TMP
-	echo "file: $file" >> $TMP
-	echo "svg: svg$i" >> $TMP
-	echo "<div id=\"graph$i\"></div>" >> $FULL_TEMPLATE
-	echo "" >> $FULL_TEMPLATE
+	echo "<div id=\"graph$i\"></div>" >> $OUTPUT
 	i=`expr $i + 1`
 done
 
-echo "---" >> $TMP
+cat $VARS >> $OUTPUT
 
-echo "Building full template..."
+echo "" >> $OUTPUT
 
-cat $TMP $FULL_TEMPLATE | mustache > $OUTPUT
+echo "Preparing temporal yml file..."
+echo "{ \"translator\" :[" >> $TMP
+
+i=1
+
+for file in $FILES
+do
+	echo "{\"graph\": \"graph$i\", \"file\": \"$file\", \"svg\": \"svg$i\"}" >> $TMP
+	if [ $i -lt $(($# -1)) ]
+		then
+		echo "," >> $TMP
+	fi
+	echo "" >> $OUTPUT
+	i=`expr $i + 1`
+done
+
+echo "]}" >> $TMP
+
+echo "Building final document..."
+
+cat $TMP | mustache - $BODY >> $OUTPUT
+
+echo "Removing temporal files..."
+rm $TMP
 
