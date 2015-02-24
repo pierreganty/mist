@@ -16,7 +16,7 @@
    along with mist; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-   Copyright 2003, 2004, Pierre Ganty, Anthony Piron
+   Copyright 2003, 2004, Pierre Ganty, Anthony Piron, 2015, Pedro Valero
  */
 
 #ifndef __CODEGENRULES_H
@@ -26,6 +26,6 @@
 #include "tree.h"
 #include "ist.h"
 
-void rulescode_produce(T_PTR_tree entry, transition_system_t **system);
+void rulescode_produce(T_PTR_tree entry, transition_system_t *system);
 
 #endif

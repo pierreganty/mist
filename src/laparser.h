@@ -38,7 +38,11 @@
 int linenumber;
 int nbr_var;
 T_PTR_tbsymbol tbsymbol;
+T_PTR_tbsymbol tbsymbol_tmp;
+
 
 int my_yyparse(T_PTR_tree* tree, char* filename);
+
+void reset(T_PTR_tbsymbol_entry entry);
 
 #endif

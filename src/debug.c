@@ -1,4 +1,4 @@
-// vim:sw=4:ts=4
+// vim:sw=4:ts=4:cindent
 /*
    This file is part of mist.
 
@@ -16,16 +16,26 @@
    along with mist; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-   Copyright 2003, 2004, Pierre Ganty, Anthony Piron
+   Copyright 2014, Pedro Valero
  */
 
-#ifndef __CODEGENGOALS_H
-#define __CODEGENGOALS_H
+#include <stdio.h>
+#include <syslog.h>
+#include <stdarg.h>
+#include <string.h>
 
-#include <sys/types.h>
-#include "tree.h"
-#include "ist.h"
+#include "debug.h"
 
-void goalscode_produce(T_PTR_tree entry, ISTSharingTree *unsafe);
 
-#endif
+void debug_printf(int line, const char *file, const char *function, char *fmt, ...)
+{
+	char buffer[DEFAULT_BUFF_SIZE];
+	va_list args;
+
+	snprintf(buffer, DEFAULT_BUFF_SIZE, "%s (%s:%d): %s", function, file, line, fmt);
+
+	va_start(args, fmt);
+	vfprintf(stderr, buffer, args);
+	va_end(args);
+}
+

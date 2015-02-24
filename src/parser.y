@@ -16,7 +16,7 @@
    along with mist2; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-   Copyright 2003, 2004, Pierre Ganty, Anthony Piron
+   Copyright 2003, 2004, Pierre Ganty, Anthony Piron, 2014 Pedro Valero
  */
 %{
 #include <stdio.h>
@@ -27,6 +27,8 @@ extern int yylex();
 extern char* yytext;
 T_PTR_tree tmp_tree;
 int yyerror(char *);
+
+
 %}
 
 %union{
@@ -99,6 +101,7 @@ varlist: varlist ID {
   info = tbsymbol_info_new();
   info->tag = tbsymbol_INFO_ID;
   info->info.id.addr = nbr_var++;
+  info->info.nb.read = -1; // Initialize with an invalid value
   tbsymbol_setinfo(entry, info, sizeof(T_tbsymbol_info));
 }
 | { }
@@ -106,6 +109,9 @@ varlist: varlist ID {
 
 initsection: INIT constrlistand {
   $$ = tree_new1("init", $2);
+  // We must reset the table to be able to detect
+  // if a symbol has been delimited twice or not
+  tbsymbol_dump(tbsymbol, reset);
 }
 ;
 
@@ -129,37 +135,63 @@ constrlistand: constr COMMA constrlistand {
 }
 | constr {
   $$ = tree_new1("and",$1);
+
+  // We must reset the table to be able to detect
+  // if a symbol has been delimited twice or not
+  tbsymbol_dump(tbsymbol, reset);
 }
 ;
 
 constr: ID EQUAL NB {
   T_PTR_tbsymbol_entry entry;
+  T_PTR_tbsymbol_info info;
 
   entry = tbsymbol_select(tbsymbol, $1);
   if (entry == NULL)
     err_quit("\nhey fieu undeclared symbol %s line %d", $1, linenumber);
+  // Storing the constan value into the symbol table
 
   $$ = tree_new2("=", tree_new0(entry), tree_new0($3));
+
+  info = tbsymbol_getinfo(entry);
+  if (info->info.nb.read != -1)
+    err_quit("\nhey fieu symbol %s has been limited twice in the same state, last time in line %d", $1, linenumber);
+  info->info.nb.read = atoi($3->name); // Store the min value that the variable could have before applying this transition.
+
 }
 | ID GTE NB {
   T_PTR_tbsymbol_entry entry;
+  T_PTR_tbsymbol_info info;
 
   entry = tbsymbol_select(tbsymbol, $1);
   if (entry == NULL)
     err_quit("\nhey fieu undeclared symbol %s line %d", $1, linenumber);
+  // Storing the constan value into the symbol table
 
   $$ = tree_new2(">=", tree_new0(entry), tree_new0($3));
+
+  info = tbsymbol_getinfo(entry);
+  if (info->info.nb.read != -1)
+    err_quit("\nhey fieu symbol %s has been limited twice in the same state, last time in line %d", $1, linenumber);
+  info->info.nb.read = atoi($3->name); // Store the min value that the variable could have before applying this transition.
+
 }
 | ID IN '[' NB COMMA NB ']' {
 
   T_PTR_tbsymbol_entry entry;
+  T_PTR_tbsymbol_info info;
 
   entry = tbsymbol_select(tbsymbol, $1);
   if (entry == NULL)
     err_quit("\nhey fieu undeclared symbol %s line %d", $1, linenumber);
+  // Storing the constan value into the symbol table
 
   $$ = tree_new3("in", tree_new0(entry), tree_new0($4),tree_new0($6));
 
+  info = tbsymbol_getinfo(entry);
+  if (info->info.nb.read != -1)
+    err_quit("\nhey fieu symbol %s has been limited twice in the same state, last time in line %d", $1, linenumber);
+  info->info.nb.read = atoi($4->name); // Store the min value that the variable could have before applying this transition.
 
 }
 ;
@@ -172,6 +204,7 @@ rulessection: RULES guardedcmdlist {
 guardedcmdlist: guardedcmd guardedcmdlist {
   $$ = tree_merge("rules",
 		  tree_new1("firstrule", $1), $2);
+
 }
 | { $$ = NULL;}
 ;
@@ -182,6 +215,11 @@ guardedcmd: guardlist ARROW statementlist TERMINATOR {
 	 * we only consider unbounded transfers
 	 */
   $$ = tree_new2("guardedcmd", $1, $3);
+
+  // We must reset the table to be able to detect
+  // if a symbol has been delimited twice or not
+
+  tbsymbol_dump(tbsymbol, reset);
 }
 ;
 
@@ -242,6 +280,7 @@ statementfollow : COMMA statement statementfollow {
 statement : ID '\'' EQUAL exprarith {
   T_PTR_tree tree;
   T_PTR_tbsymbol_entry entry;
+  T_PTR_tbsymbol_info info;
 
   entry = tbsymbol_select(tbsymbol, $1);
   if (entry == NULL)
@@ -251,6 +290,13 @@ statement : ID '\'' EQUAL exprarith {
 
   $$ = tree;
 
+  if (strcmp($4->info, "-") == 0) { //If we have a substraction
+    info = tbsymbol_getinfo(entry);
+    // Checking that the variable we are going to substract is lower or equal than the minimum value reached by the variable before the transition began so we can ensure that the variable never goes below 0.
+    if(atoi($4->subtrees[1]->info) > info->info.nb.read && info->info.nb.read >= 0){
+       err_quit("\nhey fieu invalid operation in line %d. %d must be lower than %d", linenumber, atoi($4->subtrees[1]->info), info->info.nb.read);
+    }
+  }
 }
 ;
 
@@ -319,18 +365,29 @@ equallistand: equal COMMA equallistand {
   $$ = tree_merge("and",tree_new1("and",$1),$3);
 }
 | equal {
+  // We must reset the table to be able to detect
+  // if a symbol has been delimited twice or not
   $$ = tree_new1("and",$1);
+  tbsymbol_dump(tbsymbol, reset);
 }
 ;
 
 equal: ID EQUAL NB {
   T_PTR_tbsymbol_entry entry;
+  T_PTR_tbsymbol_info info;
 
   entry = tbsymbol_select(tbsymbol, $1);
   if (entry == NULL)
     err_quit("\nhey fieu undeclared symbol %s line %d", $1, linenumber);
 
   $$ = tree_new2("=", tree_new0(entry), tree_new0($3));
+
+  info = tbsymbol_getinfo(entry);
+  if (info->info.nb.read != -1)
+    err_quit("\nhey fieu symbol %s has been defined has invariant twice in line %d", $1, linenumber);
+
+  info->info.nb.read = 0; // For the invariants the minimum value doesn't care
+                          // We just have to distinguish two possible states
 }
 ;
 
@@ -367,4 +424,20 @@ my_yyparse(T_PTR_tree* tree, char* filename)
     err_sys("fclose error");
 
   return retval;
+}
+// The field 'read' let us control if the variable has already been constrained
+// in a block where this can happend just once or not.
+
+// If we are working on a transition we also want to store the minimum value possible
+// for the variable.
+
+// To reset the symbol table before continue analyzing a different block we have to
+// reset the field to the same value with which we initialize it.
+
+void reset(T_PTR_tbsymbol_entry entry){
+  T_PTR_tbsymbol_info info;
+
+  info = tbsymbol_getinfo(entry);
+  if(info->tag == tbsymbol_INFO_ID)
+    info->info.nb.read = -1;
 }

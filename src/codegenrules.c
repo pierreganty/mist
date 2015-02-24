@@ -16,7 +16,7 @@
    along with mist; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-   Copyright 2003, 2004, Pierre Ganty, Anthony Piron
+   Copyright 2003, 2004, Pierre Ganty, Anthony Piron, 2015, Pedro Valero
  */
 
 #include "codegenrules.h"
@@ -39,10 +39,9 @@ static boolean messy_spec;
 
 void
 rulescode_produce(T_PTR_tree entry,
-		  transition_system_t **system) {
+		  transition_system_t *system) {
   /* First memory allocation of the transition system */
-  (*system) = (transition_system_t *)xmalloc(sizeof(transition_system_t));
-  sys = (*system);
+  sys = system;
   sys->limits.nbr_variables = nbr_var;
   rules(entry);
 }

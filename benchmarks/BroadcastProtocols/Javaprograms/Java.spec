@@ -1,4 +1,4 @@
-#expected result: safune
+#expected result: unsafe
 #variable definition
 vars
   c2while1 c2getwa c2while2 c2wait1 c2afterwait1 c2return c2putack c2while3 c2wait2 c2afterwait2 c2end p2while1 p2putwa p2while2 p2wait1 p2afterwait1 p2return p2getack p2while3 p2wait2 p2afterwait2 p2end cwhile1 get cwhile2 cwait cafterwait creturn pwhile1 put pwhile2 pwait pafterwait pend unlock lock available notavailable askforack notaskforack needack notneedack isack notisack
