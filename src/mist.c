@@ -1338,9 +1338,9 @@ int main(int argc, char *argv[ ])
 	PRINTF("Timeout established to %d seconds\n", timeout);
 
 	file = NULL;
-	if (graph != NULL) file = fopen("print.csv", "w");
+	if (graph != NULL) file = fopen(graph, "w");
 	if (file == NULL){
-		printf("Can't open file 'print.csv' so there won't be data for the graphics\n");
+		printf("Can't open file %s so there won't be data for the graphics\n", graph);
 	}
 
 	linenumber = 1;

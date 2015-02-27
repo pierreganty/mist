@@ -13,10 +13,18 @@ d3.csv("{{{file}}}", function(error, data) {
     d.iterations = iterationNames.map(function(name) { return {name: name, value: +d[name]}; });
   });
 
-  x0.domain(data.map(function(d) { return d.Iterations; }));
+  {{svg}}.append("text")
+        .attr("x", (width / 2))
+        .attr("y", 0)
+        .attr("text-anchor", "middle")
+        .style("font-size", "16px")
+        .style("text-decoration", "underline")
+        .text("{{file}}");
+  var counter=0;
+  x0.domain(data.map(function(d) { counter+=1; return d.Iterations; }));
   x1.domain(iterationNames).rangeRoundBands([0, x0.rangeBand()]);
   y.domain([0, d3.max(data, function(d) { return d3.max(d.iterations, function(d) { return d.value; }); })]);
-
+  xAxis.tickValues(x0.domain().filter(function(d, i) { return !(i % Math.floor(counter/30)); }));
   {{svg}}.append("g")
       .attr("class", "x axis")
       .attr("transform", "translate(0," + height + ")")
