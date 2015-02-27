@@ -278,9 +278,9 @@ void backward_basic(system, initial_marking, frontier)
 	}
 	ist_init_list_ist(&List);
 	nbr_iteration = 1;
-	if (file != NULL){
-		fprintf(file, "Iterations,Frontier,Total elems\n");
-	}
+
+	if (file != NULL) fprintf(file, "Iterations,Frontier,Total elems\n");
+
 	while (Continue == true) {
 		printf("\n\nIteration\t%3d\n", nbr_iteration);
 		puts("Computation of the symbolic predecessors states ...");
@@ -495,9 +495,9 @@ boolean eec_fp(system, abs, initial_marking, bad, lfp)
 			finished= ist_is_empty(inter) == true ? false : true;
 			ist_dispose(inter);
 			while (finished==false) {
-				fprintf(file, "%d,",iterations++);
+				if(file != NULL) fprintf(file, "%d,",iterations++);
 				tmp = ist_abstract_post(bpost,bound_values,abs->bound,system);
-				fprintf(file, "\n");
+				if(file != NULL) fprintf(file, "\n");
 				//tmp = ist_abstract_post_transtree(bpost,bound_values,abs->bound,system);
 				_tmp =  ist_remove_subsumed_paths(tmp,bpost);
 				ist_dispose(tmp);
@@ -608,9 +608,9 @@ boolean eec_cegar(system, abs, initial_marking, bad, List)
 			/* insert a copy of initial_marking in the list */
 			ist_insert_at_the_beginning_list_ist(List,ist_copy(initial_marking));
 			while (finished==false) {
-				fprintf(file, "%d,",iterations++);
+				if(file != NULL) fprintf(file, "%d,",iterations++);
 				tmp = ist_abstract_post(bpost,bound_values,abs->bound,system);
-				fprintf(file, "\n");
+				if(file != NULL) fprintf(file, "\n");
 				_tmp =  ist_remove_subsumed_paths(tmp,bpost);
 				ist_dispose(tmp);
 				if (ist_is_empty(_tmp)==false) {
@@ -1082,9 +1082,9 @@ boolean eec_bound(system, abs, initial_marking, bad, lfp)
 			ISTSharingTree * Frontier = ist_copy(bpost);
 
 			while (finished==false) {
-				fprintf(file, "%d,",iterations++);
+				if(file != NULL) fprintf(file, "%d,",iterations++);
 				tmp = ist_abstract_post(Frontier,bound_values,abs->bound,system);
-				fprintf(file, "\n");
+				if(file != NULL) fprintf(file, "\n");
 				//tmp = ist_abstract_post_transtree(bpost,bound_values,abs->bound,system);
 				ist_dispose(Frontier);
 				Frontier =  ist_remove_subsumed_paths(tmp,bpost);
@@ -1414,7 +1414,7 @@ int main(int argc, char *argv[ ])
 	ist_dispose(initial_marking);
 	ist_dispose(bad);
 	dispose_transition_system(system);
-	fclose(file);
+	if(file != NULL) fclose(file);
 
 	if(output_file != NULL){
 		printf("Displaying graph into img/%s \n", output_file);

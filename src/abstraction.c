@@ -1154,9 +1154,9 @@ ISTSharingTree *ist_abstract_post_star_until_reach_bad(ISTSharingTree *initial_m
 		ist_dispose(inter);
 		while (true) {
 			//printf("iteration dans abstract post star\n");
-			fprintf(file, "%d,",iterations++);
+			if(file!=NULL) fprintf(file, "%d,",iterations++);
 			tmp = ist_abstract_post(Frontier,approx,bound,t);
-			fprintf(file, "\n");
+			if(file!=NULL) fprintf(file, "\n");
 			//tmp = ist_abstract_post_transtree(S,approx,bound,t);
 			ist_dispose(Frontier);
 			Frontier = ist_remove_subsumed_paths(tmp,S);

@@ -486,5 +486,5 @@ void ist_stat_plot(S, f)
     int NbArcs;
 
     NbArcs = ist_count_number_of_arcs(S);
-    fprintf(f, "%7ld",ist_nb_elements(S));
+    if(f!=NULL) fprintf(f, "%7ld",ist_nb_elements(S));
 }
