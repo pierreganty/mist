@@ -6,11 +6,21 @@ var {{svg}} = d3.select("#{{graph}}").append("svg")
   .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
+{{svg}}.call(tip);
+
 d3.csv("{{{file}}}", function(error, data) {
   var iterationNames = d3.keys(data[0]).filter(function(key) { return key !== "Iterations"; });
 
+var phase=0;
   data.forEach(function(d) {
-    d.iterations = iterationNames.map(function(name) { return {name: name, value: +d[name]}; });
+    d.iterations = iterationNames.map(function(name) {
+      if (typeof d.Frontier === 'undefined'){
+        if(d[name] == 1.1) phase=0.1;
+        if(d[name] == 2.2) phase=0.2;
+        return {name: name, value: +(phase+parseInt(d[name]))};
+      }
+      return {name: name, value: +d[name]};
+    });
   });
 
   {{svg}}.append("text")
@@ -23,7 +33,7 @@ d3.csv("{{{file}}}", function(error, data) {
   var counter=0;
   x0.domain(data.map(function(d) { counter+=1; return d.Iterations; }));
   x1.domain(iterationNames).rangeRoundBands([0, x0.rangeBand()]);
-  y.domain([0, d3.max(data, function(d) { return d3.max(d.iterations, function(d) { return d.value; }); })]);
+  y.domain([0, d3.max(data, function(d) { return d3.max(d.iterations, function(d) { return Math.floor(d.value); }); })]);
   xAxis.tickValues(x0.domain().filter(function(d, i) { return !(i % Math.floor(counter/30)); }));
   {{svg}}.append("g")
       .attr("class", "x axis")
@@ -52,6 +62,8 @@ d3.csv("{{{file}}}", function(error, data) {
       .attr("width", x1.rangeBand())
       .attr("x", function(d) { return x1(d.name); })
       .attr("y", function(d) { return y(d.value); })
+      .on('mouseover', tip.show)
+      .on('mouseout', tip.hide)
       .attr("height", function(d) { return height - y(d.value); })
       .style("fill", function(d) {
         if (d.value == 1.1) {
