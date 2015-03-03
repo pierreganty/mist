@@ -16,7 +16,7 @@
    along with mist; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-   Copyright 2006, Pierre Ganty, 2007 Laurent Van Begin
+   Copyright 2006, Pierre Ganty, 2007 Laurent Van Begin, 2015 Pedro Valero
  */
 
 #include"abstraction.h"
@@ -24,6 +24,9 @@
 #include"checkup.h"
 #include<assert.h>
 #include<limits.h>
+
+extern FILE *file;
+extern int iterations;
 
 transition_system_t * build_sys_using_abs(sys,abs)
 	transition_system_t *sys;
@@ -1067,6 +1070,8 @@ ISTSharingTree
 		ist_dispose(_tmp);
 	}
 	ist_stat(res);
+	if (file != NULL) ist_stat_plot(res, file);
+
 	return res;
 }
 
@@ -1107,8 +1112,9 @@ ISTSharingTree *ist_abstract_post_star(ISTSharingTree *initial_marking, void
 	Frontier = ist_copy(S);
 	while (true) {
 		//printf("iteration dans abstract post star\n");
-
+		if (file != NULL) fprintf(file, "%d,",iterations++);
 		tmp = ist_abstract_post(Frontier,approx,bound,t);
+		if (file != NULL) fprintf(file, "\n");
 		//tmp = ist_abstract_post_transtree(S,approx,bound,t);
 		ist_dispose(Frontier);
 		Frontier = ist_remove_subsumed_paths(tmp,S);
@@ -1148,8 +1154,9 @@ ISTSharingTree *ist_abstract_post_star_until_reach_bad(ISTSharingTree *initial_m
 		ist_dispose(inter);
 		while (true) {
 			//printf("iteration dans abstract post star\n");
-
+			if(file!=NULL) fprintf(file, "%d,",iterations++);
 			tmp = ist_abstract_post(Frontier,approx,bound,t);
+			if(file!=NULL) fprintf(file, "\n");
 			//tmp = ist_abstract_post_transtree(S,approx,bound,t);
 			ist_dispose(Frontier);
 			Frontier = ist_remove_subsumed_paths(tmp,S);

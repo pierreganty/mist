@@ -16,7 +16,7 @@
    along with mist; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-   Copyright 2003, 2004, Pierre Ganty
+   Copyright 2003, 2004, Pierre Ganty, 2015, Pedro Valero
  */
 
 #include "checkup.h"
@@ -477,4 +477,14 @@ void ist_stat(S)
     NbArcs = ist_count_number_of_arcs(S);
     printf("Elems: %7ld Nodes: %5d Arcs: %5d Layers: %2d\n",
 	    ist_nb_elements(S), ist_nb_nodes(S), NbArcs, ist_nb_layers(S));
+}
+
+void ist_stat_plot(S, f)
+    ISTSharingTree *S;
+    FILE *f;
+{
+    int NbArcs;
+
+    NbArcs = ist_count_number_of_arcs(S);
+    if(f!=NULL) fprintf(f, "%7ld",ist_nb_elements(S));
 }
