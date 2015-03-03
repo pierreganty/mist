@@ -21,6 +21,12 @@ body {
   display: none;
 }
 
+.line {
+  fill: none;
+  stroke: #F00000;
+  stroke-width: 1.5px;
+}
+
 .d3-tip {
   line-height: 1;
   font-weight: bold;
@@ -50,7 +56,27 @@ body {
   left: 0;
 }
 
+/* Checkbox*/
+.multiselect {
+    width:50%;
+    border:solid 1px #c0c0c0;
+    overflow:auto;
+}
+
+.multiselect label {
+    display:block;
+    float:left;
+    width: 20em;
+}
+
+/* Graph's divs*/
+.graph {
+  float: left;
+  width: 600px;
+}
 </style>
 <body>
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
+<button type="button" onClick="showAll()">Show all</button>
+<button type="button" onClick="hideAll()">Hide all</button>
