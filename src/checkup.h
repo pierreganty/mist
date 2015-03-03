@@ -16,12 +16,13 @@
    along with mist; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-   Copyright 2003, 2004, Pierre Ganty
+   Copyright 2003, 2004, Pierre Ganty, 2015, Pedro Valero
  */
 
 #ifndef __CHECKUP_H
 #define __CHECKUP_H
 
+#include <stdio.h>
 #include "proc.h"
 #include "def.h"
 
@@ -32,5 +33,6 @@
 
 boolean ist_checkup(ISTSharingTree *S) ;
 void ist_stat(ISTSharingTree *S) ;
+void ist_stat_plot(ISTSharingTree *S, FILE *f);
 
 #endif

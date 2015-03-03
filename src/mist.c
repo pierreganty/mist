@@ -33,6 +33,7 @@
 #include <sys/times.h>
 #include <assert.h>
 #include <signal.h>
+#include <stdlib.h>
 
 #include "laparser.h"
 #include "ist.h"
@@ -40,6 +41,8 @@
 #include "debug.h"
 
 int verbose = 0;
+FILE *file;
+int iterations = 1;
 
 /*To end the executing when timeout event occurs*/
 void timeout_func (int sgn) {
@@ -275,6 +278,9 @@ void backward_basic(system, initial_marking, frontier)
 	}
 	ist_init_list_ist(&List);
 	nbr_iteration = 1;
+
+	if (file != NULL) fprintf(file, "Iterations,Frontier,Total elems\n");
+
 	while (Continue == true) {
 		printf("\n\nIteration\t%3d\n", nbr_iteration);
 		puts("Computation of the symbolic predecessors states ...");
@@ -286,6 +292,11 @@ void backward_basic(system, initial_marking, frontier)
 
 			printf("The new frontier counts :\n");
 			ist_checkup(frontier);
+			if (file != NULL){
+				if (file != NULL) fprintf(file, "%d,", nbr_iteration);
+				ist_stat_plot(frontier, file);
+				if (file != NULL) fprintf(file, ",");
+			}
 			PRINT_IST(frontier);
 			temp=ist_intersection(initial_marking,frontier);
 			reached = (ist_is_empty(temp) == true ? false : true);
@@ -313,6 +324,10 @@ void backward_basic(system, initial_marking, frontier)
 				 */
 				puts("After union, the reached symbolic state space is:");
 				ist_checkup(reached_elem);
+				if (file != NULL){
+					ist_stat_plot(reached_elem, file);
+					fprintf(file, "\n");
+				}
 				ist_insert_at_the_beginning_list_ist(&List,old_frontier);
 				old_frontier = frontier;
 			}
@@ -356,15 +371,17 @@ static void print_help()
 {
 	puts("Usage: mist [options] filename \n");
 	puts("Options:");
-	puts("     --help       this help");
-	puts("     --version    show version numbers");
-	puts("     --backward   the backward algorithm with invariant pruning");
-	puts("     --ic4pn      the algorithm described in FI");
-	puts("     --tsi        the algorithm described in TSI");
-	puts("     --eec        the Expand, Enlarge and Check algorithm");
-	puts("     --cegar      the Expand, Enlarge and Check algorithm with counterexample guided refinement");
-	puts("     --timeout=T  establish an execution timeout of T seconds");
-	puts("     --verbose=V  establish an verbose level V");
+	puts("     --help           this help");
+	puts("     --version        show version numbers");
+	puts("     --backward       the backward algorithm with invariant pruning");
+	puts("     --ic4pn          the algorithm described in FI");
+	puts("     --tsi            the algorithm described in TSI");
+	puts("     --eec            the Expand, Enlarge and Check algorithm");
+	puts("     --cegar          the Expand, Enlarge and Check algorithm with counterexample guided refinement");
+	puts("     --timeout=T      establish an execution timeout of T seconds");
+	puts("     --verbose=V      establish a verbose level V");
+	puts("     --graph=filename generate filename.html which shows the graphic representation of the memory usage of the tool");
+	puts("     --plot=filename  generate a .png with the graph of the memory usage");
 }
 
 static void head_msg()
@@ -443,6 +460,7 @@ boolean eec_fp(system, abs, initial_marking, bad, lfp)
 	finished=false;
 	while (finished == false) {
 		printf("eec: ENLARGE begin\t\n");
+		if (file != NULL) fprintf(file, "0, \t 2.2\n");
 		fflush(NULL);
 		/* To OVERapproximate we use abstract_bound */
 		/* Do not use ist_abstract_post_star_until_reach_bad it produces incorrect results/non termination.
@@ -463,6 +481,7 @@ boolean eec_fp(system, abs, initial_marking, bad, lfp)
 			retval = true;
 		} else {
 			printf("eec: EXPAND begin\t");
+			if (file != NULL) fprintf(file, "0,\t 1.1\n");
 			fflush(NULL);
 			/* use bpost = ist_abstract_post_star(downward_closed_initial_marking,bound_values,abs->bound,system)
 			 * if you want to compute the lfp. Instead we make something more
@@ -476,7 +495,9 @@ boolean eec_fp(system, abs, initial_marking, bad, lfp)
 			finished= ist_is_empty(inter) == true ? false : true;
 			ist_dispose(inter);
 			while (finished==false) {
+				if(file != NULL) fprintf(file, "%d,",iterations++);
 				tmp = ist_abstract_post(bpost,bound_values,abs->bound,system);
+				if(file != NULL) fprintf(file, "\n");
 				//tmp = ist_abstract_post_transtree(bpost,bound_values,abs->bound,system);
 				_tmp =  ist_remove_subsumed_paths(tmp,bpost);
 				ist_dispose(tmp);
@@ -551,6 +572,7 @@ boolean eec_cegar(system, abs, initial_marking, bad, List)
 	ist_normalize(downward_closed_initial_marking);
 	assert(ist_checkup(downward_closed_initial_marking)==true);
 
+
 	finished=false;
 	while (finished == false) {
 		printf("eec: ENLARGE begin\t");
@@ -586,7 +608,9 @@ boolean eec_cegar(system, abs, initial_marking, bad, List)
 			/* insert a copy of initial_marking in the list */
 			ist_insert_at_the_beginning_list_ist(List,ist_copy(initial_marking));
 			while (finished==false) {
+				if(file != NULL) fprintf(file, "%d,",iterations++);
 				tmp = ist_abstract_post(bpost,bound_values,abs->bound,system);
+				if(file != NULL) fprintf(file, "\n");
 				_tmp =  ist_remove_subsumed_paths(tmp,bpost);
 				ist_dispose(tmp);
 				if (ist_is_empty(_tmp)==false) {
@@ -648,6 +672,8 @@ void cegar(system, initial_marking, bad)
 	size_t i, nb_iteration, lg_cex;
 	int *countex, j;
 	boolean out, conclusive, eec_conclusive;
+
+	if (file != NULL) fprintf(file, "Iterations, Total elems\n");
 
 	printf("CEGAR..\n");
 	tmp=ist_intersection(initial_marking,bad);
@@ -893,6 +919,7 @@ void ic4pn(system, initial_marking, bad)
 	dispose_abstraction(topabs);
 
 	nb_iteration=0;
+	if (file != NULL) fprintf(file, "Iterations, Total elems\n");
 	while(conclusive == false) {
 		puts("begin of iteration");
 		// We build the abstract system
@@ -1020,6 +1047,7 @@ boolean eec_bound(system, abs, initial_marking, bad, lfp)
 	finished=false;
 	while (finished == false) {
 		printf("eec: ENLARGE begin\t\n");
+		if (file != NULL) fprintf(file, "0, \t 2.2\n");
 		fflush(NULL);
 		/* To OVERapproximate we use abstract_bound */
 		//abs_post_star = ist_abstract_post_star(downward_closed_initial_marking,abstract_bound,abs->bound,system);
@@ -1037,6 +1065,7 @@ boolean eec_bound(system, abs, initial_marking, bad, lfp)
 			retval = true;
 		} else {
 			printf("eec: EXPAND begin\t");
+			if (file != NULL) fprintf(file, "0,\t 1.1\n");
 			fflush(NULL);
 			/* use bpost = ist_abstract_post_star(downward_closed_initial_marking,bound_values,abs->bound,system)
 			 * if you want to compute the lfp. Instead we make something more
@@ -1053,7 +1082,9 @@ boolean eec_bound(system, abs, initial_marking, bad, lfp)
 			ISTSharingTree * Frontier = ist_copy(bpost);
 
 			while (finished==false) {
+				if(file != NULL) fprintf(file, "%d,",iterations++);
 				tmp = ist_abstract_post(Frontier,bound_values,abs->bound,system);
+				if(file != NULL) fprintf(file, "\n");
 				//tmp = ist_abstract_post_transtree(bpost,bound_values,abs->bound,system);
 				ist_dispose(Frontier);
 				Frontier =  ist_remove_subsumed_paths(tmp,bpost);
@@ -1144,7 +1175,7 @@ void eec(system, initial_marking, bad)
 	from_transitions_to_tree(system, maskpost);
 	ist_stat(system->tree_of_transitions);
 	ist_write(system->tree_of_transitions);
-
+	if (file != NULL) fprintf(file, "Iterations, Total elems\n");
         eec_conclusive=eec_fp(system,bottomabs,initial_marking,bad,&lfp_eec);
 	if (eec_conclusive == true)
 		puts("EEC concludes safe");
@@ -1176,7 +1207,6 @@ void tsi(system, initial_marking, bad)
 				bottomabs->A[i][j]=0;
 	}
 	print_abstraction(bottomabs);
-
 	maskpost=(boolean *)xmalloc(system->limits.nbr_rules*sizeof(boolean));
 	for(i=0;i<system->limits.nbr_rules;++i)
 		maskpost[i]=true;
@@ -1186,6 +1216,7 @@ void tsi(system, initial_marking, bad)
 	ist_write(system->tree_of_transitions);
 
 	/* the TSI algorithm is built as a modification of the EEC algorithm */
+	if (file != NULL) fprintf(file, "Iterations, Total elems\n");
         eec_conclusive=eec_bound(system,bottomabs,initial_marking,bad,&lfp_eec);
 	if (eec_conclusive == true)
 		puts("TSI concludes safe");
@@ -1193,7 +1224,7 @@ void tsi(system, initial_marking, bad)
 		puts("TSI concludes unsafe");
 }
 
-static void* mist_cmdline_options_handle(int argc, char *argv[ ], int *timeout, char **filename)
+static void* mist_cmdline_options_handle(int argc, char *argv[ ], int *timeout, char **filename, char **imgname, char **graph)
 {
 	int c;
 	void *retval=NULL;
@@ -1210,6 +1241,8 @@ static void* mist_cmdline_options_handle(int argc, char *argv[ ], int *timeout, 
 			{"cegar", 0, 0, 'c'},
 			{"timeout", 0, 0, 'o'},
 			{"verbose", 0, 0, 'v'},
+			{"plot", 0, 0, 'p'},
+			{"graph", 0, 0, 'g'},
 			{0, 0, 0, 0}
 		};
 
@@ -1260,6 +1293,14 @@ static void* mist_cmdline_options_handle(int argc, char *argv[ ], int *timeout, 
 				*timeout = atoi(argv[optind++]);
 				break;
 
+			case 'p':
+				*imgname = argv[optind++];
+				break;
+
+			case 'g':
+				*graph = argv[optind++];
+				break;
+
 			case 'v':
 				verbose = atoi(argv[optind++]);
 				break;
@@ -1285,12 +1326,22 @@ int main(int argc, char *argv[ ])
 	ISTSharingTree *initial_marking, *bad;
 	void (*mc)(transition_system_t *sys, ISTSharingTree *init, ISTSharingTree *bad);
 	int timeout=0;
-	char *input_file;
+	char *input_file=NULL, *output_file=NULL, *graph=NULL;
+
+	// To draw graphs with gnuplot
+	FILE *gnuplotPipe;
+	char * commandsForGnuplot[] = {"plot 'print.csv' every ::1 using 1:2 with lines, 'print.csv' every ::1 using 1:3 with lines;", "plot 'print.csv' every ::1 using 1:2 with lines"};
 
 	head_msg();
-	mc=mist_cmdline_options_handle(argc, argv, &timeout, &input_file);
+	mc=mist_cmdline_options_handle(argc, argv, &timeout, &input_file, &output_file, &graph);
 	assert(mc!=NULL);
 	PRINTF("Timeout established to %d seconds\n", timeout);
+
+	file = NULL;
+	if (graph != NULL) file = fopen(graph, "w");
+	if (file == NULL){
+		printf("Can't open file %s so there won't be data for the graphics\n", graph);
+	}
 
 	linenumber = 1;
 	tbsymbol_init(&tbsymbol, 4096);
@@ -1363,8 +1414,28 @@ int main(int argc, char *argv[ ])
 	ist_dispose(initial_marking);
 	ist_dispose(bad);
 	dispose_transition_system(system);
+	if(file != NULL) fclose(file);
+
+	if(output_file != NULL){
+		printf("Displaying graph into img/%s \n", output_file);
+
+		gnuplotPipe = popen ("gnuplot", "w");
+
+	   	fprintf(gnuplotPipe, "set term png\n");
+	    fprintf(gnuplotPipe, "set output 'img/%s'\n", output_file);
+		fprintf(gnuplotPipe, "set xlabel \"Iterations\"\n");
+		fprintf(gnuplotPipe, "set ylabel \"Num Elems\"\n");
+		fprintf(gnuplotPipe, "set yrange [ 0 : ]\n");
+		fprintf(gnuplotPipe, "unset key\n");
+	    fprintf(gnuplotPipe, "set title \"Memory usage\"\n");
+	    fprintf(gnuplotPipe,"%s\n", commandsForGnuplot[(mc == backward_basic)? 0:1]);
+
+	    fflush(gnuplotPipe);
+	    fclose(gnuplotPipe);
+	}
 
 	tbsymbol_destroy(&tbsymbol);
+
 	puts("Thanks for using this tool");
 	return 0;
 }
