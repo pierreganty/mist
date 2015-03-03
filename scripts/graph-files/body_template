@@ -1,0 +1,174 @@
+{{#translator}}
+<script>
+// Definition of the graph and its location
+var {{svg}} = d3.select("#{{graph}}").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+// Associate the tooltip to the graph
+{{svg}}.call(tip);
+
+d3.csv("{{{file}}}", function(error, data) {
+  var iterationNamesDown = d3.keys(data[0]).filter(function(key) { return key === "Time"; });
+  var iterationNamesUp = d3.keys(data[0]).filter(function(key) { return key !== "Iterations" && key !== "Time"; });
+
+// This functions modify the values, when needed, to make the tooltip be able to
+// recognise in which phase are we working on
+var phase=0;
+  data.forEach(function(d) {
+    d.iterations = iterationNamesUp.map(function(name) {
+      if (typeof d.Frontier === 'undefined'){
+        //if(d[name] == 0.1) phase=0.1;
+        //if(d[name] == 0.2) phase=0.2;
+        phase = d[name];
+        return {name: name, value: +(phase+parseInt(d[name]))};
+      }
+      return {name: name, value: +d[name]};
+    });
+    d.times = iterationNamesDown.map(function(name) {
+        return {name: name, value: +d[name]};
+    });
+  });
+
+  var counter=0; // Used to count hoy many iterations do we have.
+  // It's equivalent to taking the max of d.Iterations
+  x0.domain(data.map(function(d) { counter+=1; return d.Iterations; }));
+  x1Up.domain(iterationNamesUp).rangeRoundBands([0, x0.rangeBand()]);
+  x1Down.domain(iterationNamesDown).rangeRoundBands([0, x0.rangeBand()]);
+
+  var target = 0
+  // Sum of the number of elements on the frontier of each iteration. This function also computes the size of the target state
+  // as the difference between the number of elems and the frontier on the first iteration
+  var sum = d3.sum(data, function(d) {
+    if (d.Iterations == 1) {
+      target = d['Total elems'] - d.Frontier;
+      return d['Total elems'];
+    }
+    return d.Frontier; })
+
+  // The domain of the Y axis will be [0, max(numElems, sum)]
+  yUp.domain([0, Math.max(sum, d3.max(data, function(d) {
+    return d3.max(d.iterations, function(d) {
+      if (d.name == 'Total elems') return Math.floor(d.value);
+      else return 0; }); }))]);
+  yDown.domain([0, d3.max(data, function(d) { return Math.ceil(d['Time']);})]);
+
+  // Function tickValues receives the set of values that will be shown in the axis.
+  // Here we obtain these values by filtering the domain. The filter function filters the selection,
+  // returning a new selection that contains only the elements for which the specified selector is true.
+  xAxisUp.tickValues(x0.domain().filter(function(d, i) { return !(i % Math.floor(counter/30)); }));
+  // We will use one set of ticks for both graphs
+  xAxisDown.tickValues([]);
+
+  // We add the axis to the graph
+  {{svg}}.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + pointB + ")")
+      .call(xAxisUp);
+
+  {{svg}}.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + pointA + ")")
+      .call(xAxisDown);
+
+  {{svg}}.append("g")
+      .attr("class", "y axis")
+      .call(yAxisUp)
+    .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 6)
+      .attr("dy", ".71em")
+      .style("text-anchor", "end")
+      .text("Nº Elems");
+
+  {{svg}}.append("g")
+      .attr("class", "y axis")
+      .call(yAxisDown)
+      .attr('transform', translation(0, pointB))
+    .append("text")
+      .attr("transform", "rotate(90)" + translation(regionHeight, -5))
+      .attr("y", 6)
+      .attr("dy", "-0.8em")
+      .style("text-anchor", "end")
+      .text("Time (usec)");
+
+
+  // We create two groups: one for the memory usage graph and other for the times one.
+  var stateUp = {{svg}}.selectAll(".state")
+      .data(data)
+    .enter().append("g")
+      .attr("class", "g")
+      .attr("transform", function(d) { return "translate(" + x0(d.Iterations) + ",0)"; });
+
+  var stateDown = {{svg}}.selectAll(".state")
+      .data(data)
+    .enter().append("g")
+      .attr("class", "g")
+      //.attr("transform", "scale(1,-1)")
+      .attr("transform", function(d) { return "translate(" + x0(d.Iterations) + ","+pointB+")"; } );
+
+  // We define the graphs
+  stateUp.selectAll("rect")
+      .data(function(d) { return d.iterations; })
+    .enter().append("rect")
+      .attr("width", x1Up.rangeBand())
+      .attr("x", function(d) { return x1Up(d.name); }) // X values
+      .attr("y", function(d) { return yUp(Math.floor(d.value)); }) // Y values
+      // Assign the tooltip on mouseover
+      .on('mouseover', tip.show)
+      .on('mouseout', tip.hide)
+      .attr("height", function(d) { return regionHeight - yUp(Math.floor(d.value)); })
+      .style("fill", function(d) {
+        if (d.value == 0.1) {
+          change_color = 5;
+        } else if (d.value == 0.2) {
+          change_color = 1;
+        }
+        return color(d.name + change_color); });
+
+    stateDown.selectAll("rect")
+      .data(function(d) { return d.times; })
+    .enter().append("rect")
+      .attr("width", x1Down.rangeBand())
+      .attr("x", function(d) { return x1Down(d.name); }) // X values
+      .attr("y", function(d) { return 0; }) // Y values
+      // Assign the tooltip on mouseover
+      .on('mouseover', tip.show)
+      .on('mouseout', tip.hide)
+      .attr("height", function(d) { return yDown(d.value); })
+      .style("fill", function(d) {
+        return color(d.name + 1); });
+
+  // Printing the red line which represents the sum of elements on each frontier.
+
+  data.push(data[data.length-1]); // Adding an element to plot the last step
+
+  var iterSum_{{svg}}=target;
+  var line_{{svg}} = d3.svg.line()
+    .x(function(d, i) {
+      if (i+1 == data.length) return 540; // Magic number to make the function continue to the end (width). Counting with pixels
+      else return x0(d.Iterations); })
+    .y(function(d, i) {
+      if (typeof d.Frontier !== 'undefined'){
+        // Computing and drawing the sum of elems. Only for backward graphs
+       if (i+1 == data.length) return yUp(iterSum_{{svg}});
+       iterSum_{{svg}} = iterSum_{{svg}} + parseInt(d.Frontier);
+       return yUp(iterSum_{{svg}});
+     }
+    })
+    .interpolate("step-after");
+
+
+  {{svg}}.append("path") // Add the line path.
+        .attr("class", "line")
+        .attr("d", line_{{svg}}(data))
+});
+
+function translation(x,y) {
+  return 'translate(' + x + ',' + y + ')';
+}
+
+</script>
+{{/translator}}

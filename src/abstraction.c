@@ -19,14 +19,22 @@
    Copyright 2006, Pierre Ganty, 2007 Laurent Van Begin, 2015 Pedro Valero
  */
 
-#include"abstraction.h"
-#include"xmalloc.h"
-#include"checkup.h"
-#include<assert.h>
-#include<limits.h>
+#include "abstraction.h"
+#include "xmalloc.h"
+#include "checkup.h"
+#include <sys/times.h>
+#include <sys/time.h>
+#include <unistd.h>
+#include <assert.h>
+#include <limits.h>
+#include <sys/resource.h>
 
 extern FILE *file;
 extern int iterations;
+
+// Global vars to compute the time used on each iteration.
+struct rusage time_before, time_after;
+int time_init=0;
 
 transition_system_t * build_sys_using_abs(sys,abs)
 	transition_system_t *sys;
@@ -1056,6 +1064,9 @@ ISTSharingTree
 	size_t i;
 	ISTSharingTree *res, *tmp, *_tmp;
 
+	long int tick_sec=0;
+	float comp_s;
+
 	ist_new(&res);
 	for(i=0;i< t->limits.nbr_rules;i++) {
 		tmp = ist_abstract_post_of_rules(S,approx,bound,&t->transition[i]);
@@ -1071,7 +1082,17 @@ ISTSharingTree
 	}
 	ist_stat(res);
 	if (file != NULL) ist_stat_plot(res, file);
-
+	if(time_init == 0){
+		time_init = 1;
+		if(file != NULL) fprintf(file, ",\t 0");
+		getrusage(RUSAGE_SELF, &time_before);
+	} else {
+		getrusage(RUSAGE_SELF, &time_after);
+		//tick_sec = sysconf (_SC_CLK_TCK);
+		comp_s =((float)time_after.ru_utime.tv_usec +(float)time_after.ru_utime.tv_sec*1000000 - (float)time_before.ru_utime.tv_sec*1000000- (float)time_before.ru_utime.tv_usec);
+		if(file != NULL) fprintf(file, ",\t %f", (float)comp_s /(float)1000);
+		getrusage(RUSAGE_SELF, &time_before);
+	}
 	return res;
 }
 

@@ -1,0 +1,106 @@
+<script>
+// Variables to control the size and margins of the graphs
+var margin = {top: 20, right: 20, bottom: 30, left: 40},
+    width = 600 - margin.left - margin.right,
+    height = 600 - margin.top - margin.bottom;
+
+var change_color = 0; // Used to change color on each phase
+var max_colors = 7;
+
+margin.middle = 13; // Adding middle margin property to the margin object
+
+// the width of each side of the chart
+var regionHeight = height/2 - margin.middle;
+
+// these are the x-coordinates of the y-axes
+var pointA = regionHeight,
+    pointB = height - regionHeight;
+
+// Constructus a new ordinal scale with the output range [0, width]
+// without padding (0)
+var x0 = d3.scale.ordinal()
+    .rangeBands([0, width], 0);
+
+// Constructus other ordinal scale with an empty domain and empty range
+var x1Up = d3.scale.ordinal();
+var x1Down = d3.scale.ordinal();
+
+// Construct a linear scale with empty domain and output range [0, height]
+// Note that the range is inverted
+var yUp = d3.scale.linear()
+    .range([regionHeight, 0]);
+var yDown = d3.scale.linear()
+    .range([0, regionHeight]);
+
+// Creating an ordinal scale for the colors. This let as change easily
+// between colors
+var color = d3.scale.ordinal()
+    .range(["#98abc5", "#d0743c", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#ff8c00"]);
+
+// Definition of X axis
+var xAxisUp = d3.svg.axis()
+    .scale(x0)
+    .orient("top");
+
+var xAxisDown = d3.svg.axis()
+    .scale(x0)
+    .orient("bottom");
+
+// Definition of Y axis
+var yAxisUp = d3.svg.axis()
+    .scale(yUp)
+    .orient("left")
+    .tickFormat(d3.format(".2s"));
+var yAxisDown = d3.svg.axis()
+    .scale(yDown)
+    .orient("left")
+    .tickFormat(d3.format(".2s"));
+
+// This variable defines the tooltip
+var tip = d3.tip()
+  .attr('class', 'd3-tip')
+  .offset([-10, 0])
+  .html(function(d) {
+    // Magic numbers comes from the way mist indicates a change of phase and the unprecission
+    // when representing decimal numbers.
+
+    // If we are on the time graph
+    if (d.name == "Time") return "<strong>Time(μs):</strong> <span style='color:red'>" + d.value + "</span>";
+    // If we have an integer, there is no phases (eec or backward)
+    // If the number is x.2 we are in the enlarge phase
+    // If the number is x.1 we are in the expand phase
+    if (d.value %1 == 0) return "<strong>numElems:</strong> <span style='color:red'>" + Math.floor(d.value) + "</span>";
+    if (d.value %1 < 0.19) return "<strong>numElems:</strong> <span style='color:red'>"+ Math.floor(d.value) +"<br><strong>Phase:</strong> <span style='color:red'> EXPAND </span>";
+    if (d.value %1 >= 0.19) return "<strong>numElems:</strong> <span style='color:red'>"+ Math.floor(d.value) +"<br><strong>Phase:</strong> <span style='color:red'> ENLARGE </span>";
+  });
+</script>
+
+<script>
+// Function used to change the visibility of a graph.
+// This function will be called when
+function change(param, option) {
+  if (option.checked)
+    d3.select(param).style("display", 'block');
+  else
+    d3.select(param).style("display", 'none');
+}
+</script>
+
+<script>
+
+function showAll(){
+    var checkboxes = document.getElementsByTagName("input");
+    for(var i = 0, n = checkboxes.length; i < n; i++) {
+      checkboxes[i].checked = true;
+      d3.select("#graph".concat(i+1)).style("display", 'block');
+    }
+}
+
+function hideAll(){
+    var checkboxes = document.getElementsByTagName("input");
+    for(var i = 0, n = checkboxes.length; i < n; i++) {
+      checkboxes[i].checked = false;
+      d3.select("#graph".concat(i+1)).style("display", 'none');
+    }
+}
+</script>

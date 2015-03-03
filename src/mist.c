@@ -34,6 +34,7 @@
 #include <assert.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <sys/resource.h>
 
 #include "laparser.h"
 #include "ist.h"
@@ -43,9 +44,11 @@
 int verbose = 0;
 FILE *file;
 int iterations = 1;
+char description[100];
 
 /*To end the executing when timeout event occurs*/
 void timeout_func (int sgn) {
+	if(file != NULL) fprintf(file, "\n%s",description);
 	err_quit("Timeout");
 }
 
@@ -259,7 +262,14 @@ void backward_basic(system, initial_marking, frontier)
 	struct tms before, after;
 	float comp_u, comp_s ;
 
-	times(&before) ;
+	struct rusage beforeIt, afterIt;
+    float diff;
+
+	times(&before);
+	getrusage(RUSAGE_SELF, &beforeIt);
+
+	// Auxiliar variable for the graphs
+	int last_print=0;
 
 	temp = ist_remove_with_all_invar_exact(frontier, system);
 	/* We de not call ist_dispose(frontier); since we do not want
@@ -274,12 +284,12 @@ void backward_basic(system, initial_marking, frontier)
 	ist_dispose(temp);
 	if (ist_is_empty(frontier) == true ||  reached == true) {
 		Continue = false;
-		puts("Unsafe region is empty or lies outside the invariants or contrains some initial states");
+		puts("Unsafe region is empty or lies outside the invariants or contains some initial states");
 	}
 	ist_init_list_ist(&List);
 	nbr_iteration = 1;
 
-	if (file != NULL) fprintf(file, "Iterations,Frontier,Total elems\n");
+	if (file != NULL) fprintf(file, "Iterations,Frontier,Total elems,Time\n");
 
 	while (Continue == true) {
 		printf("\n\nIteration\t%3d\n", nbr_iteration);
@@ -289,13 +299,13 @@ void backward_basic(system, initial_marking, frontier)
 		frontier = ist_pre_pruned_wth_inv_and_prev_iterates(old_frontier, reached_elem, system);
 
 		if (ist_is_empty(frontier) == false) {
-
+			last_print = 0;
 			printf("The new frontier counts :\n");
 			ist_checkup(frontier);
 			if (file != NULL){
-				if (file != NULL) fprintf(file, "%d,", nbr_iteration);
+				fprintf(file, "%d,", nbr_iteration);
 				ist_stat_plot(frontier, file);
-				if (file != NULL) fprintf(file, ",");
+				fprintf(file, ",");
 			}
 			PRINT_IST(frontier);
 			temp=ist_intersection(initial_marking,frontier);
@@ -323,9 +333,14 @@ void backward_basic(system, initial_marking, frontier)
 				 * ist_minimal_form or ist_minimal_form_sim_based
 				 */
 				puts("After union, the reached symbolic state space is:");
+				last_print = 1;
 				ist_checkup(reached_elem);
 				if (file != NULL){
 					ist_stat_plot(reached_elem, file);
+					getrusage(RUSAGE_SELF, &afterIt);
+					diff = ((float)afterIt.ru_utime.tv_usec +(float)afterIt.ru_utime.tv_sec*1000000 - (float)beforeIt.ru_utime.tv_sec*1000000- (float)beforeIt.ru_utime.tv_usec);
+					if(file != NULL) fprintf(file, ",\t %f", ((float) diff / (float)1000));
+					getrusage(RUSAGE_SELF, &beforeIt);
 					fprintf(file, "\n");
 				}
 				ist_insert_at_the_beginning_list_ist(&List,old_frontier);
@@ -340,6 +355,10 @@ void backward_basic(system, initial_marking, frontier)
 	if (nbr_iteration != 0){
 		puts("The reached symbolic state space is:");
 		ist_stat(reached_elem);
+		if (file != NULL && last_print == 0){
+			ist_stat_plot(reached_elem, file);
+			fprintf(file, "\n");
+		}
 		PRINT_IST(reached_elem);
 	}
 	if (reached == true)
@@ -351,44 +370,59 @@ void backward_basic(system, initial_marking, frontier)
 	comp_s = ((float)after.tms_stime - (float)before.tms_stime)/(float)tick_sec ;
 	printf("Total time of computation (user)   -> %6.3f sec.\n",comp_u);
 	printf("                          (system) -> %6.3f sec.\n",comp_s);
+	if(file != NULL) fprintf(file, "User: %6.3f sec\t System: %6.3f sec\n", comp_u, comp_s);
 
 	ist_dispose(reached_elem);
  	/* old_frontier should be disposed, when the loop is exited but it wasn't added to the error trace */
    	if(ist_is_empty(frontier)) ist_dispose(old_frontier);
 
 	/* Is the system safe ? */
-	if (reached == true)
+	if (reached == true){
 		puts("backward algorithm concludes unsafe");
-	else
+		if(file != NULL) fprintf(file, "backward: unsafe");
+	}
+	else{
 		puts("backward algorithm concludes safe");
+		if(file != NULL) fprintf(file, "backward: safe");
+	}
 }
 
 static void print_version() {
 	printf("Version %s\n", VERSION);
 }
 
+/*
+	This function shows the output according to the sintax described at:
+	http://docopt.org/
+
+*/
 static void print_help()
 {
-	puts("Usage: mist [options] filename \n");
+	puts("Usage: ");
+	puts("     mist --algorithm [option]... <filename>");
+	puts("     mist --help");
+	puts("     mist --version");
+	puts(" ");
+	puts("Algorithm:");
+	puts("     backward       the backward algorithm with invariant pruning");
+	puts("     ic4pn          the algorithm described in FI");
+	puts("     tsi            the algorithm described in TSI");
+	puts("     eec            the Expand, Enlarge and Check algorithm");
+	puts("     cegar          the Expand, Enlarge and Check algorithm with counterexample guided refinement");
+	puts("");
 	puts("Options:");
+	puts("     --timeout <T>      establish an execution timeout of T seconds");
+	puts("     --verbose <V>      establish a verbose level V");
+	puts("     --graph <filename> generate filename.csv which contains the needed data to plot graphs of the memory usage. Graphs could be generated by using generate_graphs.sh");
 	puts("     --help           this help");
-	puts("     --version        show version numbers");
-	puts("     --backward       the backward algorithm with invariant pruning");
-	puts("     --ic4pn          the algorithm described in FI");
-	puts("     --tsi            the algorithm described in TSI");
-	puts("     --eec            the Expand, Enlarge and Check algorithm");
-	puts("     --cegar          the Expand, Enlarge and Check algorithm with counterexample guided refinement");
-	puts("     --timeout=T      establish an execution timeout of T seconds");
-	puts("     --verbose=V      establish a verbose level V");
-	puts("     --graph=filename generate filename.html which shows the graphic representation of the memory usage of the tool");
-	puts("     --plot=filename  generate a .png with the graph of the memory usage");
+	puts("     --version        show version number");
 }
 
 static void head_msg()
 {
-	puts("Copyright (C) 2002-2013 Pierre Ganty, 2003-2008 Laurent Van Begin.");
+	puts("Copyright (C) 2002-2015 Pierre Ganty, 2003-2008 Laurent Van Begin, 2014-2015 Pedro Valero.");
 	puts("mist is free software, covered by the GNU General Public License, and you are");
-	puts("welcome to change it and/or distribute copies of it under certains conditions.");
+	puts("welcome to change it and/or distribute copies of it under certain conditions.");
 	puts("There is absolutely no warranty for mist. See the COPYING for details.");
 }
 
@@ -460,8 +494,9 @@ boolean eec_fp(system, abs, initial_marking, bad, lfp)
 	finished=false;
 	while (finished == false) {
 		printf("eec: ENLARGE begin\t\n");
-		if (file != NULL) fprintf(file, "0, \t 2.2\n");
+		if (file != NULL) fprintf(file, "1, \t 0.2, \t 0\n");
 		fflush(NULL);
+
 		/* To OVERapproximate we use abstract_bound */
 		/* Do not use ist_abstract_post_star_until_reach_bad it produces incorrect results/non termination.
 		abs_post_star = ist_abstract_post_star_until_reach_bad(downward_closed_initial_marking,abstract_bound,abs->bound,system,bad);
@@ -481,7 +516,7 @@ boolean eec_fp(system, abs, initial_marking, bad, lfp)
 			retval = true;
 		} else {
 			printf("eec: EXPAND begin\t");
-			if (file != NULL) fprintf(file, "0,\t 1.1\n");
+			if (file != NULL) fprintf(file, "1,\t 0.1,\t 0\n");
 			fflush(NULL);
 			/* use bpost = ist_abstract_post_star(downward_closed_initial_marking,bound_values,abs->bound,system)
 			 * if you want to compute the lfp. Instead we make something more
@@ -498,6 +533,7 @@ boolean eec_fp(system, abs, initial_marking, bad, lfp)
 				if(file != NULL) fprintf(file, "%d,",iterations++);
 				tmp = ist_abstract_post(bpost,bound_values,abs->bound,system);
 				if(file != NULL) fprintf(file, "\n");
+
 				//tmp = ist_abstract_post_transtree(bpost,bound_values,abs->bound,system);
 				_tmp =  ist_remove_subsumed_paths(tmp,bpost);
 				ist_dispose(tmp);
@@ -542,6 +578,7 @@ boolean eec_fp(system, abs, initial_marking, bad, lfp)
 	comp_s = ((float)after.tms_stime - (float)before.tms_stime)/(float)tick_sec ;
 	printf("EEC time of computation (user)   -> %6.3f sec.\n",comp_u);
 	printf("                          (system) -> %6.3f sec.\n",comp_s);
+	if(file != NULL) fprintf(file, "User: %6.3f sec\t System: %6.3f sec\n", comp_u, comp_s);
 
 	return retval;
 }
@@ -576,6 +613,7 @@ boolean eec_cegar(system, abs, initial_marking, bad, List)
 	finished=false;
 	while (finished == false) {
 		printf("eec: ENLARGE begin\t");
+		if (file != NULL) fprintf(file, "1, \t 0.2,\t 0\n");
 		fflush(NULL);
 		/* To OVERapproximate we use abstract_bound */
 		abs_post_star = ist_abstract_post_star(downward_closed_initial_marking,abstract_bound,abs->bound,system);
@@ -595,6 +633,7 @@ boolean eec_cegar(system, abs, initial_marking, bad, List)
 			 * many markings; so in the expand phase we work with a finite
 			 * subset of it. */
 			printf("eec: EXPAND begin\t");
+			if (file != NULL) fprintf(file, "1,\t 0.1, \t 0\n");
 			fflush(NULL);
 			ist_init_list_ist(List);
 
@@ -655,6 +694,7 @@ boolean eec_cegar(system, abs, initial_marking, bad, List)
 	comp_s = ((float)after.tms_stime - (float)before.tms_stime)/(float)tick_sec ;
 	printf("Total time of computation (user)   -> %6.3f sec.\n",comp_u);
 	printf("                          (system) -> %6.3f sec.\n",comp_s);
+	if(file != NULL) fprintf(file, "User: %6.3f sec\t System: %6.3f sec\n", comp_u, comp_s);
 
 	return retval;
 }
@@ -673,7 +713,7 @@ void cegar(system, initial_marking, bad)
 	int *countex, j;
 	boolean out, conclusive, eec_conclusive;
 
-	if (file != NULL) fprintf(file, "Iterations, Total elems\n");
+	if (file != NULL) fprintf(file, "Iterations,Total elems,Time\n");
 
 	printf("CEGAR..\n");
 	tmp=ist_intersection(initial_marking,bad);
@@ -710,6 +750,7 @@ void cegar(system, initial_marking, bad)
 		if (eec_conclusive==true) {
 			// says "safe" because it is indeed safe
 			puts("EEC concludes safe with the abstraction");
+			if (file != NULL) fprintf(file, "cegar: safe");
 			print_abstraction(myabs);
 			conclusive = true;
 		} else {
@@ -919,7 +960,7 @@ void ic4pn(system, initial_marking, bad)
 	dispose_abstraction(topabs);
 
 	nb_iteration=0;
-	if (file != NULL) fprintf(file, "Iterations, Total elems\n");
+	if (file != NULL) fprintf(file, "Iterations,Total elems,Time\n");
 	while(conclusive == false) {
 		puts("begin of iteration");
 		// We build the abstract system
@@ -946,6 +987,7 @@ void ic4pn(system, initial_marking, bad)
 		if (eec_conclusive==true) {
 			// says "safe" because it is indeed safe
 			puts("EEC concludes safe with the abstraction");
+			if(file != NULL) fprintf(file, "EEC: safe");
 			print_abstraction(myabs);
 			conclusive = true;
 		} else {
@@ -1047,7 +1089,7 @@ boolean eec_bound(system, abs, initial_marking, bad, lfp)
 	finished=false;
 	while (finished == false) {
 		printf("eec: ENLARGE begin\t\n");
-		if (file != NULL) fprintf(file, "0, \t 2.2\n");
+		if (file != NULL) fprintf(file, "1, \t 0.2, 0\n");
 		fflush(NULL);
 		/* To OVERapproximate we use abstract_bound */
 		//abs_post_star = ist_abstract_post_star(downward_closed_initial_marking,abstract_bound,abs->bound,system);
@@ -1065,7 +1107,7 @@ boolean eec_bound(system, abs, initial_marking, bad, lfp)
 			retval = true;
 		} else {
 			printf("eec: EXPAND begin\t");
-			if (file != NULL) fprintf(file, "0,\t 1.1\n");
+			if (file != NULL) fprintf(file, "1,\t 0.1, 0\n");
 			fflush(NULL);
 			/* use bpost = ist_abstract_post_star(downward_closed_initial_marking,bound_values,abs->bound,system)
 			 * if you want to compute the lfp. Instead we make something more
@@ -1136,6 +1178,7 @@ boolean eec_bound(system, abs, initial_marking, bad, lfp)
 	comp_s = ((float)after.tms_stime - (float)before.tms_stime)/(float)tick_sec ;
 	printf("TSI time of computation (user)   -> %6.3f sec.\n",comp_u);
 	printf("                          (system) -> %6.3f sec.\n",comp_s);
+	if(file != NULL) fprintf(file, "User: %6.3f sec\t System: %6.3f sec\n", comp_u, comp_s);
 
 	return retval;
 }
@@ -1175,12 +1218,16 @@ void eec(system, initial_marking, bad)
 	from_transitions_to_tree(system, maskpost);
 	ist_stat(system->tree_of_transitions);
 	ist_write(system->tree_of_transitions);
-	if (file != NULL) fprintf(file, "Iterations, Total elems\n");
+	if (file != NULL) fprintf(file, "Iterations,Total elems,Time\n");
         eec_conclusive=eec_fp(system,bottomabs,initial_marking,bad,&lfp_eec);
-	if (eec_conclusive == true)
+	if (eec_conclusive == true){
 		puts("EEC concludes safe");
-	else
+		if(file != NULL) fprintf(file, "EEC: safe");
+	}
+	else {
 		puts("EEC concludes unsafe");
+		if(file != NULL) fprintf(file, "EEC: unsafe");
+	}
 }
 
 void tsi(system, initial_marking, bad)
@@ -1216,15 +1263,19 @@ void tsi(system, initial_marking, bad)
 	ist_write(system->tree_of_transitions);
 
 	/* the TSI algorithm is built as a modification of the EEC algorithm */
-	if (file != NULL) fprintf(file, "Iterations, Total elems\n");
+	if (file != NULL) fprintf(file, "Iterations,Total elems,Time\n");
         eec_conclusive=eec_bound(system,bottomabs,initial_marking,bad,&lfp_eec);
-	if (eec_conclusive == true)
+	if (eec_conclusive == true){
 		puts("TSI concludes safe");
-	else
+		if(file != NULL) fprintf(file, "TSI: safe");
+	}
+	else{
 		puts("TSI concludes unsafe");
+		if(file != NULL) fprintf(file, "TSI: unsafe");
+	}
 }
 
-static void* mist_cmdline_options_handle(int argc, char *argv[ ], int *timeout, char **filename, char **imgname, char **graph)
+static void* mist_cmdline_options_handle(int argc, char *argv[ ], int *timeout, char **filename, char **graph)
 {
 	int c;
 	void *retval=NULL;
@@ -1241,7 +1292,6 @@ static void* mist_cmdline_options_handle(int argc, char *argv[ ], int *timeout, 
 			{"cegar", 0, 0, 'c'},
 			{"timeout", 0, 0, 'o'},
 			{"verbose", 0, 0, 'v'},
-			{"plot", 0, 0, 'p'},
 			{"graph", 0, 0, 'g'},
 			{0, 0, 0, 0}
 		};
@@ -1293,10 +1343,6 @@ static void* mist_cmdline_options_handle(int argc, char *argv[ ], int *timeout, 
 				*timeout = atoi(argv[optind++]);
 				break;
 
-			case 'p':
-				*imgname = argv[optind++];
-				break;
-
 			case 'g':
 				*graph = argv[optind++];
 				break;
@@ -1326,22 +1372,12 @@ int main(int argc, char *argv[ ])
 	ISTSharingTree *initial_marking, *bad;
 	void (*mc)(transition_system_t *sys, ISTSharingTree *init, ISTSharingTree *bad);
 	int timeout=0;
-	char *input_file=NULL, *output_file=NULL, *graph=NULL;
-
-	// To draw graphs with gnuplot
-	FILE *gnuplotPipe;
-	char * commandsForGnuplot[] = {"plot 'print.csv' every ::1 using 1:2 with lines, 'print.csv' every ::1 using 1:3 with lines;", "plot 'print.csv' every ::1 using 1:2 with lines"};
+	char *input_file=NULL, *graph=NULL;
 
 	head_msg();
-	mc=mist_cmdline_options_handle(argc, argv, &timeout, &input_file, &output_file, &graph);
+	mc=mist_cmdline_options_handle(argc, argv, &timeout, &input_file, &graph);
 	assert(mc!=NULL);
 	PRINTF("Timeout established to %d seconds\n", timeout);
-
-	file = NULL;
-	if (graph != NULL) file = fopen(graph, "w");
-	if (file == NULL){
-		printf("Can't open file %s so there won't be data for the graphics\n", graph);
-	}
 
 	linenumber = 1;
 	tbsymbol_init(&tbsymbol, 4096);
@@ -1375,6 +1411,7 @@ int main(int argc, char *argv[ ])
 
 	build_problem_instance(atree, &system, &initial_marking, &bad);
 	printf("System has %3d variables, %3d transitions and %2d actual invariants\n",system->limits.nbr_variables, system->limits.nbr_rules, system->limits.nbr_invariants);
+	sprintf(description, "System: %3d variables, %3d transitions, %2d invariants\n",system->limits.nbr_variables, system->limits.nbr_rules, system->limits.nbr_invariants);
 
 /* Our various coverability checker:
  * - backward is described in Laurent Van Begin Thesis and my master thesis (work for PN and extensions).
@@ -1404,6 +1441,13 @@ int main(int argc, char *argv[ ])
 	sa.sa_handler = &timeout_func;
 	sigaction (SIGVTALRM, &sa, NULL);
 
+	/* Open the output file*/
+	file = NULL;
+	if (graph != NULL) file = fopen(graph, "w");
+	if (file == NULL){
+		printf("Can't open file %s so there won't be data for the graphics\n", graph);
+	}
+
 	/* Start a virtual timer. It counts down whenever this process is
 	   executing. */
 	setitimer(ITIMER_VIRTUAL, &timer, NULL);
@@ -1411,28 +1455,12 @@ int main(int argc, char *argv[ ])
 		mc(system,initial_marking,bad);
 	setitimer(ITIMER_VIRTUAL, NULL, NULL);
 
+	if(file != NULL) fprintf(file, "\n%s",description);
+
 	ist_dispose(initial_marking);
 	ist_dispose(bad);
 	dispose_transition_system(system);
 	if(file != NULL) fclose(file);
-
-	if(output_file != NULL){
-		printf("Displaying graph into img/%s \n", output_file);
-
-		gnuplotPipe = popen ("gnuplot", "w");
-
-	   	fprintf(gnuplotPipe, "set term png\n");
-	    fprintf(gnuplotPipe, "set output 'img/%s'\n", output_file);
-		fprintf(gnuplotPipe, "set xlabel \"Iterations\"\n");
-		fprintf(gnuplotPipe, "set ylabel \"Num Elems\"\n");
-		fprintf(gnuplotPipe, "set yrange [ 0 : ]\n");
-		fprintf(gnuplotPipe, "unset key\n");
-	    fprintf(gnuplotPipe, "set title \"Memory usage\"\n");
-	    fprintf(gnuplotPipe,"%s\n", commandsForGnuplot[(mc == backward_basic)? 0:1]);
-
-	    fflush(gnuplotPipe);
-	    fclose(gnuplotPipe);
-	}
 
 	tbsymbol_destroy(&tbsymbol);
 
