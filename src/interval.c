@@ -276,7 +276,7 @@ inline ISTInterval* ist_build_interval(leftbound, rightbound)
 inline ISTInterval* ist_copy_interval(interv)
 	ISTInterval *interv;
 {
-	ISTInterval *Result;
+	ISTInterval *Result = NULL;
 	if(interv != NULL) {
 		Result = ist_new_info();
 		Result->Left = interv->Left;
