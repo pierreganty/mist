@@ -19,14 +19,21 @@
    Copyright 2006, Pierre Ganty, 2007 Laurent Van Begin, 2015 Pedro Valero
  */
 
-#include"abstraction.h"
-#include"xmalloc.h"
-#include"checkup.h"
-#include<assert.h>
-#include<limits.h>
+#include "abstraction.h"
+#include "xmalloc.h"
+#include "checkup.h"
+#include <sys/times.h>
+#include <sys/time.h>
+#include <unistd.h>
+#include <assert.h>
+#include <limits.h>
 
 extern FILE *file;
 extern int iterations;
+
+// Global vars to compute the time used on each iteration.
+struct timeval before, after;
+int time_init=0;
 
 transition_system_t * build_sys_using_abs(sys,abs)
 	transition_system_t *sys;
@@ -1056,6 +1063,9 @@ ISTSharingTree
 	size_t i;
 	ISTSharingTree *res, *tmp, *_tmp;
 
+	long int tick_sec=0;
+	float comp_s;
+
 	ist_new(&res);
 	for(i=0;i< t->limits.nbr_rules;i++) {
 		tmp = ist_abstract_post_of_rules(S,approx,bound,&t->transition[i]);
@@ -1071,7 +1081,17 @@ ISTSharingTree
 	}
 	ist_stat(res);
 	if (file != NULL) ist_stat_plot(res, file);
-
+	if(time_init == 0){
+		time_init = 1;
+		if(file != NULL) fprintf(file, ",\t 0");
+		gettimeofday(&before, NULL);
+	} else {
+		gettimeofday(&after, NULL);
+		//tick_sec = sysconf (_SC_CLK_TCK);
+		comp_s =((float)after.tv_usec +(float)after.tv_sec*1000000 - (float)before.tv_sec*1000000- (float)before.tv_usec);
+		if(file != NULL) fprintf(file, ",\t %f", (float)comp_s /(float)1000);
+		gettimeofday(&before, NULL);
+	}
 	return res;
 }
 
