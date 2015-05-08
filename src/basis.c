@@ -319,7 +319,7 @@ boolean ist_add(ST_, Info_, LInfo_)
 	integer16 LInfo_;
 {
 	struct LOC_ist_add V;
-	ISTNode *son, *res;
+	ISTNode *son;
 
 	V.ST = ST_;
 	V.Info = Info_;
@@ -341,8 +341,8 @@ boolean ist_add(ST_, Info_, LInfo_)
 		V.newelement = true;
 		ist_add_son(V.ST->Root, Add(ist_create_node(V.v), false, false, &V));
 	} else {
-		res = Add(son, true, false, &V);
-	}
+		Add(son, true, false, &V);
+ 	}
 	if (V.newelement) {
 		if (V.ST->NbElements >= 0)
 			V.ST->NbElements++;
@@ -439,7 +439,7 @@ ISTSharingTree *ist_union(ST1, ST2)
 {
 	struct LOC_ist_method  V;
 	ISTSon *s1, *s2;
-	ISTNode *rchild;
+	ISTNode *rchild = NULL;
 
 	ist_new(&V.STR);
 	ist_new_magic_number();
