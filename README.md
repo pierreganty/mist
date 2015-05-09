@@ -1,18 +1,23 @@
 # mist - a safety checker for Petri Nets and extensions
 
-## Compilation
+mist is tool to check safety properties against Petri Net like models.
+It implements a variety of search algorithms described on the [wiki][mistpage].
+Even though mist has its own input format there it can be translated from other formats 
+(using, for instance, [tttrans](https://github.com/pevalme/bfc_fork))
+mist also ships with Python scripts to run mist over sets of benchmarks
+and an infrastructure producing bar graphs using [d3js](http://d3js.org/) with runtime and memory consumption information.
 
-To install (last step of optional):
+## Building mist on Unix
 
-     $ ./autogen.sh
-     $ ./configure
-     $ make
-     $ make install
+Type `./configure`, then `make`.
 
-To uninstall:
+If `./configure` does not exist (you downloaded from Github), run `autoreconf -i` first.
 
-     $ make uninstall
+`make install` will build and install mist (under `/usr/local` by default).
 
+`./configure` accepts the usual options; see `INSTALL` for more details.
+
+`make uninstall` will uninstall mist.
 
 ## Synopsis
 

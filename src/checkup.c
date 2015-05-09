@@ -483,8 +483,5 @@ void ist_stat_plot(S, f)
     ISTSharingTree *S;
     FILE *f;
 {
-    int NbArcs;
-
-    NbArcs = ist_count_number_of_arcs(S);
     if(f!=NULL) fprintf(f, "%7ld",ist_nb_elements(S));
 }

@@ -251,7 +251,7 @@ void backward_basic(system, initial_marking, frontier)
 	transition_system_t *system;
 	ISTSharingTree *frontier, *initial_marking;
 {
-	ISTSharingTree *old_frontier, *temp, *reached_elem;
+	ISTSharingTree *old_frontier=NULL, *temp, *reached_elem;
 	size_t nbr_iteration;
 	boolean Continue;
 	boolean reached;
@@ -267,6 +267,7 @@ void backward_basic(system, initial_marking, frontier)
 
 	times(&before);
 	getrusage(RUSAGE_SELF, &beforeIt);
+
 
 	// Auxiliar variable for the graphs
 	int last_print=0;
@@ -399,7 +400,7 @@ static void print_version() {
 static void print_help()
 {
 	puts("Usage: ");
-	puts("     mist --algorithm [option]... <filename>");
+	puts("     mist --algorithm <filename> [option]...");
 	puts("     mist --help");
 	puts("     mist --version");
 	puts(" ");
@@ -704,8 +705,8 @@ void cegar(system, initial_marking, bad)
 	ISTSharingTree *bad, *initial_marking;
 {
 	abstraction_t *myabs, *newabs, *abs_tmp;
-	transition_system_t *sysabs;
-	ISTSharingTree *tmp, *_tmp, *alpha_bad, *predecessor, *inter, *seed, *cutter, *Z;
+	transition_system_t *sysabs = NULL;
+	ISTSharingTree *tmp, *_tmp, *alpha_bad, *predecessor, *inter = NULL, *seed, *cutter, *Z;
 	ISTLayer *layer;
 	ISTNode *node;
 	THeadListIST cex;

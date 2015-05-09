@@ -32,6 +32,7 @@ mkdir $OUTPUT
 
 OUT_FILE="$OUTPUT/index.html"
 
+
 echo "Preparing output file..."
 cat $BEGIN  > $OUT_FILE
 

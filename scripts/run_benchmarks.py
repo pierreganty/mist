@@ -253,6 +253,7 @@ analyze = False
 graphs = False
 algorithm = ""
 
+
 # Parse input
 #########################################################
 if len(sys.argv) == 1 or sys.argv[1] == "--help":
@@ -263,25 +264,6 @@ else:
             analyze = True
             folder = sys.argv[2]
             output_file_name = sys.argv[3]
-        else:
-            print "Invalid imput format:"
-            show_help()
-            sys.exit(0)
-    elif len(sys.argv) == 6:
-        if sys.argv[1] == "--run":
-            run=True
-            output_file_name = sys.argv[3]
-            folder = sys.argv[2]
-        elif sys.argv[1] == "--all":
-            run = True
-            analyze = True
-            output_file_name = sys.argv[3]
-            folder = sys.argv[2]
-        elif sys.argv[1] == "--graphs":
-            folder = sys.argv[2]
-            output_graphs = sys.argv[3]
-            graphs = True
-            run = True
         else:
             print "Invalid imput format:"
             show_help()
@@ -304,6 +286,7 @@ else:
             output_file_name = sys.argv[4]
             run = True
             analyze = True
+
         else:
             print "Invalid imput format:"
             show_help()
@@ -398,6 +381,7 @@ if run:
 
         print "Computation completed"
         list_csv_files = []
+
         list_files_with_extension("tmp_graphs", list_csv_files, ".csv")
 
         csv_files = ' '.join(list_csv_files)
@@ -473,4 +457,5 @@ if analyze:
         sys.exit(0)
 
     print "Analyzing results from ", output_file_name
+
     analyze_results(output_file_name)

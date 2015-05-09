@@ -578,7 +578,7 @@ void ComputeBSimul2(T, S)
 	ISTSharingTree *T, *S;
 {
 	ISTNode *NodeFather;
-	ISTLayer *CurrentLayerS, *PreviousLayerS, *CurrentLayerT, *PreviousLayerT;
+	ISTLayer *CurrentLayerS, *PreviousLayerS, *CurrentLayerT;
 	boolean Finished;
 	long NbNodeS, NbNodeT, NbNodeMax, ZeroForLayer, Abs, Ord;
 	ISTSon *NodeSimul, *FirstSimuled, *SonSimul, *SonNode;
@@ -650,7 +650,6 @@ void ComputeBSimul2(T, S)
 			Finished = true;
 			break;
 		}
-		PreviousLayerT = CurrentLayerT;
 		CurrentLayerT = CurrentLayerT->Next;
 		NodeFather = PreviousLayerS->FirstNode;
 	}

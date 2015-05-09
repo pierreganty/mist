@@ -603,11 +603,8 @@ abstraction_t *new_abstraction_dc_set(ISTSharingTree *S,int nb_var)
 	int **tmp;
 	int  max_line,max_row, i,j,l;
 	boolean found;
-	abstraction_t abs;
 	int *Component;
 	int *infcomponent;
-
-	abs.nbConcreteV = nb_var;
 
 	//allocation of memory + initialisation
 	result = (int **)xmalloc(nb_var * sizeof(int*));
@@ -730,10 +727,8 @@ abstraction_t *new_abstraction_finite_set(ISTSharingTree *S,int nb_var)
 	int **tmp;
 	int  max_line,max_row, i,j,l;
 	boolean found;
-	abstraction_t abs;
 	int *Component;
 
-	abs.nbConcreteV = nb_var;
 
 	//allocation of memory + initialisation
 	result = (int **)xmalloc(nb_var * sizeof(int*));
@@ -790,10 +785,7 @@ abstraction_t *new_abstraction_lub(ISTSharingTree *S, int nb_var, abstraction_t 
 	ISTLayer *layer;
 	ISTNode *node;
 	int **result, **tmpline, *Component, *infcomponent, max_line,max_row, i,j,l;
-	abstraction_t *result_abs, abs;
-	boolean found;
-
-	abs.nbConcreteV = nb_var;
+	abstraction_t *result_abs;
 
 	puts("call to new_abstraction_lub");
 
@@ -826,7 +818,6 @@ abstraction_t *new_abstraction_lub(ISTSharingTree *S, int nb_var, abstraction_t 
 	}
 	xfree(infcomponent);
 
-	found = true;
 	for(i = 0; (i < max_line);++i)
 		if (mergeable(i,old_abs,result) == true) {
 			for(j=i+1;(j<max_line);)
@@ -854,7 +845,6 @@ abstraction_t *new_abstraction_lub(ISTSharingTree *S, int nb_var, abstraction_t 
 						xfree(result);
 						result = tmpline;
 						--max_line;
-						found = true;
 
 					} else
 						j++; //when line i and line j are fusionned,
@@ -909,7 +899,7 @@ ISTSharingTree *ist_abstraction(S,abs)
 {
 
 	size_t i, j;
-	ISTSharingTree *temp, *temp2, *result;
+	ISTSharingTree *temp, *temp2 = NULL, *result;
 	transition_t * t = (transition_t *)xmalloc(sizeof(transition_t));
 	int *mask;
 
@@ -1064,7 +1054,6 @@ ISTSharingTree
 	size_t i;
 	ISTSharingTree *res, *tmp, *_tmp;
 
-	long int tick_sec=0;
 	float comp_s;
 
 	ist_new(&res);
@@ -1088,7 +1077,6 @@ ISTSharingTree
 		getrusage(RUSAGE_SELF, &time_before);
 	} else {
 		getrusage(RUSAGE_SELF, &time_after);
-		//tick_sec = sysconf (_SC_CLK_TCK);
 		comp_s =((float)time_after.ru_utime.tv_usec +(float)time_after.ru_utime.tv_sec*1000000 - (float)time_before.ru_utime.tv_sec*1000000- (float)time_before.ru_utime.tv_usec);
 		if(file != NULL) fprintf(file, ",\t %f", (float)comp_s /(float)1000);
 		getrusage(RUSAGE_SELF, &time_before);
@@ -1313,7 +1301,7 @@ ISTSharingTree *adhoc_pre(ISTSharingTree *S, transition_system_t *t)
 
 ISTSharingTree *adhoc_pre_star_pruned_unless_hit_m0(ISTSharingTree *S, ISTSharingTree *cutter, transition_system_t *sys, ISTSharingTree *initial_marking)
 {
-	ISTSharingTree *tmp, *result, *frontier, *inter;
+	ISTSharingTree *tmp, *result = NULL, *frontier, *inter;
 	int iter, i, j;
 	boolean *maskpre;
 
