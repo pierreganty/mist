@@ -79,7 +79,7 @@ invariantor(T_PTR_tree entry) {
 	size_t i;
 	boolean overwrite;
 	integer16 place;
-	ISTInterval *Product;
+	ISTInterval *Product = NULL;
 
 
 	if (entry) {

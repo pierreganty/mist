@@ -352,14 +352,12 @@ void ist_minimize_invar_heuristic(S, invariant)
 	ISTSharingTree *S;
 	invariant_t *invariant;
 {
-	boolean stop;
-
 	if (ist_is_empty(S) == false) {
 		ComputeMinUp(S, invariant);
 		ComputeMaxUp(S, invariant);
 		ComputeMinDown(S, invariant);
 		ComputeMaxDown(S, invariant);
-		stop = ist_reduce_with_invar_heuristic(S, invariant);
+		ist_reduce_with_invar_heuristic(S, invariant);
 	}
 }
 
