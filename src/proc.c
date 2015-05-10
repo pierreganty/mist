@@ -414,8 +414,11 @@ void ist_init_system()
 inline void ist_dispose(ST)
 	ISTSharingTree *ST;
 {
-	ST->Next = st_Disposed;
-	st_Disposed = ST;
+
+	if(ST != NULL){
+		ST->Next = st_Disposed;
+		st_Disposed = ST;
+	}
 }
 
 void ist_new(ST)
