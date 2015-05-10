@@ -27,12 +27,13 @@
 #include <unistd.h>
 #include <assert.h>
 #include <limits.h>
+#include <sys/resource.h>
 
 extern FILE *file;
 extern int iterations;
 
 // Global vars to compute the time used on each iteration.
-struct timeval before, after;
+struct rusage time_before, time_after;
 int time_init=0;
 
 transition_system_t * build_sys_using_abs(sys,abs)
@@ -1073,12 +1074,12 @@ ISTSharingTree
 	if(time_init == 0){
 		time_init = 1;
 		if(file != NULL) fprintf(file, ",\t 0");
-		gettimeofday(&before, NULL);
+		getrusage(RUSAGE_SELF, &time_before);
 	} else {
-		gettimeofday(&after, NULL);
-		comp_s =((float)after.tv_usec +(float)after.tv_sec*1000000 - (float)before.tv_sec*1000000- (float)before.tv_usec);
+		getrusage(RUSAGE_SELF, &time_after);
+		comp_s =((float)time_after.ru_utime.tv_usec +(float)time_after.ru_utime.tv_sec*1000000 - (float)time_before.ru_utime.tv_sec*1000000- (float)time_before.ru_utime.tv_usec);
 		if(file != NULL) fprintf(file, ",\t %f", (float)comp_s /(float)1000);
-		gettimeofday(&before, NULL);
+		getrusage(RUSAGE_SELF, &time_before);
 	}
 	return res;
 }

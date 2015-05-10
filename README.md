@@ -21,19 +21,28 @@ If `./configure` does not exist (you downloaded from Github), run `autoreconf -i
 
 ## Synopsis
 
-     $ mist --[options] <input_file>
+     $ mist --algorithm --[option] <input_file>
+     $ mist --help
+     $ mist --version
 
-### options
-
-| option      | Description of the algorithm                                                                              |
+### Algorithm
+| Algorithm:  | Description of the algorithm |
 |-------------|-----------------------------------------------------------------------------------------------------------|
 | backward    | the backward algorithm with invariant pruning described in Laurent Van Begin PhD thesis                   |
 | ic4pn	    | the abstraction refinement algorithm described in Fundamenta Informaticae, 88(3), 2008                    |
 | tsi	    | the abstraction refinement algorithm described in Technique et Sciences Informatiques, 28(9), 2009        |
 | eec	    | Expand, Enlarge and Check algorithm described in the Journal of Computer and System Sciences, 72(1), 2005 |
-| eec-cegar   | Expand, Enlarge and Check with a counter-example based refinement (not described anywhere)                |	
+| eec-cegar   | Expand, Enlarge and Check with a counter-example based refinement (not described anywhere)                |
+
+### Options
+| Option      | Effect of the option                                                                             |
+|-------------|-----------------------------------------------------------------------------------------------------------|
+| timeout <*T*>   | establish an execution timeout of *T* seconds. Atfer that time the execution will be stopped and proper message will be shown                 |
+| graph <*filename*>  | creates a file called *filename* to store the data needed to plot graphs of the memory usage and execution time of the given algorithm |
+| verbose <*V*> | establish a verbosity level *V*
 | help        | this help                                                                                                 |
 | version     | show version number                                                                                       |
+
 
 ## Input file format and further details
 
@@ -47,7 +56,14 @@ Please report issues on [GitHub][issueslist].
 
 Contact the author, [Pierre Ganty][email].
 
+## Requirements
+
+You need to install [mustache][mustachepage] to generate the graphs with our script.
+
+Tested under linux (Ubuntu 14.10) and MacOS (OSX 10.9)
+
 [issueslist]:https://github.com/pierreganty/mist/issues
 [homepage]:http://software.imdea.org/people/pierre.ganty/index.html
 [mistpage]:https://github.com/pierreganty/mist/wiki
 [email]:mailto:pierreganty@gmail.com
+[mustachepage]:https://github.com/janl/mustache.js/

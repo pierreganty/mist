@@ -20,8 +20,9 @@ var phase=0;
   data.forEach(function(d) {
     d.iterations = iterationNamesUp.map(function(name) {
       if (typeof d.Frontier === 'undefined'){
-        if(d[name] == 1.1) phase=0.1;
-        if(d[name] == 2.2) phase=0.2;
+        //if(d[name] == 0.1) phase=0.1;
+        //if(d[name] == 0.2) phase=0.2;
+        phase = d[name];
         return {name: name, value: +(phase+parseInt(d[name]))};
       }
       return {name: name, value: +d[name]};
@@ -54,9 +55,14 @@ var phase=0;
       else return 0; }); }))]);
   yDown.domain([0, d3.max(data, function(d) { return Math.ceil(d['Time']);})]);
 
+  // Function tickValues receives the set of values that will be shown in the axis.
+  // Here we obtain these values by filtering the domain. The filter function filters the selection,
+  // returning a new selection that contains only the elements for which the specified selector is true.
   xAxisUp.tickValues(x0.domain().filter(function(d, i) { return !(i % Math.floor(counter/30)); }));
-  xAxisDown.tickValues(x0.domain().filter(function(d, i) { return !(i % Math.floor(counter/30)); }));
+  // We will use one set of ticks for both graphs
+  xAxisDown.tickValues([]);
 
+  // We add the axis to the graph
   {{svg}}.append("g")
       .attr("class", "x axis")
       .attr("transform", "translate(0," + pointB + ")")
@@ -82,12 +88,14 @@ var phase=0;
       .call(yAxisDown)
       .attr('transform', translation(0, pointB))
     .append("text")
-      .attr("transform", "rotate(90)" + translation(0, height))
+      .attr("transform", "rotate(90)" + translation(regionHeight, -5))
       .attr("y", 6)
       .attr("dy", "-0.8em")
       .style("text-anchor", "end")
       .text("Time (usec)");
 
+
+  // We create two groups: one for the memory usage graph and other for the times one.
   var stateUp = {{svg}}.selectAll(".state")
       .data(data)
     .enter().append("g")
@@ -101,21 +109,21 @@ var phase=0;
       //.attr("transform", "scale(1,-1)")
       .attr("transform", function(d) { return "translate(" + x0(d.Iterations) + ","+pointB+")"; } );
 
-  // Defining the graphs itself
+  // We define the graphs
   stateUp.selectAll("rect")
       .data(function(d) { return d.iterations; })
     .enter().append("rect")
       .attr("width", x1Up.rangeBand())
-      .attr("x", function(d) { if (d.name != 'Time') return x1Up(d.name); }) // X values
-      .attr("y", function(d) { if (d.name != 'Time') return  yUp(Math.floor(d.value)); }) // Y values
+      .attr("x", function(d) { return x1Up(d.name); }) // X values
+      .attr("y", function(d) { return yUp(Math.floor(d.value)); }) // Y values
       // Assign the tooltip on mouseover
       .on('mouseover', tip.show)
       .on('mouseout', tip.hide)
-      .attr("height", function(d) { if (d.name != 'Time') return regionHeight - yUp(Math.floor(d.value)); })
+      .attr("height", function(d) { return regionHeight - yUp(Math.floor(d.value)); })
       .style("fill", function(d) {
-        if (d.value == 1.1) {
+        if (d.value == 0.1) {
           change_color = 5;
-        } else if (d.value == 2.2) {
+        } else if (d.value == 0.2) {
           change_color = 1;
         }
         return color(d.name + change_color); });
@@ -124,12 +132,12 @@ var phase=0;
       .data(function(d) { return d.times; })
     .enter().append("rect")
       .attr("width", x1Down.rangeBand())
-      .attr("x", function(d) { if (d.name == 'Time') return x1Down(d.name); }) // X values
-      .attr("y", function(d) { if (d.name == 'Time')  return 0; }) // Y values
+      .attr("x", function(d) { return x1Down(d.name); }) // X values
+      .attr("y", function(d) { return 0; }) // Y values
       // Assign the tooltip on mouseover
       .on('mouseover', tip.show)
       .on('mouseout', tip.hide)
-      .attr("height", function(d) { if (d.name == 'Time') return yDown(d.value); })
+      .attr("height", function(d) { return yDown(d.value); })
       .style("fill", function(d) {
         return color(d.name + 1); });
 

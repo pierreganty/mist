@@ -808,9 +808,9 @@ static void STWriteElem(path, l)
 	printf("-<");
 	for (i = 0; i < l-1; i++){
 		printf("[%2ld", path[i]->Left);
-//		if(path[i]->Right==INFINITY)
-//			printf(",  ]");
-//		else
+		if(path[i]->Right==INFINITY){
+			printf(", \u221E]");
+		} else
 			printf(",%2ld]", path[i]->Right);
 	}
 	printf(">-\n");

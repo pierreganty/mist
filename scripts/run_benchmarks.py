@@ -21,13 +21,14 @@ def worker(input, output):
     for test in iter(input.get, 'STOP'):
         worker_result = test + "*+*+"
         for argument in ["--eec", "--backward", "--tsi", "--ic4pn", "--cegar"]:
-            if graphs:
-                sp = subprocess.Popen(['mist', argument, test, '--timeout', str(timeout), '--graph', 'tmp_graphs/' + argument[2:] + "_" + os.path.basename(test)], stdout=subprocess.PIPE, shell = False, stderr=subprocess.PIPE)
-            else :
-                sp = subprocess.Popen(['mist', argument, test, '--timeout', str(timeout)], stdout=subprocess.PIPE, shell = False, stderr=subprocess.PIPE)
-            communication = sp.communicate()
-            worker_result += communication[0]
-            worker_result += communication[1]
+            if algorithm in argument:
+                if graphs:
+                    sp = subprocess.Popen(['mist', argument, test, '--timeout', str(timeout), '--graph', 'tmp_graphs/' + argument[2:] + "_" + os.path.splitext(os.path.basename(test))[0]+".csv"], stdout=subprocess.PIPE, shell = False, stderr=subprocess.PIPE)
+                else :
+                    sp = subprocess.Popen(['mist', argument, test, '--timeout', str(timeout)], stdout=subprocess.PIPE, shell = False, stderr=subprocess.PIPE)
+                communication = sp.communicate()
+                worker_result += communication[0]
+                worker_result += communication[1]
 
         output.put(worker_result)
 
@@ -210,16 +211,16 @@ def analyze_results(results_to_check_file):
 def show_help():
     print "This script allows you to run a set of tests storing the results and analyzing them. The script also show you a summary about the correctness of the results obtained"
     print ""
-    print "Usage: ./run_benchmarks.py [--run|--all] [folder] [file] [number of subprocess] [timeout]"
-    print "Usage: ./run_benchmarks.py [--analyze] [file]"
-    print "Usage: ./run_benchmarks.py [--graphs] [folderI] [folderO] [number of subprocess] [timeout]"
+    print "Usage: ./run_benchmarks.py [--run|--all] [alg] [benchmarks directory] [output file] [number of subprocess] [timeout]"
+    print "Usage: ./run_benchmarks.py [--analyze] [benchmarks directory] [output file]"
+    print "Usage: ./run_benchmarks.py [--graphs] [alg] [benchmarks directory] [output folder] [number of subprocess] [timeout]"
     print ""
     print "Options:"
     print "\t\033[01m--help\033[00m Shows this output"
-    print "\t\033[01m--run\033[00m Runs mist on the examples in [folder] and writes the results to [file]"
-    print "\t\033[01m--analyze\033[00m Compares the results stored in [file] against expected outcomes"
-    print "\t\033[01m--all\033[00m Runs mist on the examples in [folder], writes the results in [file] and compares against expected outcomes"
-    print "\t\033[01m--graphs\033[00m Run mist on the examples in [folderI] generating [folderO] which contains a file graphs.html with graphs of the memory usage of mist for the given examples."
+    print "\t\033[01m--run\033[00m Runs mist on the examples in [benchmarks directory] and writes the results to [output file]"
+    print "\t\033[01m--analyze\033[00m Compares the results stored in [output file] against expected outcomes of the examples in [benchmarks directory]"
+    print "\t\033[01m--all\033[00m Executes run + analyze"
+    print "\t\033[01m--graphs\033[00m Runs mist on the examples in [benchmarks directory], using the algorithm [alg] and generating a folder [output folder] which contains a file [output folder].html with graphs of the memory usage of mist for the given examples. If no algorithm is specified all of them will be used."
     print "This script will use [number of subprocess] process and establish a timeout of [timeout] sec for each execution of mist (-1 to set off timeout)"
 
 
@@ -244,41 +245,48 @@ def is_tool(name):
 
 # Check if mist is instlled:
 if is_tool("mist") == False:
-    print "You should install mist before running this script"
+    print "You have to install mist before running this script"
     sys.exit(0)
 
 run = False
 analyze = False
 graphs = False
+algorithm = ""
+
 
 # Parse input
 #########################################################
 if len(sys.argv) == 1 or sys.argv[1] == "--help":
     show_help()
 else:
-    if len(sys.argv) == 3:
+    if len(sys.argv) == 4:
         if sys.argv[1] == "--analyze":
             analyze = True
-            output_file_name = sys.argv[2]
+            folder = sys.argv[2]
+            output_file_name = sys.argv[3]
         else:
             print "Invalid imput format:"
             show_help()
             sys.exit(0)
-    elif len(sys.argv) == 6:
-        if sys.argv[1] == "--run":
-            run=True
-            output_file_name = sys.argv[3]
-            folder = sys.argv[2]
-        elif sys.argv[1] == "--all":
-            run = True
-            analyze = True
-            output_file_name = sys.argv[3]
-            folder = sys.argv[2]
-        elif sys.argv[1] == "--graphs":
-            folder = sys.argv[2]
-            output_graphs = sys.argv[3]
+    elif len(sys.argv) == 7:
+        if sys.argv[1] == "--graphs":
+            algorithm = sys.argv[2]
+            folder = sys.argv[3]
+            output_graphs = sys.argv[4]
             graphs = True
             run = True
+        elif sys.argv[1] == "--run":
+            algorithm = sys.argv[2]
+            folder = sys.argv[3]
+            output_file_name = sys.argv[4]
+            run = True
+        elif sys.argv[1] == "--all":
+            algorithm = sys.argv[2]
+            folder = sys.argv[3]
+            output_file_name = sys.argv[4]
+            run = True
+            analyze = True
+
         else:
             print "Invalid imput format:"
             show_help()
@@ -289,11 +297,15 @@ else:
         sys.exit(0)
 #########################################################
 
+if not os.path.isdir(folder):
+    print "The origin folder does not exists. There is no data to work with"
+    sys.exit(0)
+
 if run:
     if not graphs:
         # Preparing the output file
         if os.path.isfile(output_file_name):
-            print "The file ", output_file_name, " already exists. It will be overwritten."
+            print "The file ", output_file_name, "already exists. It will be overwritten."
             print "Do you want to continue anyways? [y/n]"
             line = sys.stdin.readline()
             if line == "y\n" or line =="Y\n":
@@ -306,7 +318,7 @@ if run:
     else:
         # Preparing the output folder
         if os.path.isdir(output_graphs):
-            print "The folder", output_graphs, " alredy exists."
+            print "The folder", output_graphs, "alredy exists."
             print "You should remove it or choose another folder."
             sys.exit(0)
 
@@ -334,6 +346,10 @@ if run:
     list_spec_files = []
 
     list_files_with_extension(folder, list_spec_files, ".spec")
+
+    if list_spec_files == []:
+        print "The folder ", folder, " does not contains any .spec file"
+        sys.exit(0)
 
     # We already have all the test stored in the variable 'list_spec_files'
     # Now we have to execute all of them and store the output
@@ -365,7 +381,8 @@ if run:
 
         print "Computation completed"
         list_csv_files = []
-        list_files_with_extension("tmp_graphs", list_csv_files, ".spec")
+
+        list_files_with_extension("tmp_graphs", list_csv_files, ".csv")
 
         csv_files = ' '.join(list_csv_files)
 
@@ -435,5 +452,10 @@ if run:
     print "Tests completed"
 
 if analyze:
-    print "Analyzing results from ", output_file
+    if not os.path.isfile(output_file_name):
+        print "The file", output_file_name, "does not exists"
+        sys.exit(0)
+
+    print "Analyzing results from ", output_file_name
+
     analyze_results(output_file_name)
