@@ -778,33 +778,11 @@ long ist_nb_elements(S)
 static void STWriteElem(path, l)
 	ISTInterval **path;
 	integer16 l;
-	/*
-	 * For some historical reasons I let the macros HYTECH that outputs the IST
-	 * in a format close to the one of HyTech.
-	 */
 {
 	integer16 i;
 
 	if (l <= 0)
 		return;
-#ifdef HYTECH
-	for (i = 0; i < l-1; i++){
-		/* From 0 to l-2 = l-1 elements */
-		if (path[i]->Left == path[i]->Right){
-			printf("x%ld = %ld ",i+1,path[i]->Left);
-		} else {
-			printf("x%ld >= %ld ",i+1,path[i]->Left);
-			if (path[i]->Right != INFINITY){
-				printf("& x%ld <= %ld ",i+1,path[i]->Right);
-			}
-		}
-		if (i == l-2){
-			printf("|\n");
-		} else {
-			printf(" & ");
-		}
-	}
-#else
 	printf("-<");
 	for (i = 0; i < l-1; i++){
 		printf("[%2ld", path[i]->Left);
@@ -814,7 +792,6 @@ static void STWriteElem(path, l)
 			printf(",%2ld]", path[i]->Right);
 	}
 	printf(">-\n");
-#endif
 }
 
 /* See below void ist_write(S) */

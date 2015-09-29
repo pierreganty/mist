@@ -71,7 +71,7 @@ void ist_print_error_trace(ISTSharingTree * initial_marking,THeadListIST * list_
 			intersect = ist_intersection(post,Siter);
 			ist_dispose(post);
 			if (!ist_is_empty(intersect)) {
-				printf("[%d> ",i);
+				printf("[%zu> ",i);
 				ist_dispose(S);
 				S = intersect;
 				Continue = false;
@@ -157,7 +157,7 @@ ISTSharingTree *backward(system, initial_marking, frontier, bounds)
 	ist_init_list_ist(&List);
 	nbr_iteration = 1;
 	while (Continue == true) {
-		printf("\n\nIteration\t%3d\n", nbr_iteration);
+		printf("\n\nIteration\t%3zu\n", nbr_iteration);
 		puts("Computation of the symbolic predecessors states ...");
 		old_frontier = frontier;
 		/* As post cond, we have that frontier is minimal (in a 1to1 comparison) w.r.t reached_elem */
@@ -293,7 +293,7 @@ void backward_basic(system, initial_marking, frontier)
 	if (file != NULL) fprintf(file, "Iterations,Frontier,Total elems,Time\n");
 
 	while (Continue == true) {
-		printf("\n\nIteration\t%3d\n", nbr_iteration);
+		printf("\n\nIteration\t%3zu\n", nbr_iteration);
 		puts("Computation of the symbolic predecessors states ...");
 		old_frontier = frontier;
 		/* As post cond, we have that frontier is minimal (in a 1to1 comparison) w.r.t reached_elem */
@@ -304,7 +304,7 @@ void backward_basic(system, initial_marking, frontier)
 			printf("The new frontier counts :\n");
 			ist_checkup(frontier);
 			if (file != NULL){
-				fprintf(file, "%d,", nbr_iteration);
+				fprintf(file, "%zu,", nbr_iteration);
 				ist_stat_plot(frontier, file);
 				fprintf(file, ",");
 			}
@@ -757,7 +757,7 @@ void cegar(system, initial_marking, bad)
 		} else {
 			/* compute the length of cex */
 			lg_cex=ist_count_elem_list_ist(&cex)-1;
-			printf("run to bad is %d transition(s) long.\n",lg_cex);
+			printf("run to bad is %zu transition(s) long.\n",lg_cex);
 			tmp=ist_first_element_list_ist(&cex);
 
 			/* seed is neither a dc-set, nor a uc-set */
@@ -906,7 +906,7 @@ void cegar(system, initial_marking, bad)
 	}
 	// release sysabs
 	dispose_transition_system(sysabs);
-	printf("end of iteration %d\n",++nb_iteration);
+	printf("end of iteration %zu\n",++nb_iteration);
 }
 
 //pre^*, we use the complement of the least fixpoint in pre^*, and we compute an abstract greatest fixpoint
@@ -1048,7 +1048,7 @@ void ic4pn(system, initial_marking, bad)
 		ist_dispose(lfp);
 		// release sysabs
 		dispose_transition_system(sysabs);
-		printf("end of iteration %d\n",++nb_iteration);
+		printf("end of iteration %zu\n",++nb_iteration);
 	}
 	// release abstraction
 	dispose_abstraction(myabs);

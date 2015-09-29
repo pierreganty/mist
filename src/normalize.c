@@ -20,8 +20,6 @@
  */
 
 #include "normalize.h"
-#include <sys/time.h>
-#include <time.h>
 #include "checkup.h"
 
 void ist_merge_sons(Source, Target)
@@ -197,25 +195,6 @@ void ist_adjust_second_condition(S)
 void ist_normalize(S)
 	ISTSharingTree *S;
 {
-#ifdef TIMING
-	struct timeval start_time, end_time;
-	int total_usecs;
-	printf("ist_normalize: time statistics of %p:\t",S);
-	ist_stat(S);
-
-	/* First, call gettimeofday() to get start time */
-	gettimeofday(&start_time, (struct timezone*)0);
-#endif
-
 	ist_adjust_first_condition(S);
 	ist_adjust_second_condition(S);
-
-#ifdef TIMING
-	/* Now call gettimeofday() to get end time */
-	gettimeofday(&end_time, (struct timezone*)0);  /* after time */
-	/* Print the execution time */
-	total_usecs = (end_time.tv_sec-start_time.tv_sec) * 1000000 +
-		(end_time.tv_usec-start_time.tv_usec);
-	printf("%d Sec.\n", total_usecs);
-#endif
 }
