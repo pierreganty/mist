@@ -28,13 +28,6 @@
 #include "stdio.h"
 #include "tree.h"
 
-/*
- * We bounded the size of the transition system. Now they are no more used.
- */
-#define MAXR            					60
-#define MAXV            					60
-#define MAXI            					50
-
 /* This is the last relevant define */
 #define MAXNBTRANS				 			60
 
