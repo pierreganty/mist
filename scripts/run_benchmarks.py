@@ -220,7 +220,7 @@ def show_help():
     print "\t\033[01m--run\033[00m Runs mist on the examples in [benchmarks directory] and writes the results to [output file]"
     print "\t\033[01m--analyze\033[00m Compares the results stored in [output file] against expected outcomes of the examples in [benchmarks directory]"
     print "\t\033[01m--all\033[00m Executes run + analyze"
-    print "\t\033[01m--graphs\033[00m Runs mist on the examples in [benchmarks directory], using the algorithm [alg] and generating a folder [output folder] which contains a file [output folder].html with graphs of the memory usage of mist for the given examples. If no algorithm is specified all of them will be used."
+    print "\t\033[01m--graphs\033[00m Runs mist on the examples in [benchmarks directory], using the algorithm [alg] and generating a folder [output folder] which contains a file [output folder].html with graphs of the memory usage of mist for the given examples. If algorithm '--' is specified all of them will be used."
     print "This script will use [number of subprocess] process and establish a timeout of [timeout] sec for each execution of mist (-1 to set off timeout)"
 
 
