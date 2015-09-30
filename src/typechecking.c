@@ -56,9 +56,9 @@ boolean possible_petri_net_check_action(T_PTR_tree entry){
       }
 
       //printf("From the list read %d the rule has %d\n",aux->min_value, value);
-      if (strcmp((char*)child->info, "-") == 0){
+      if (strcmp((char*)child->info, "-") == 0) {
          if (aux->min_value < value) return false;
-      }else if (strcmp((char*)child->info, "+") == 0){
+      } else if (strcmp((char*)child->info, "+") == 0){
          if (aux->max_value < value) return false;
       }
 
