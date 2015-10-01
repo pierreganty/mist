@@ -377,26 +377,6 @@ static ISTInterval **GiveMeAPath(ISTSharingTree *S)
 	return result;
 }
 
-
-#define MAXN    1000     /* largest n or m */
-
-//static long choose(n,m)
-//int n,m;            /* computer n choose m */
-//{
-//    int i,j;        /* counters */
-//    long bc[MAXN][MAXN];    /* table of binomial coefficient values */
-//
-//    for (i=0; i<=n; i++) bc[i][0] = 1;
-//
-//    for (j=0; j<=n; j++) bc[j][j] = 1;
-//
-//    for (i=1; i<=n; i++)
-//        for (j=1; j<i; j++)
-//            bc[i][j] = bc[i-1][j-1] + bc[i-1][j];
-//
-//    return(bc[n][m]);
-//}
-
 // Another binomial coefficient implementation (got it from the internet, http://rosettacode.org/wiki/Evaluate_binomial_coefficients#C).
 typedef unsigned long ULONG;
 
@@ -408,7 +388,7 @@ ULONG choose(ULONG n, ULONG k)
 	if (d > k) { k = d; d = n - k; }
 
 	while (n > k) {
-		if (r >= UINT_MAX / n) assert(false); /* overflown */
+		if (r >= UINT_MAX / n) assert("binonial coefficient computation overflows" && false); /* overflown */
 		r *= n--;
 
 		/* divide (n - k)! as soon as we can to delay overflows */
@@ -582,8 +562,6 @@ static boolean CanIRepresentExactlyTheDcSet(ISTSharingTree *S, int *Component)
 			complementComponent[dim] = 1;
 			Q = ist_projection(T,complementComponent);
 			xfree(complementComponent);
-			// Deprecated safety net for deprecated binomial coefficient implementation
-			// assert(val + DimComp-1 <= MAXN);
 			ok = (ist_nb_elements(Q) * choose(val + DimComp-1,DimComp-1) == ist_nb_elements(T));
 			ist_dispose(Q);
 		}
