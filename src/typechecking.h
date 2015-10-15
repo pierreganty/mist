@@ -35,9 +35,6 @@ struct guard_list {
   struct guard_list *next;
 };
 
-#define MAX_INT 32768
-#define MIN_INT 0
-
 /*
    This function checks if a node satisfies the conditions needed to belong to a petri net checking.
 

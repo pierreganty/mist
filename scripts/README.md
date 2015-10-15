@@ -20,7 +20,7 @@ This script allows you to run a set of tests storing the results and analyzing t
 
 ###Usage
 
-	$ ./run_benchmarks.py --[run|all] [benchmarks directory] [output file] [number of subprocess] [timeout]
+	$ ./run_benchmarks.py --[run|all] [alg] [benchmarks directory] [output file] [number of subprocess] [timeout]
 
 	$ ./run_benchmarks.py --[analyze] [output file]
 
@@ -35,6 +35,8 @@ This script allows you to run a set of tests storing the results and analyzing t
 |analyze |  Compares the results stored in [output file] against expected outcomes |
 |all |  Executes run + analyze |
 |graphs |  Runs mist on the examples in [benchmarks directory], using the algorithm [alg] and generating a folder [output folder] which contains a file index.html with graphs of the memory usage of mist for the given examples. If no algorithm is specified all of them will be used. This option uses the script *generate_graphs.sh*|
+
+The argument [alg] indicates which algorithm should be used. If algorithm '--' is specified all of them will be used.
 
 This script will use [number of subprocess] process and establish a timeout of [timeout] sec for each execution of mist (-1 to set off timeout)
 
