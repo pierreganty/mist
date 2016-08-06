@@ -198,11 +198,11 @@ static long ComputeMinMinDownSon(Node)
 	return Sol;
 }
 
-static long ComputeMaxMaxDownSon(Node)
+static integer32 ComputeMaxMaxDownSon(Node)
 	ISTNode *Node;
 {
 	ISTSon *Son;
-	long Sol;
+	integer32 Sol;
 
 	Son = Node->FirstSon;
 	Sol = Son->Son->MaxDown;
