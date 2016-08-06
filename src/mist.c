@@ -312,6 +312,17 @@ void backward_basic(system, initial_marking, frontier)
 			temp=ist_intersection(initial_marking,frontier);
 			reached = (ist_is_empty(temp) == true ? false : true);
 			ist_dispose(temp);
+			temp = ist_remove_subsumed_paths(reached_elem, frontier);
+			/*
+			 * Here we prune trivial 1to1 inclusion
+			 * We don't use simulation relations, we compute it exactly !
+			 */
+			ist_dispose(reached_elem);
+			reached_elem = ist_union(temp, frontier);
+			ist_dispose(temp);
+			/* To minimize we can use:
+			 * ist_minimal_form or ist_minimal_form_sim_based
+			 */
 			if (reached == true) {
 				Continue = false;
 				ist_insert_at_the_beginning_list_ist(&List,old_frontier);
@@ -322,17 +333,6 @@ void backward_basic(system, initial_marking, frontier)
 				 *				Continue = false;
 				 */
 			} else {
-				temp = ist_remove_subsumed_paths(reached_elem, frontier);
-				/*
-				 * Here we prune trivial 1to1 inclusion
-				 * We don't use simulation relations, we compute it exactly !
-				 */
-				ist_dispose(reached_elem);
-				reached_elem = ist_union(temp, frontier);
-				ist_dispose(temp);
-				/* To minimize we can use:
-				 * ist_minimal_form or ist_minimal_form_sim_based
-				 */
 				puts("After union, the reached symbolic state space is:");
 				last_print = 1;
 				ist_checkup(reached_elem);
