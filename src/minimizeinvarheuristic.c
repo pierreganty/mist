@@ -283,7 +283,7 @@ static void ComputeMaxDown(S, invariant)
 		Node = Layer->FirstNode;
 		while (Node != NULL) {
 			if (Node->Info->Right != INFINITY)
-				Node->MaxDown = (invariant->weight_on_place[CurrentLayer] * Node->Info->Right) + ComputeMaxMaxDownSon(Node);
+				Node->MaxDown = ist_add_value((invariant->weight_on_place[CurrentLayer] * Node->Info->Right) , ComputeMaxMaxDownSon(Node));
 			else
 				Node->MaxDown = INFINITY;
 			Node = Node->Next;
