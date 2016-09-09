@@ -19,14 +19,14 @@
    Copyright 2003, 2004, Pierre Ganty
  */
 
-#ifndef __IST_TO_PS_H
-#define __IST_TO_PS_H
+#ifndef __DRAW_H
+#define __DRAW_H
 
 #include "proc.h"
 
 /*
  * This module provides a way to generate a graphical representation of a IST.
  */
-void ist_dump_graph(char * filename, ISTSharingTree * T);
+void ist_draw_graph(char * filename, ISTSharingTree * T);
 
 #endif

@@ -19,7 +19,7 @@
    Copyright 2003, 2004, Pierre Ganty
  */
 
-#include "ist_to_ps.h"
+#include "draw.h"
 #include <stdio.h>
 #include "basis.h"
 
@@ -47,18 +47,11 @@ static void rec_parc(FILE * f, ISTNode *n)
 
 /*
 	From the IST T,
-	void ist_dump_graph(char * filename, ISTSharingTree * T)
-	produces a file at the dot format. From the dot file
-	you can obtain a graphical representation of T.
-	For instance, to get a postscript file, under
-	the shell write the command :
-   	dot <dot file> -o<postscript file> -Tps
-
-	the dot tools is part of the Graphiz tool suite that
-	you can find freely at the URL :
-	http://www.research.att.com/sw/tools/graphviz/
+	void ist_draw_graph(char * filename, ISTSharingTree * T)
+	produces a file at the dot format.
+    See: http://www.research.att.com/sw/tools/graphviz/
  */
-void ist_dump_graph(char * filename, ISTSharingTree * T)
+void ist_draw_graph(char * filename, ISTSharingTree * T)
 {
     ISTSharingTree *S;
     FILE * f ;

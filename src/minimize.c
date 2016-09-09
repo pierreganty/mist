@@ -31,7 +31,6 @@
 //----- For Debbugging ----------
 #include "assert.h"
 #include <stdio.h>
-#include "ist_to_ps.h"
 //----- For Debbugging ----------
 
 static ISTNode *who_subsumes(node1, node2, LINK)

@@ -34,8 +34,8 @@ mist_SOURCES = \
 	interval.c \
 	interval.h \
 	ist.h \
-	ist_to_ps.c \
-	ist_to_ps.h \
+	draw.c \
+	draw.h \
 	laparser.h \
 	lexer.l \
 	list_ist.c \
