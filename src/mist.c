@@ -282,12 +282,15 @@ void backward_basic(system, initial_marking, frontier)
 	Continue = true;
 	temp=ist_intersection(initial_marking,reached_elem);
 	reached = (ist_is_empty(temp) == true ? false : true);
-	ist_dispose(temp);
 	if (ist_is_empty(frontier) == true ||  reached == true) {
 		Continue = false;
 		puts("Unsafe region is empty or lies outside the invariants or contains some initial states");
+		PRINT_IST(temp);
 	}
+	ist_dispose(temp);
 	ist_init_list_ist(&List);
+	PRINTF("\nFixpoint computation starting from");
+	PRINT_IST(frontier);
 	nbr_iteration = 1;
 
 	if (file != NULL) fprintf(file, "Iterations,Frontier,Total elems,Time\n");
@@ -354,8 +357,8 @@ void backward_basic(system, initial_marking, frontier)
 	}
 
 	if (nbr_iteration != 0){
-		puts("The reached symbolic state space is:");
-		ist_stat(reached_elem);
+		PRINTF("The reached symbolic state space is:");
+		PRINT_IST(reached_elem);
 		if (file != NULL && last_print == 0){
 			ist_stat_plot(reached_elem, file);
 			fprintf(file, "\n");
