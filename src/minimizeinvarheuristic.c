@@ -26,7 +26,6 @@
 #include "normalize.h"
 /* DEPRECATED #include "globvar.h" */
 /*return true is if the number of marks in a place constrained by the invariant is modified*/
-#ifdef TRANSFERT
 static boolean UseInvariant(NuInvar, NuRule, system)
 	long NuInvar, NuRule;
 	transition_system_t *system;
@@ -48,7 +47,6 @@ static boolean UseInvariant(NuInvar, NuRule, system)
 	ist_dispose_info(tau);
 	return Sol;
 }
-#endif
 
 static void InitializeMinUp(Layer)
 	ISTLayer *Layer;
@@ -372,7 +370,7 @@ void ist_remove_with_invar_heuristic(S, NuRule, system)
 
 	NuInv = 0;
 	while (NuInv < system->limits.nbr_invariants) {
-#ifdef TRANSFERT
+#ifdef TRANSFER
 		if (UseInvariant(NuInv, NuRule, system) == true) {
 			ist_minimize_invar_heuristic(S, &system->invariants[NuInv]);
 			if (ist_is_empty(S) == false)

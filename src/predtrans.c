@@ -113,9 +113,6 @@ ISTSharingTree *ist_post_of_transfer(S, transfers)
 }
 
 
-/*
- * All that part (fron #ifdef TRANSFERT ... #else) is only dedicated to system
- */
 static boolean IsTarget(Place, transition)
 	integer16 Place;
 	transition_t *transition;
