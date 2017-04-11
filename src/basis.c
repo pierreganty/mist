@@ -132,41 +132,59 @@ ISTSharingTree *ist_copy(ST)
  * This function is used by ist_equal defined below, take a look first at it then
  * go back to this function.
  */
+
+/* We abuse the memoization function by storing address 1 as return value for true
+ * result and address 2 for false result.
+ */
 static boolean Equal(node1, node2)
 	ISTNode *node1, *node2;
 {
-	boolean Result;
+	boolean Result ;
 	ISTSon *s1, *s2;
+    
+    TMemo1 * Memo ;
 
 	Result = true;
-	node1->AuxI = ist_get_magic_number();
-	node2->AuxI = ist_get_magic_number();
-	if (ist_not_equal_interval(node1->Info,node2->Info) || (ist_number_of_sons(node1) != ist_number_of_sons(node2)))
-		return false;
-	s1 = node1->FirstSon;
-	s2 = node2->FirstSon;
-	while (s1 != NULL) {
-		if (s1->Son->AuxI == ist_get_magic_number() && s2->Son->AuxI == ist_get_magic_number()) {
-			s1 = s1->Next;
-			s2 = s2->Next;
-		} else {
-			if (Equal(s1->Son, s2->Son)) {
-				s1 = s1->Next;
-				s2 = s2->Next;
-			} else {
-				Result = false;
-				s1 = NULL;
-			}
-		}
-	}
-	return Result;
+
+    if (ist_not_equal_interval(node1->Info,node2->Info) || (ist_number_of_sons(node1) != ist_number_of_sons(node2))) {
+        Result = false ;
+    } else {
+        s1 = node1->FirstSon;
+        s2 = node2->FirstSon;
+        while (s1 != NULL) { // node1 and node2 are guaranteed to have the same number of sons
+            
+            Memo = ist_get_memoization1(s1->Son, s2->Son) ;
+            
+            if (Memo != NULL) { // We have stored a previous call
+                if (Memo->r == (ISTNode*)(1)) {// it returned true: see above comment
+                    s1 = s1->Next ;
+                    s2 = s2->Next;
+                } else {
+                    Result = false ; // previous call returned false
+                    s1 = NULL ; // stop the loop
+                }
+            } else { // we need to perform a recursive call
+                if (Equal(s1->Son, s2->Son)) {
+                    s1 = s1->Next;
+                    s2 = s2->Next;
+                } else {
+                    Result = false;
+                    s1 = NULL;
+                }
+            }
+        }
+    }
+    
+    ist_put_memoization1(node1, node2, (ISTNode*)(Result?1:2)) ; // see above comment.
+    
+    return Result;
 }
 
 
 boolean ist_equal(ST1, ST2)
 	ISTSharingTree *ST1, *ST2;
 {
-	ist_new_magic_number();
+    ist_new_memo1_number();
 	return (Equal(ST1->Root, ST2->Root));
 }
 
@@ -175,35 +193,55 @@ boolean ist_equal(ST1, ST2)
  * This function is used by ist_included defined below, take a look first at it then
  * go back to this function.
  */
+
+/* As for the equlity function, we abuse the memoization function by storing address 1 as 
+ * return value for true result and address 2 for false result.
+ */
 static boolean Included(node1, node2)
 	ISTNode *node1, *node2;
 {
 	boolean Result;
 	ISTSon *s1;
 	ISTNode *s2;
+    
+    TMemo1 * Memo ;
 
 	Result = true;
-	node1->AuxI = ist_get_magic_number();
-	node2->AuxI = ist_get_magic_number();
-	if (ist_not_equal_interval(node1->Info,node2->Info))
-		return false;
-	s1 = node1->FirstSon;
-	while (s1 != NULL) {
-		s2 = ist_has_son_with_value(node2, s1->Son->Info);
-		if (s2 == NULL) {
-			Result = false;
-			s1 = NULL;
-			break;
-		}
-		if (s1->Son->AuxI == ist_get_magic_number() && s2->AuxI == ist_get_magic_number())
-			s1 = s1->Next;
-		else if (Included(s1->Son, s2))
-			s1 = s1->Next;
-		else {
-			Result = false;
-			s1 = NULL;
-		}
-	}
+
+    if (ist_not_equal_interval(node1->Info,node2->Info)) {
+        Result = false ;
+    } else {
+        s1 = node1->FirstSon;
+        while (s1 != NULL) {
+            s2 = ist_has_son_with_value(node2, s1->Son->Info);
+            if (s2 == NULL) {
+                Result = false;
+                s1 = NULL;
+                break;
+            }
+            
+            Memo = ist_get_memoization1(s1->Son, s2) ;
+            
+            if (Memo != NULL) { // We have stored a previous call
+                if (Memo->r == (ISTNode*)(1)) {// it returned true: see above comment
+                    s1 = s1->Next ;
+                } else {
+                    Result = false ; // previous call returned false
+                    s1 = NULL ; // stop the loop
+                }
+            } else { // we need to perform a recursive call
+                if (Included(s1->Son, s2)) {
+                    s1 = s1->Next;
+                } else {
+                    Result = false;
+                    s1 = NULL;
+                }
+            }
+        }
+    }
+    
+    ist_put_memoization1(node1, node2, (ISTNode*)(Result?1:2)) ; // see above comment.
+        
 	return Result;
 }
 
@@ -217,7 +255,7 @@ static boolean Included(node1, node2)
 boolean ist_included(ST1, ST2)
 	ISTSharingTree *ST1, *ST2;
 {
-	ist_new_magic_number();
+	ist_new_memo1_number();
 	return (Included(ST1->Root, ST2->Root));
 }
 
