@@ -16,7 +16,8 @@
    along with mist; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-   Copyright 2003, 2004, Pierre Ganty, 2007 Laurent Van Begin
+   Copyright 2003, 2004, Pierre Ganty, 2007 Laurent Van Begin, 
+             2017 Gilles Geeraerts
  */
 
 
