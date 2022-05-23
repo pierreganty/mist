@@ -35,9 +35,9 @@
 #define EXTERN extern
 #endif
 
-int linenumber;
-int nbr_var;
-T_PTR_tbsymbol tbsymbol;
+EXTERN int linenumber;
+EXTERN int nbr_var;
+EXTERN T_PTR_tbsymbol tbsymbol;
 
 int my_yyparse(T_PTR_tree* tree, char* filename);
 

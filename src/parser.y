@@ -28,6 +28,9 @@ extern char* yytext;
 T_PTR_tree tmp_tree;
 int yyerror(char *);
 
+int linenumber=0;
+int nbr_var=0;
+T_PTR_tbsymbol tbsymbol=NULL;
 
 %}
 
