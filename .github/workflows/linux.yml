@@ -1,0 +1,24 @@
+name: Linux Build
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2.3.4
+    - name: build
+      run: ./build_mist.sh
+    - name: Deploy to GitHub Pages
+      uses: JamesIves/github-pages-deploy-action@4.1.3
+      with:
+          branch: linux # The branch the action should deploy to.
+          folder: website/ # The folder the action should deploy.
+          clean: true # Automatically remove deleted files from the deploy branch 
+          single-commit: true
