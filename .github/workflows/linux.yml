@@ -14,7 +14,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3.0.2
     - name: build
-      run: ./build_mist.sh
+      run: export LDFLAGS='-static-libgcc -static' ; ./build_mist.sh
     - name: Deploy to GitHub Pages
       uses: JamesIves/github-pages-deploy-action@v4.3.3
       with:
