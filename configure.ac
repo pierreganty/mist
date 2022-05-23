@@ -1,5 +1,5 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT([mist], 1.1)
+AC_INIT([mist],[1.1])
 AC_CONFIG_SRCDIR([src/mist.c])
 AM_INIT_AUTOMAKE
 AC_CONFIG_HEADERS([src/config.h])
@@ -12,8 +12,8 @@ AC_PROG_YACC
 # Checks for libraries.
 
 # Checks for header files.
-AC_STDC_HEADERS
-AC_HAVE_HEADERS(errno.h stdarg.h limits.h string.h sys/types.h getopt.h malloc.h stddef.h stdlib.h sys/time.h unistd.h)
+AC_HEADER_STDC
+AC_CHECK_HEADERS([errno.h stdarg.h limits.h string.h sys/types.h getopt.h malloc.h stddef.h stdlib.h sys/time.h unistd.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -34,4 +34,5 @@ CFLAGS="-O3 -Wall"
 #AC_CONFIG_FILES()
 AC_SUBST(CFLAGS)
 AC_SUBST(YFLAGS)
-AC_OUTPUT([Makefile src/Makefile])
+AC_CONFIG_FILES([Makefile src/Makefile])
+AC_OUTPUT
