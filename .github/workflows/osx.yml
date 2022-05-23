@@ -14,9 +14,9 @@ jobs:
     steps:
     - uses: actions/checkout@v3.0.2
     - name: Install packages
-      run: brew install gcc autoconf automake libtool binutils ;
+      run: brew install autoconf automake ;
     - name: build
-      run: export AR='gcc-ar-11'; export NM='gcc-nm-11'; export RANLIB='gcc-ranlib-11'; export CXX='g++-11'; export CC='gcc-11' ;  ./build_mist.sh
+      run: ./build_mist.sh
     - name: rename
       run: mv website/mist_linux.tar.gz website/mist_osx.tar.gz
     - name: Deploy to GitHub Pages
