@@ -32,7 +32,7 @@ jobs:
           persist-credentials: false
 
       - name: Download Artifacts 🔻 # The built project is downloaded into the 'site' folder.
-        uses: actions/download-artifact@v2.0.9
+        uses: actions/download-artifact@v3.0.0
         with:
           name: site
       - name: move to website
