@@ -175,8 +175,8 @@ static boolean Equal(node1, node2)
             }
         }
     }
-    
-    ist_put_memoization1(node1, node2, (ISTNode*)(Result?1:2)) ; // see above comment.
+    size_t res = (Result?1:2); // patches cast to pointer from integer of different size
+    ist_put_memoization1(node1, node2, (ISTNode*)res) ; // see above comment.
     
     return Result;
 }
@@ -240,8 +240,8 @@ static boolean Included(node1, node2)
             }
         }
     }
-    
-    ist_put_memoization1(node1, node2, (ISTNode*)(Result?1:2)) ; // see above comment.
+    size_t res = (Result?1:2); // patches cast to pointer from integer of different size
+    ist_put_memoization1(node1, node2, (ISTNode*)res) ; // see above comment.
         
 	return Result;
 }
