@@ -8,7 +8,7 @@ mkdir -p $INSTALLDIR
 
 autoreconf -vfi
 
-./configure --prefix=$INSTALLDIR
+./configure --prefix=$INSTALLDIR LDFLAGS='-static-libgcc -static'
 
 make install
 
