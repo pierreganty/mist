@@ -7,6 +7,14 @@ Even though mist has its own input format there it can be translated from other 
 mist also ships with Python scripts to run mist over sets of benchmarks
 and an infrastructure producing bar graphs using [d3js](http://d3js.org/) with runtime and memory consumption information.
 
+## Downloading Mist 
+
+For ease of use, pre-built binaries are available using these links :
+
+* Linux : https://github.com/yanntm/mist/blob/linux/mist_linux.tar.gz?raw=true
+* OSX : https://github.com/yanntm/mist/blob/osx/mist_osx.tar.gz?raw=true
+* Windows : https://github.com/yanntm/mist/blob/windows/mist_windows.tar.gz?raw=true
+
 ## Building mist on Unix
 
 Type `./configure`, then `make`.
