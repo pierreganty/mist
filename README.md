@@ -11,9 +11,9 @@ and an infrastructure producing bar graphs using [d3js](http://d3js.org/) with r
 
 For ease of use, pre-built binaries are available using these links :
 
-* Linux : https://github.com/yanntm/mist/blob/linux/mist_linux.tar.gz?raw=true
-* OSX : https://github.com/yanntm/mist/blob/osx/mist_osx.tar.gz?raw=true
-* Windows : https://github.com/yanntm/mist/blob/windows/mist_windows.tar.gz?raw=true
+* [https://github.com/yanntm/mist/blob/linux/mist_linux.tar.gz?raw=true](Linux build)
+* [https://github.com/yanntm/mist/blob/osx/mist_osx.tar.gz?raw=true](Mac OSX build)
+* [https://github.com/yanntm/mist/blob/Windows/mist_windows.tar.gz?raw=true](Windows build)
 
 ## Building mist on Unix
 
