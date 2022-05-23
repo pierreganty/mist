@@ -16,7 +16,7 @@ jobs:
     - name: Install packages
       run: brew install gcc autoconf automake libtool binutils ;
     - name: build
-      run: export AR='gcc-ar-10'; export NM='gcc-nm-10'; export RANLIB='gcc-ranlib-10'; export CXX='g++-10'; export CC='gcc-10' ;  ./build_mist.sh
+      run: export AR='gcc-ar-11'; export NM='gcc-nm-11'; export RANLIB='gcc-ranlib-11'; export CXX='g++-11'; export CC='gcc-11' ;  ./build_mist.sh
     - name: rename
       run: mv website/mist_linux.tar.gz website/mist_osx.tar.gz
     - name: Deploy to GitHub Pages
