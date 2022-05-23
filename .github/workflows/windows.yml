@@ -14,7 +14,7 @@ jobs:
     steps:    
     - uses: actions/checkout@v3.0.2
     - name: install packages
-      run:  C:\msys64\usr\bin\bash -lc "PATH+=:/mingw64/bin ; pacman --noconfirm -S autoconf "
+      run:  C:\msys64\usr\bin\bash -lc "PATH+=:/mingw64/bin ; pacman --noconfirm -S autoconf ; pacman --noconfirm -S automake ; pacman --noconfirm -S libtool "
     - name: configure and make
       run:  C:\msys64\usr\bin\bash -lc "PATH+=:/mingw64/bin ; cd /D/a/mist/mist ; ./build_mist.sh && mv website/mist_linux.tar.gz website/mist_windows.tar.gz && cp -r website/ site/ "
     - name: Upload Artifacts 🔺 # The project is then uploaded as an artifact named 'site'.
