@@ -436,7 +436,7 @@ static int ValueInComponent(ISTInterval **V,int *Component,int dim)
 }
 
 //used to compute all the path such that the sum of values appearing in layers given by Component is equal to val
-static ISTNode *PathWithValueInComponent(ISTSharingTree * S, ISTNode * N,ISTLayer *L,int NuLayer,int * Component,int val,int sum)
+static ISTNode *PathWithValueInComponent(ISTSharingTree * S, ISTNode * N,ISTLayer *L,int NuLayer,int * Component,int val,size_t sum)
 {
 	ISTNode *result;
 	ISTSon *s;

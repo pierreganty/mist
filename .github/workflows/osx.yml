@@ -1,0 +1,28 @@
+name: OSX Build
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v3.0.2
+    - name: Install packages
+      run: brew install autoconf automake ;
+    - name: build
+      run: ./build_mist.sh
+    - name: rename
+      run: mv website/mist_linux.tar.gz website/mist_osx.tar.gz
+    - name: Deploy to GitHub Pages
+      uses: JamesIves/github-pages-deploy-action@v4.3.3
+      with:
+          branch: osx  # The branch the action should deploy to.
+          folder: website/  # The folder the action should deploy.
+          clean: true # Automatically remove deleted files from the deploy branch
+          single-commit: true 
