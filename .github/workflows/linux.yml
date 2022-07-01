@@ -16,7 +16,7 @@ jobs:
     - name: build
       run: export LDFLAGS='-static-libgcc -static' ; ./build_mist.sh
     - name: Deploy to GitHub Pages
-      uses: JamesIves/github-pages-deploy-action@v4.3.3
+      uses: JamesIves/github-pages-deploy-action@v4.3.4
       with:
           branch: linux # The branch the action should deploy to.
           folder: website/ # The folder the action should deploy.
