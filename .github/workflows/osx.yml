@@ -12,7 +12,7 @@ jobs:
     runs-on: macos-latest
     
     steps:
-    - uses: actions/checkout@v3.0.2
+    - uses: actions/checkout@v3.1.0
     - name: Install packages
       run: brew install autoconf automake ;
     - name: build
