@@ -12,14 +12,15 @@ AC_PROG_YACC
 # Checks for libraries.
 
 # Checks for header files.
-AC_HEADER_STDC
+AC_CHECK_INCLUDES_DEFAULT
 AC_CHECK_HEADERS([errno.h stdarg.h limits.h string.h sys/types.h getopt.h malloc.h stddef.h stdlib.h sys/time.h unistd.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 AC_C_INLINE
 AC_TYPE_SIZE_T
-AC_HEADER_TIME
+AC_CHECK_HEADERS_ONCE([sys/time.h])
+
 
 # Checks for library functions.
 AC_FUNC_ALLOCA
